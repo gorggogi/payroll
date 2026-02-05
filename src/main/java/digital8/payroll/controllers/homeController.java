@@ -16,10 +16,12 @@ public class homeController {
         return "html/homeAdmin";
     }
 
-    @PostMapping("/validateLogin")
-    public String validateLogin(Employees emp, RedirectAttributes redi) {
-        redi.addFlashAttribute("message", "User has been saved...");
-        service.save(employees);
-        return "html/homeEmployee";
-    }
+// @PostMapping("/validateLogin")
+// public String validateLogin(Employees emp, RedirectAttributes redi) {
+//     redi.addFlashAttribute("message", "User has been saved...");
+//     service.save(employees);
+//     return "html/homeEmployee";
+// }
 }
+
+    

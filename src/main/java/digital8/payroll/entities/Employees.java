@@ -3,6 +3,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
+import java.time.LocalDate;
+
+import org.hibernate.annotations.Any;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
@@ -28,7 +34,7 @@ public class Employees{
     private String lastName;
 
     @Column (nullable = false, unique = false)
-    private String birthDate;
+    private LocalDate birthDate;
 
     @Column (nullable = false, unique = false)
     private String address;
@@ -48,18 +54,17 @@ public class Employees{
     @Column (nullable = false, unique = false)
     private String employmentType;
     
-    @Column (nullable = false, unique = true)
-    private String departmentId;
+    @Column (nullable = false, unique = false)
+    private Integer departmentId;
 
     @Column (nullable = false, unique = false)
     private String payType;
 
     @Column (nullable = false, unique = false)
-    private String basicSalary;
+    private Integer basicSalary;
 
     @Column (nullable = false, unique = true)
     private String bank_Account;
-    
 
     @Column (nullable = false, unique = true)
     private String tin;
@@ -73,7 +78,7 @@ public class Employees{
     @Column (nullable = false, unique = true)
     private String pagibigNumber;
 
-    @Column (nullable = false, unique = true)
+    @Column (nullable = false, unique = false)
     private Integer positionId;
 
     public Integer getPositionId() {
@@ -124,11 +129,11 @@ public class Employees{
         this.lastName = lastName;
     }
 
-    public String getBirthDate() {
+    public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    public void setBirthDate(String birthDate) {
+    public void setBirthDate(LocalDate birthDate) {
         this.birthDate = birthDate;
     }
 
@@ -188,11 +193,11 @@ public class Employees{
         this.employmentType = employmentType;
     }
 
-    public String getDepartmentId() {
+    public Integer getDepartmentId() {
         return departmentId;
     }
 
-    public void setDepartmentId(String departmentId) {
+    public void setDepartmentId(Integer departmentId) {
         this.departmentId = departmentId;
     }
 
@@ -204,11 +209,11 @@ public class Employees{
         this.payType = payType;
     }
 
-    public String getBasicSalary() {
+    public Integer getBasicSalary() {
         return basicSalary;
     }
 
-    public void setBasicSalary(String basicSalary) {
+    public void setBasicSalary(Integer basicSalary) {
         this.basicSalary = basicSalary;
     }
 
