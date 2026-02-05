@@ -43,7 +43,7 @@ public class Employees{
     private Integer contactNumber;
 
     @Column (nullable = false, unique = true)
-    private Integer contactNumber;
+    private
 
 }
 
