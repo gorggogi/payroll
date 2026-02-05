@@ -6,10 +6,12 @@
     <title>Digital8 Payroll Login</title>
 </head>
 <body>
-    <form action="/home">
-        <input type="text" name="username" placeholder="username" id="">
-        <input type="password" name="password" placeholder="password" id="">
-        <button type="submit">Login</button>
+    <form action="/validateLogin" method="post">
+        <h1>Login to your account</h1><br>
+        <input type="text" name="username" placeholder="Username"><br>
+        <input type="password" name="password" placeholder="Password"><br>
+        <button type="submit">Login</button><br>
     </form>
+        <a href="forgotPassword">Forgot Password?</a>
 </body>
 </html>
