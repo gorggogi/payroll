@@ -5,6 +5,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
@@ -25,10 +26,10 @@ public class Attendance{
     private  LocalDate attendance_date;
 
     @Column (nullable = false, unique = false)
-    private Integer time_in;
+    private LocalTime time_in;
 
     @Column (nullable = false, unique = false)
-    private Integer time_out;
+    private LocalTime time_out;
 
     @Column (nullable = false, unique = false)
     private Integer work_hours;
@@ -38,6 +39,12 @@ public class Attendance{
 
     @Column (nullable = false, unique = false)
     private Integer overtime_hours;
+
+    @Column (nullable = false, unique = false)
+    private Integer undertime_minutes;
+
+    @Column (nullable = false, unique = false)
+    private String status;
 
     public Integer getAttendanceId() {
         return attendanceId;
@@ -63,19 +70,19 @@ public class Attendance{
         this.attendance_date = attendance_date;
     }
 
-    public Integer getTime_in() {
+    public LocalTime getTime_in() {
         return time_in;
     }
 
-    public void setTime_in(Integer time_in) {
+    public void setTime_in(LocalTime time_in) {
         this.time_in = time_in;
     }
 
-    public Integer getTime_out() {
+    public LocalTime getTime_out() {
         return time_out;
     }
 
-    public void setTime_out(Integer time_out) {
+    public void setTime_out(LocalTime time_out) {
         this.time_out = time_out;
     }
 
