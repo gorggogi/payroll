@@ -31,11 +31,8 @@ public class Employees{
     private String birthDate;
 
     @Column (nullable = false, unique = false)
-    private String sex;
+    private String address;
 
-    @Column (nullable = false, unique = false)
-    private String civilStatus;
-    
     @Column (nullable = false, unique = true)
     private String email;
 
@@ -61,8 +58,9 @@ public class Employees{
     private String basicSalary;
 
     @Column (nullable = false, unique = true)
-    private String bankAccountNumber;
+    private String bank_Account;
     
+
     @Column (nullable = false, unique = true)
     private String tin;
     
@@ -74,6 +72,17 @@ public class Employees{
 
     @Column (nullable = false, unique = true)
     private String pagibigNumber;
+
+    @Column (nullable = false, unique = true)
+    private Integer positionId;
+
+    public Integer getPositionId() {
+        return positionId;
+    }
+
+    public void setPositionId(Integer positionId) {
+        this.positionId = positionId;
+    }
 
     public Integer getEmployeeId() {
         return employeeId;
@@ -123,20 +132,20 @@ public class Employees{
         this.birthDate = birthDate;
     }
 
-    public String getSex() {
-        return sex;
+    public String getAddress() {
+        return address;
     }
 
-    public void setSex(String sex) {
-        this.sex = sex;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
-    public String getCivilStatus() {
-        return civilStatus;
+    public String getBank_Account() {
+        return bank_Account;
     }
 
-    public void setCivilStatus(String civilStatus) {
-        this.civilStatus = civilStatus;
+    public void setBank_Account(String bank_Account) {
+        this.bank_Account = bank_Account;
     }
 
     public String getEmail() {
@@ -201,14 +210,6 @@ public class Employees{
 
     public void setBasicSalary(String basicSalary) {
         this.basicSalary = basicSalary;
-    }
-
-    public String getBankAccountNumber() {
-        return bankAccountNumber;
-    }
-
-    public void setBankAccountNumber(String bankAccountNumber) {
-        this.bankAccountNumber = bankAccountNumber;
     }
 
     public String getTin() {
