@@ -4,6 +4,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.persistence.Column;
@@ -19,7 +20,7 @@ public class Employees{
     private Integer employeeId;
 
     @Column (nullable = false, unique = true)
-    private Integer employeeNumber;
+    private String employeeNumber;
 
     @Column (nullable = false, unique = false)
     private String firstName;
@@ -40,10 +41,10 @@ public class Employees{
     private String email;
 
     @Column (nullable = false, unique = true)
-    private Integer contactNumber;
+    private String contactNumber;
 
     @Column (nullable = false, unique = false)
-    private String dateHired;
+    private LocalDate dateHired;
 
     @Column (nullable = false, unique = false)
     private String employmentStatus;
@@ -58,7 +59,7 @@ public class Employees{
     private String payType;
 
     @Column (nullable = false, unique = false)
-    private Integer basicSalary;
+    private BigDecimal basicSalary;
 
     @Column (nullable = false, unique = true)
     private String bank_Account;
@@ -94,11 +95,11 @@ public class Employees{
         this.employeeId = employeeId;
     }
 
-    public Integer getEmployeeNumber() {
+    public String getEmployeeNumber() {
         return employeeNumber;
     }
 
-    public void setEmployeeNumber(Integer employeeNumber) {
+    public void setEmployeeNumber(String employeeNumber) {
         this.employeeNumber = employeeNumber;
     }
 
@@ -158,19 +159,19 @@ public class Employees{
         this.email = email;
     }
 
-    public Integer getContactNumber() {
+    public String getContactNumber() {
         return contactNumber;
     }
 
-    public void setContactNumber(Integer contactNumber) {
+    public void setContactNumber(String contactNumber) {
         this.contactNumber = contactNumber;
     }
 
-    public String getDateHired() {
+    public LocalDate getDateHired() {
         return dateHired;
     }
 
-    public void setDateHired(String dateHired) {
+    public void setDateHired(LocalDate dateHired) {
         this.dateHired = dateHired;
     }
 
@@ -206,11 +207,11 @@ public class Employees{
         this.payType = payType;
     }
 
-    public Integer getBasicSalary() {
+    public BigDecimal getBasicSalary() {
         return basicSalary;
     }
 
-    public void setBasicSalary(Integer basicSalary) {
+    public void setBasicSalary(BigDecimal basicSalary) {
         this.basicSalary = basicSalary;
     }
 
