@@ -7,13 +7,31 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
 @Entity
-@Table (name="Departments")
+@Table (name="departments")
 public class Departments{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     
-    @Column (name = departmentId, unique = true)
+    @Column (nullable = false, unique = true)
+    private Integer departmentId;
 
-    @Column (name = departmentName, unique = true)
+    @Column (nullable = false, unique = true)
+    private String departmentName;
+
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
+    public void setDepartmentName(String departmentName) {
+        this.departmentName = departmentName;
+    }
 
 }
