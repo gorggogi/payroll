@@ -6,9 +6,14 @@ div{
     display: flex;
 }
 .left-section {
+    display: flex;
+    flex-direction: column;
     width: 65%;
     height: 100vh;
     background-color: var(--primary-color);
+    justify-content: center;
+    padding-left: 5%;
+    padding-right: 15%;
 }
 .right-section {
     height: 100vh;
@@ -33,4 +38,13 @@ form input{
     font-size: var(--font-size-300);
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+form button {
+    padding: 0.75rem;
+    font-size: var(--font-size-300);
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }
