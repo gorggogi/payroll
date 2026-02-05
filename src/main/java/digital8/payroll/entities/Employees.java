@@ -42,8 +42,211 @@ public class Employees{
     @Column (nullable = false, unique = true)
     private Integer contactNumber;
 
+    @Column (nullable = false, unique = false)
+    private String dateHired;
+
+    @Column (nullable = false, unique = false)
+    private String employmentStatus;
+    
+    @Column (nullable = false, unique = false)
+    private String employmentType;
+    
     @Column (nullable = false, unique = true)
-    private
+    private String departmentId;
+
+    @Column (nullable = false, unique = false)
+    private String payType;
+
+    @Column (nullable = false, unique = false)
+    private String basicSalary;
+
+    @Column (nullable = false, unique = true)
+    private String bankAccountNumber;
+    
+    @Column (nullable = false, unique = true)
+    private String tin;
+    
+    @Column (nullable = false, unique = true)
+    private String sssNumber;
+
+    @Column (nullable = false, unique = true)
+    private String philhealthNumber;
+
+    @Column (nullable = false, unique = true)
+    private String pagibigNumber;
+
+    public Integer getEmployeeId() {
+        return employeeId;
+    }
+
+    public void setEmployeeId(Integer employeeId) {
+        this.employeeId = employeeId;
+    }
+
+    public Integer getEmployeeNumber() {
+        return employeeNumber;
+    }
+
+    public void setEmployeeNumber(Integer employeeNumber) {
+        this.employeeNumber = employeeNumber;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(String birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getSex() {
+        return sex;
+    }
+
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
+    public String getCivilStatus() {
+        return civilStatus;
+    }
+
+    public void setCivilStatus(String civilStatus) {
+        this.civilStatus = civilStatus;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public Integer getContactNumber() {
+        return contactNumber;
+    }
+
+    public void setContactNumber(Integer contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+
+    public String getDateHired() {
+        return dateHired;
+    }
+
+    public void setDateHired(String dateHired) {
+        this.dateHired = dateHired;
+    }
+
+    public String getEmploymentStatus() {
+        return employmentStatus;
+    }
+
+    public void setEmploymentStatus(String employmentStatus) {
+        this.employmentStatus = employmentStatus;
+    }
+
+    public String getEmploymentType() {
+        return employmentType;
+    }
+
+    public void setEmploymentType(String employmentType) {
+        this.employmentType = employmentType;
+    }
+
+    public String getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(String departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    public String getPayType() {
+        return payType;
+    }
+
+    public void setPayType(String payType) {
+        this.payType = payType;
+    }
+
+    public String getBasicSalary() {
+        return basicSalary;
+    }
+
+    public void setBasicSalary(String basicSalary) {
+        this.basicSalary = basicSalary;
+    }
+
+    public String getBankAccountNumber() {
+        return bankAccountNumber;
+    }
+
+    public void setBankAccountNumber(String bankAccountNumber) {
+        this.bankAccountNumber = bankAccountNumber;
+    }
+
+    public String getTin() {
+        return tin;
+    }
+
+    public void setTin(String tin) {
+        this.tin = tin;
+    }
+
+    public String getSssNumber() {
+        return sssNumber;
+    }
+
+    public void setSssNumber(String sssNumber) {
+        this.sssNumber = sssNumber;
+    }
+
+    public String getPhilhealthNumber() {
+        return philhealthNumber;
+    }
+
+    public void setPhilhealthNumber(String philhealthNumber) {
+        this.philhealthNumber = philhealthNumber;
+    }
+
+    public String getPagibigNumber() {
+        return pagibigNumber;
+    }
+
+    public void setPagibigNumber(String pagibigNumber) {
+        this.pagibigNumber = pagibigNumber;
+    }
+
+
+
+
+
 
 }
 
