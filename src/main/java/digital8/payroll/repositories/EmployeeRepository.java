@@ -8,22 +8,22 @@ import java.util.List;
 public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
 
     Employees findByEmployeeNumber(String employeeNumber); // 1.
-    Employees findbtEmail(String email); // 2.
+    Employees findByEmail(String email); // 2.
     boolean existsByEmployeeNumber(String employeeNumber); // 3.
     boolean existsByEmail(String email); // 4.
 
 
-    List <Employees> findByDepartmentId(Integer departmentId); // 5.
+    List<Employees> findByDepartmentId(Integer departmentId); // 5.
 
-    List <Employees> findByPositionId(Integer positionId); // 6.
+    List<Employees> findByPositionId(Integer positionId); // 6.
 
-    List <Employees> findByEmploymentStatus(String employmentStatus); // 7. 
+    List<Employees> findByEmploymentStatus(String employmentStatus); // 7. 
 
-    List <Employees> findByEmployeeType(String employeeType); // 9.
+    List<Employees> findByEmploymentType(String employmentType); // 9.
 
-    List<Employees> findByDepartmentIdandEmploymentStatus(Integer departmentId, String employmentStatus); // 10.
+    List<Employees> findByDepartmentIdAndEmploymentStatus(Integer departmentId, String employmentStatus); // 10.
 
-    List<Employees> findByEmployementStatusandPayType(String employmentStatus, String payType); // 11.
+    List<Employees> findByEmploymentStatusAndPayType(String employmentStatus, String payType); // 11.
 
  
 
