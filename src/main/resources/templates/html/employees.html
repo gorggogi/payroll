@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/employees.css">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <script src="/js/employees.js"></script>
     <title>Digital8 Payroll System</title>
 </head>
 <body>
@@ -26,7 +27,21 @@
         <div class="head">
             <input type="search" placeholder="Search employees..." />
             <div class="buttons">
-                <button><i class="fa-solid fa-sort"></i> Sort by</button>
+                <div class="sortby">
+                    <button onclick="myFunction('sortDropdown')" class="dropbtn"><i class="fa-solid fa-sort"></i> Sort by</button>
+                    <div id="sortDropdown" class="dropdown-content">
+                        <a href="#">First Name</a>
+                        <a href="#">Last Name</a>
+                    </div>
+                </div>
+                <div class="sortorder">
+                    <button onclick="myFunction('orderDropdown')" class="dropbtn"><i class="fa-solid fa-arrow-down-a-z"></i> Order</button>
+                    <div id="orderDropdown" class="dropdown-content">
+                        <a href="#">Ascending</a>
+                        <a href="#">Descending</a>
+                    </div>
+                </div>
+                
                 <button><i class="fa-solid fa-magnifying-glass"></i>Search</button>
             </div>
         </div>
