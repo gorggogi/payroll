@@ -52,9 +52,9 @@ section {
 .head {
     display: flex;
     justify-content: space-between;
-    padding-bottom: 2rem;
     gap: 1rem;
-    height: 6rem;
+    max-height: 4rem;
+    margin-bottom: 2rem;
 }
 
 input {
@@ -62,14 +62,42 @@ input {
     gap: 1rem;
     padding: 1rem;
     font-size: var(--font-size-300);
-    border: 1px solid #ccc;
+    border: 1px solid var(--tertiary-color);
     border-radius: 1rem;
-    width: 80%;
+    width: 70%;
 }
 
 section .buttons {
     display: flex;
     gap: .5rem;
+}
+
+.sortby, .sortorder {
+    position: relative;
+}
+
+.dropdown-content {
+    display: none;
+    flex-direction: column;
+    padding: 1rem;
+    position: absolute;
+    background-color: white;
+    border: 1px solid var(--tertiary-color);
+    border-radius: 1rem;
+    margin-top: .25rem;
+    z-index: 1;
+}
+
+.dropdown-content.show {
+    display: flex;
+}
+
+.dropdown-content a {
+    padding-block: .5rem;
+    font-size: var(--font-size-300);
+    color: black;
+    text-decoration: none;
+    display: block;
 }
 
 button {
@@ -83,5 +111,4 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 50%;
 }
