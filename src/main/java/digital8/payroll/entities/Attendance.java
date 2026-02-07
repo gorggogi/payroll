@@ -4,6 +4,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -20,7 +21,7 @@ public class Attendance{
     private Integer attendanceId;
 
     @Column (nullable = false, unique = false)
-    private Integer employeeId;
+    private Integer employeeId; // foreign key
 
     @Column (nullable = false, unique = false)
     private  LocalDate attendance_date;
@@ -32,19 +33,35 @@ public class Attendance{
     private LocalTime time_out;
 
     @Column (nullable = false, unique = false)
-    private Integer work_hours;
+    private BigDecimal work_hours;
 
     @Column (nullable = false, unique = false)
     private Integer late_minutes;
 
     @Column (nullable = false, unique = false)
-    private Integer overtime_hours;
+    private BigDecimal overtime_hours;
 
     @Column (nullable = false, unique = false)
     private Integer undertime_minutes;
 
     @Column (nullable = false, unique = false)
     private String status;
+
+    public Integer getUndertime_minutes() {
+        return undertime_minutes;
+    }
+
+    public void setUndertime_minutes(Integer undertime_minutes) {
+        this.undertime_minutes = undertime_minutes;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
     public Integer getAttendanceId() {
         return attendanceId;
@@ -86,11 +103,11 @@ public class Attendance{
         this.time_out = time_out;
     }
 
-    public Integer getWork_hours() {
+    public BigDecimal getWork_hours() {
         return work_hours;
     }
 
-    public void setWork_hours(Integer work_hours) {
+    public void setWork_hours(BigDecimal work_hours) {
         this.work_hours = work_hours;
     }
 
@@ -102,11 +119,11 @@ public class Attendance{
         this.late_minutes = late_minutes;
     }
 
-    public Integer getOvertime_hours() {
+    public BigDecimal getOvertime_hours() {
         return overtime_hours;
     }
 
-    public void setOvertime_hours(Integer overtime_hours) {
+    public void setOvertime_hours(BigDecimal overtime_hours) {
         this.overtime_hours = overtime_hours;
     }
 

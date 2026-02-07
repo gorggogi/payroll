@@ -38,7 +38,7 @@ public class LeaveTypes {
         this.leaveTypeId = leaveTypeId;
     }
 
-    public String getLeaveTypeName() {
+    public String getLeaveName() {
         return leaveName;
     }
 
