@@ -7,11 +7,36 @@ import jakarta.persistence.Id;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
 @Entity
 @Table (name="employees")
+@JsonPropertyOrder({
+    "employeeId",
+    "employeeNumber",
+    "lastName",
+    "firstName",
+    "middleName",
+    "email",
+    "contactNumber",
+    "departmentId",
+    "positionId",
+    "employmentStatus",
+    "employmentType",
+    "basicSalary",
+    "dateHired",
+    "birthDate",
+    "address",
+    "sssNumber",
+    "tin",
+    "philhealthNumber",
+    "pagibigNumber",
+    "bank_Account",
+    "payType"
+})
 public class Employees{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
