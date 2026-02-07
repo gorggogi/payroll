@@ -1,43 +1,29 @@
 package digital8.payroll.repositories;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Employees;
+import digital8.payroll.entities.Positions;
 import java.time.LocalDate;
 import java.util.List;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
 
-    Employees findByEmployeeNumber(String employeeNumber); // 1.
-    Employees findByEmail(String email); // 2.
-    boolean existsByEmployeeNumber(String employeeNumber); // 3.
-    boolean existsByEmail(String email); // 4.
+    Employees findByEmployeeNumber(String employeeNumber);
+    Employees findByEmail(String email);
+    boolean existsByEmployeeNumber(String employeeNumber);
+    boolean existsByEmail(String email);
 
-
-    List<Employees> findByDepartmentId(Integer departmentId); // 5.
-
-    List<Employees> findByPositionId(Integer positionId); // 6.
-
-    List<Employees> findByEmploymentStatus(String employmentStatus); // 7. 
-
-    List<Employees> findByEmploymentType(String employmentType); // 9.
-
-    List<Employees> findByDepartmentIdAndEmploymentStatus(Integer departmentId, String employmentStatus); // 10.
-
-    List<Employees> findByEmploymentStatusAndPayType(String employmentStatus, String payType); // 11.
-
+    List<Employees> findByDepartment(Departments department);
+    List<Employees> findByDepartment_DepartmentId(Integer departmentId);
+    List<Employees> findByPosition(Positions position);
+    List<Employees> findByPosition_PositionId(Integer positionId);
+    List<Employees> findByEmploymentStatus(String employmentStatus);
+    List<Employees> findByEmploymentType(String employmentType);
+    List<Employees> findByDepartmentAndEmploymentStatus(Departments department, String employmentStatus);
+    List<Employees> findByDepartment_DepartmentIdAndEmploymentStatus(Integer departmentId, String employmentStatus);
+    List<Employees> findByEmploymentStatusAndPayType(String employmentStatus, String payType);
     List<Employees> findByDateHiredBetween(LocalDate startDate, LocalDate endDate);
-
-    
-
-
-
-
-
-
-
- 
-
-
-    
 }

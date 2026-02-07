@@ -1,12 +1,19 @@
 package digital8.payroll.entities;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import digital8.payroll.entities.Departments;
+import digital8.payroll.entities.Positions;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.Column;
@@ -22,8 +29,8 @@ import jakarta.persistence.Table;
     "middleName",
     "email",
     "contactNumber",
-    "departmentId",
-    "positionId",
+    "department",
+    "position",
     "employmentStatus",
     "employmentType",
     "basicSalary",
@@ -76,9 +83,14 @@ public class Employees{
     
     @Column (nullable = false, unique = false)
     private String employmentType;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "departmentId", nullable = false)
+    @JsonIgnoreProperties({"employees"})
+    private Departments department;
     
-    @Column (nullable = false, unique = false)
-    private Integer departmentId;
+    // @Column (nullable = false, unique = false)
+    // private Integer departmentId;
 
     @Column (nullable = false, unique = false)
     private String payType;
@@ -101,15 +113,20 @@ public class Employees{
     @Column (nullable = false, unique = true)
     private String pagibigNumber;
 
-    @Column (nullable = false, unique = false)
-    private Integer positionId;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "positionId", nullable = false)
+    @JsonIgnoreProperties({"employees"})
+    private Positions position;
 
-    public Integer getPositionId() {
-        return positionId;
+    // @Column (nullable = false, unique = false)
+    // private Integer positionId;
+
+    public Positions getPosition() {
+        return position;
     }
 
-    public void setPositionId(Integer positionId) {
-        this.positionId = positionId;
+    public void setPosition(Positions position) {
+        this.position = position;
     }
 
     public Integer getEmployeeId() {
@@ -216,12 +233,12 @@ public class Employees{
         this.employmentType = employmentType;
     }
 
-    public Integer getDepartmentId() {
-        return departmentId;
+    public Departments getDepartment() {
+        return department;
     }
 
-    public void setDepartmentId(Integer departmentId) {
-        this.departmentId = departmentId;
+    public void setDepartment(Departments department) {
+        this.department = department;
     }
 
     public String getPayType() {
