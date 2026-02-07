@@ -2,8 +2,6 @@ package digital8.payroll.controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class homeController {
@@ -14,6 +12,16 @@ public class homeController {
     @GetMapping("/adminHome")
     public String adminHome() {
         return "html/homeAdmin";
+    }
+
+    @GetMapping("/employeeHome")
+    public String employeeHome() {
+        return "html/homeEmployee";
+    }
+
+    @GetMapping("/employees") 
+    public String employees() {
+        return "html/employees";
     }
 
 // @PostMapping("/validateLogin")

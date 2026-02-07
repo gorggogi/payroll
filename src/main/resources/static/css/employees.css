@@ -28,7 +28,7 @@ ul li{
     border-radius: 1rem;
 }
 
-button{
+nav button{
     padding: 1rem;
     font-size: var(--font-size-300);
     background-color: red;
@@ -48,54 +48,40 @@ section {
     padding: 3rem;
 }
 
-section div {
-    display: flex;
-    justify-content: space-between;
-}
-
 section .head {
+    display: flex;
     justify-content: space-between;
-}
-
-section .head h1 {
-    font-size: var(--font-size-200);
-    margin-bottom: 0;
-}
-
-section .head p {
-    display: flex;
-    font-size: var(--font-size-300);
-    gap: 2rem;
     align-items: center;
-}
-
-section .head p i {
-    font-size: 2rem;
-    margin-right: 0;
-}
-
-section .cards {
-    padding: 2rem;
-    gap : 2rem;
-}
-
-section .cards .left {
-    display: flex;
-    flex-direction: column;
-    min-width: 60%;
-}
-
-section .cards .right {
-    display: flex;
-    flex-direction: column;
-    min-width: 35%;
-}
-
-section .cards .card {
-    flex-direction: column;
     gap: 1rem;
-    padding: 1rem;
-    background-color: var(--primary-color);
+}
+
+section .head input {
+    min-width: 80%;
     border-radius: 1rem;
-    margin-bottom: 2rem;
+    padding: 1rem;
+    border: 1px solid #ccc;
+    background-color: white;
+    font-size: 1rem;
+    outline: none;
+}
+
+section .head .buttons {
+    display: flex;
+    min-width: 25%;
+    gap: 1rem;
+}
+
+section .head .buttons button {
+    justify-content: center;
+    min-width: 50%;
+    font-size: var(--font-size-300);
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+}
+
+media (max-width: 1520px) {
+    
 }
