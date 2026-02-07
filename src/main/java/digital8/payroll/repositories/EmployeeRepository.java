@@ -2,6 +2,7 @@ package digital8.payroll.repositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import digital8.payroll.entities.Employees;
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -24,6 +25,16 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
     List<Employees> findByDepartmentIdAndEmploymentStatus(Integer departmentId, String employmentStatus); // 10.
 
     List<Employees> findByEmploymentStatusAndPayType(String employmentStatus, String payType); // 11.
+
+    List<Employees> findByDateHiredBetween(LocalDate startDate, LocalDate endDate);
+
+    
+
+
+
+
+
+
 
  
 
