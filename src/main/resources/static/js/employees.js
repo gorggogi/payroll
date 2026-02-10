@@ -87,7 +87,8 @@ function filterAndDisplayEmployees(){
                 (emp.email && emp.email.toLowerCase().includes(searchQuery)) ||
                 (emp.department && emp.department.departmentName && emp.department.departmentName.toLowerCase().includes(searchQuery)) ||
                 (emp.position && emp.position.positionName && emp.position.positionName.toLowerCase().includes(searchQuery)) ||
-                (emp.employmentStatus && emp.employmentStatus.toLowerCase().includes(searchQuery))
+                (emp.employmentStatus && emp.employmentStatus.toLowerCase().includes(searchQuery)) ||
+                (emp.employmentType && emp.employmentType.toLowerCase().includes(searchQuery)) 
             );
         });
        

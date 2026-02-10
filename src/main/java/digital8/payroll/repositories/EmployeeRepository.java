@@ -5,6 +5,8 @@ import org.springframework.stereotype.Repository;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Positions;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -26,4 +28,10 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
     List<Employees> findByDepartment_DepartmentIdAndEmploymentStatus(Integer departmentId, String employmentStatus);
     List<Employees> findByEmploymentStatusAndPayType(String employmentStatus, String payType);
     List<Employees> findByDateHiredBetween(LocalDate startDate, LocalDate endDate);
+    List<Employees> findByPayType(String payType);
+    List<Employees> findByBasicSalaryBetween(BigDecimal minSalary, BigDecimal maxSalary);
+    List<Employees> findByBasicSalaryGreaterThanEqual(BigDecimal minSalary);
+    List<Employees> findByBasicSalaryLessThanEqual(BigDecimal maxSalary);
+
+
 }

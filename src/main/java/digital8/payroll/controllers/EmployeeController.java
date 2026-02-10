@@ -1,9 +1,8 @@
 package digital8.payroll.controllers;
 
 import digital8.payroll.entities.Employees;
-import digital8.payroll.repositories.EmployeeRepository;
+import digital8.payroll.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -15,29 +14,14 @@ import java.util.List;
 public class EmployeeController {
 
     @Autowired
-    private EmployeeRepository employeeRepository;
+    private EmployeeService employeeService;
 
     @GetMapping
-    public ResponseEntity<List<Employees>> getAllEmployees(
-        @RequestParam(defaultValue = "lastName") String sortBy,
-        @RequestParam(defaultValue = "asc") String direction
-    ) {
+    public ResponseEntity<List<Employees>> getAllEmployees(@RequestParam (required = false) String sortBy , @RequestParam (required = false) String direction){
 
-        Sort sort;
-
-        if (direction.equalsIgnoreCase("desc")){
-            sort = Sort.by(sortBy).descending();
-        } else {
-            sort = Sort.by(sortBy).ascending();
-        }
-
-        List<Employees> employees = employeeRepository.findAll(sort);
-
+        List<Employees> employees = employeeService.getAllEmployees(sortBy, direction);
         return ResponseEntity.ok(employees);
-
+        
     }
-    
-    
-    
     
 }
