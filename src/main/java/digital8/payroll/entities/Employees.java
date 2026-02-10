@@ -88,9 +88,6 @@ public class Employees{
     @JoinColumn(name = "departmentId", nullable = false)
     @JsonIgnoreProperties({"employees"})
     private Departments department;
-    
-    // @Column (nullable = false, unique = false)
-    // private Integer departmentId;
 
     @Column (nullable = false, unique = false)
     private String payType;
@@ -117,9 +114,6 @@ public class Employees{
     @JoinColumn(name = "positionId", nullable = false)
     @JsonIgnoreProperties({"employees"})
     private Positions position;
-
-    // @Column (nullable = false, unique = false)
-    // private Integer positionId;
 
     public Positions getPosition() {
         return position;

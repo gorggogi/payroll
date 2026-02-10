@@ -25,9 +25,18 @@ window.addEventListener('load', function(){
 
     loadEmployees();
 
-    document.getElementById('searchInput').addEventListener('input', function(){
+    document.getElementById('searchInput').addEventListener('keydown', function(event){
+        if (event.key === 'Enter'){
+            event.preventDefault();
+            searchQuery = this.value.trim().toLowerCase();
+            filterAndDisplayEmployees();
+        }
 
-        searchQuery = this.value.trim().toLowerCase();
+    })
+
+    document.getElementById('searchButton').addEventListener('click', function(){
+
+        searchQuery = document.getElementById('serachInput').value.trim().toLowerCase();
         filterAndDisplayEmployees();
 
     })
@@ -137,10 +146,9 @@ function displayEmployees(employees) {
         return;
     }
 
-    const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p>
-    ${searchQuery ? `<p>Search: "${searchQuery}"</p>` : ''}</div>`;
-    const sortedEmployees = sortEmployees([...employees]);
-    const cardsHTML = sortedEmployees.map(emp => `
+    const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
+
+    const cardsHTML = employees.map(emp => `
         <div class="employee-card">
             <div class="employee-header">
                 <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
@@ -160,7 +168,6 @@ function displayEmployees(employees) {
         </div>
     `).join('');
     container.innerHTML = infoHTML + cardsHTML;
-    
 }
 
 function toggleAdvancedFilters() {
@@ -181,22 +188,76 @@ function toggleAdvancedFilters() {
 }
 
 function applyAdvancedFilters(){
-    sortBy = document.getElementById('sortBy').value;
-    sortOrder = document.getElementById('sortOrder').value;
-
-    filterAndDisplayEmployees();
     
-    console.log(`Sort applied: ${sortBy} (${sortOrder})`);
-}
+       
+        const searchQuery = document.getElementById('searchInput').value.trim();
+        
 
-function resetFilters(){
-    document.getElementById('sortBy').value = 'lastName';
-    document.getElementById('sortOrder').value = 'asc';
-    sortBy = 'lastName';
-    sortOrder = 'asc';
+        const sortBy = document.getElementById('sortBy').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+        
 
-    filterAndDisplayEmployees();
-}
+        const departmentId = document.getElementById('filterDepartment').value;
+        const positionId = document.getElementById('filterPosition').value;
+        const employmentStatus = document.getElementById('filterStatus').value;
+        const employmentType = document.getElementById('filterType').value;
+        const payType = document.getElementById('filterPayType').value;
+        const minSalary = document.getElementById('filterMinSalary').value;
+        const maxSalary = document.getElementById('filterMaxSalary').value;
+        
+   
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('searchQuery', searchQuery);
+        params.append('sortBy', sortBy);
+        params.append('direction', sortOrder);
+        
+ 
+        if (departmentId) params.append('departmentId', departmentId);
+        if (positionId) params.append('positionId', positionId);
+        if (employmentStatus) params.append('employmentStatus', employmentStatus);
+        if (employmentType) params.append('employmentType', employmentType);
+        if (payType) params.append('payType', payType);
+        if (minSalary) params.append('minSalary', minSalary);
+        if (maxSalary) params.append('maxSalary', maxSalary);
+        
+   
+        fetch(`/api/employees/filter?${params.toString()}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(employees => {
+                console.log('Filter applied:', params.toString());
+                allEmployees = employees;
+                displayEmployees(employees);
+            })
+            .catch(error => {
+                console.error('Error applying filters:', error);
+                alert(`Error applying filters: ${error.message}`);
+            });
+    }
+    
+    function resetFilters(){
+ 
+        document.getElementById('sortBy').value = 'lastName';
+        document.getElementById('sortOrder').value = 'asc';
+        document.getElementById('filterDepartment').value = '';
+        document.getElementById('filterPosition').value = '';
+        document.getElementById('filterStatus').value = '';
+        document.getElementById('filterType').value = '';
+        document.getElementById('filterPayType').value = '';
+        document.getElementById('filterMinSalary').value = '';
+        document.getElementById('filterMaxSalary').value = '';
+        
+     
+        document.getElementById('searchInput').value = '';
+        
+        loadEmployees();
+        
+        console.log('All filters reset');
+    }
 
 
 

@@ -1,6 +1,7 @@
 package digital8.payroll.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Employees;
@@ -11,13 +12,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
+public interface EmployeeRepository extends JpaRepository<Employees, Integer>, JpaSpecificationExecutor<Employees> {
 
     Employees findByEmployeeNumber(String employeeNumber);
     Employees findByEmail(String email);
     boolean existsByEmployeeNumber(String employeeNumber);
     boolean existsByEmail(String email);
 
+    // Optional: 
     List<Employees> findByDepartment(Departments department);
     List<Employees> findByDepartment_DepartmentId(Integer departmentId);
     List<Employees> findByPosition(Positions position);
@@ -32,6 +34,5 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>{
     List<Employees> findByBasicSalaryBetween(BigDecimal minSalary, BigDecimal maxSalary);
     List<Employees> findByBasicSalaryGreaterThanEqual(BigDecimal minSalary);
     List<Employees> findByBasicSalaryLessThanEqual(BigDecimal maxSalary);
-
 
 }

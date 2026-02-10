@@ -33,13 +33,13 @@
             </div>
         </div>
 
-        <!-- ADVANCED FILTERS SECTION (Collapsible) -->
+      
         <div class="advanced-filter-section" id="advancedFilterSection" style="display: none;">
             <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
             <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
             
             <form id="advancedFilterForm">
-                <!-- Sort & Order Row -->
+      
                 <div class="form-row">
                     <div class="form-group">
                         <label for="sortBy">
@@ -49,7 +49,7 @@
                             <option value="lastName">Last Name</option>
                             <option value="firstName">First Name</option>
                             <option value="employeeNumber">Employee Number</option>
-                            <option value="department">Department</option>
+                            <option value="basicSalary">Salary</option>
                         </select>
                     </div>
                     
@@ -64,7 +64,6 @@
                     </div>
                 </div>
                 
-                <!-- Filter Row 1 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="filterDepartment">
@@ -102,12 +101,12 @@
                         <select id="filterStatus">
                             <option value="">All Statuses</option>
                             <option value="Active">Active</option>
+                            <option value="Resigned">Resigned</option>
                             <option value="Terminated">Terminated</option>
                         </select>
                     </div>
                 </div>
                 
-                <!-- Filter Row 2 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="filterType">
@@ -129,6 +128,8 @@
                             <option value="">All Pay Types</option>
                             <option value="Monthly">Monthly</option>
                             <option value="Daily">Daily</option>
+                            <option value="Hourly">Hourly</option>
+                            <option value="Biweekly">Biweekly</option>
                         </select>
                     </div>
                     
