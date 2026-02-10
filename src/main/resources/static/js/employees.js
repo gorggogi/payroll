@@ -121,14 +121,12 @@ function sortEmployees(employees) {
 
 function setSortBy(field) {
     sortBy = field;
-    filterAndDisplayEmployees();
-    document.getElementById('sortDropdown').classList.remove('show');
+   
 }
 
 function setSortOrder(order) {
     sortOrder = order;
-    filterAndDisplayEmployees();
-    document.getElementById('orderDropdown').classList.remove('show');
+
 }
 
 function displayEmployees(employees) {
@@ -165,6 +163,40 @@ function displayEmployees(employees) {
     
 }
 
+function toggleAdvancedFilters() {
+    const panel = document.getElementById('advancedFilterSection');
+    const btn = document.getElementById('filterToggleBtn');
+    
+    if (panel.style.display === 'none') {
+  
+        panel.style.display = 'block';
+        btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Hide Filters';
+  
+    } else {
+     
+        panel.style.display = 'none';
+        btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Show Filters';
+      
+    }
+}
+
+function applyAdvancedFilters(){
+    sortBy = document.getElementById('sortBy').value;
+    sortOrder = document.getElementById('sortOrder').value;
+
+    filterAndDisplayEmployees();
+    
+    console.log(`Sort applied: ${sortBy} (${sortOrder})`);
+}
+
+function resetFilters(){
+    document.getElementById('sortBy').value = 'lastName';
+    document.getElementById('sortOrder').value = 'asc';
+    sortBy = 'lastName';
+    sortOrder = 'asc';
+
+    filterAndDisplayEmployees();
+}
 
 
 

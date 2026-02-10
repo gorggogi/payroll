@@ -26,29 +26,141 @@
         <div class="head">
             <input type="search" id="searchInput" placeholder="Search employees..." />
             <div class="buttons">
-                <div class="sortby">
-                    <button onclick="myFunction('sortDropdown')" class="dropbtn"><i class="fa-solid fa-sort"></i> Sort by</button>
-                    <div id="sortDropdown" class="dropdown-content">
-                        <a href="#" onclick="setSortBy('firstName')">First Name</a>
-                        <a href="#" onclick="setSortBy('lastName')">Last Name</a>
+                <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+                <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
+                    <i class="fa-solid fa-sliders"></i> Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- ADVANCED FILTERS SECTION (Collapsible) -->
+        <div class="advanced-filter-section" id="advancedFilterSection" style="display: none;">
+            <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
+            <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
+            
+            <form id="advancedFilterForm">
+                <!-- Sort & Order Row -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="sortBy">
+                            <i class="fa-solid fa-sort"></i> Sort By
+                        </label>
+                        <select id="sortBy">
+                            <option value="lastName">Last Name</option>
+                            <option value="firstName">First Name</option>
+                            <option value="employeeNumber">Employee Number</option>
+                            <option value="department">Department</option>
+                        </select>
                     </div>
-                </div>
-                <div class="sortorder">
-                    <button onclick="myFunction('orderDropdown')" class="dropbtn"><i class="fa-solid fa-arrow-down-a-z"></i> Order</button>
-                    <div id="orderDropdown" class="dropdown-content">
-                        <a href="#" onclick="setSortOrder('asc')">Ascending</a>
-                        <a href="#" onclick="setSortOrder('desc')">Descending</a>
+                    
+                    <div class="form-group">
+                        <label for="sortOrder">
+                            <i class="fa-solid fa-arrow-down-a-z"></i> Order
+                        </label>
+                        <select id="sortOrder">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
                     </div>
                 </div>
                 
-                <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
-            </div>
+                <!-- Filter Row 1 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterDepartment">
+                            <i class="fa-solid fa-building"></i> Department
+                        </label>
+                        <select id="filterDepartment">
+                            <option value="">All Departments</option>
+                            <option value="1">HR</option>
+                            <option value="2">IT</option>
+                            <option value="3">Finance</option>
+                            <option value="4">Sales</option>
+                            <option value="5">Operations</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterPosition">
+                            <i class="fa-solid fa-briefcase"></i> Position
+                        </label>
+                        <select id="filterPosition">
+                            <option value="">All Positions</option>
+                            <option value="1">Manager</option>
+                            <option value="2">Software Engineer</option>
+                            <option value="3">Accountant</option>
+                            <option value="4">HR Specialist</option>
+                            <option value="5">Sales Representative</option>
+                            <option value="6">Operations Coordinator</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterStatus">
+                            <i class="fa-solid fa-circle-check"></i> Status
+                        </label>
+                        <select id="filterStatus">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Terminated">Terminated</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Filter Row 2 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterType">
+                            <i class="fa-solid fa-user-tag"></i> Employment Type
+                        </label>
+                        <select id="filterType">
+                            <option value="">All Types</option>
+                            <option value="Regular">Regular</option>
+                            <option value="Probationary">Probationary</option>
+                            <option value="Contractual">Contractual</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterPayType">
+                            <i class="fa-solid fa-money-bill"></i> Pay Type
+                        </label>
+                        <select id="filterPayType">
+                            <option value="">All Pay Types</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Daily">Daily</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterMinSalary">
+                            <i class="fa-solid fa-peso-sign"></i> Min Salary
+                        </label>
+                        <input type="number" id="filterMinSalary" placeholder="e.g., 30000" min="0" step="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="filterMaxSalary">
+                            <i class="fa-solid fa-peso-sign"></i> Max Salary
+                        </label>
+                        <input type="number" id="filterMaxSalary" placeholder="e.g., 100000" min="0" step="1000">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="applyAdvancedFilters()" class="btn-apply">
+                        <i class="fa-solid fa-check"></i> Apply Filters
+                    </button>
+                    <button type="button" onclick="resetFilters()" class="btn-reset">
+                        <i class="fa-solid fa-rotate-right"></i> Reset All
+                    </button>
+                </div>
+            </form>
         </div>
 
         <div class="employee-list">
             <h1>Employee List:</h1>
             <div id="employeeContainer">
-
                 Loading...
             </div>
         </div>
