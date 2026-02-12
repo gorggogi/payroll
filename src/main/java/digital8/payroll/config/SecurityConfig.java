@@ -14,26 +14,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http 
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
-
-            .requestMatchers("/", "/index", "/forgotPassword").permitAll()
-
-            .anyRequest().authenticated()
-        )
-
-        .formLogin(form -> form
-            .loginPage("/index")
-            .permitAll()
-            .defaultSuccessUrl("/admin/home", true)
-        )
-
-        .logout(logout -> logout
-            .logoutUrl("/logout")
-            .logoutSuccessUrl("/index")
-            .permitAll()
+            .anyRequest().permitAll()
         )
         .csrf(csrf -> csrf.disable());
 
         return http.build();
     }
 }
+
+//
+
+
+//
