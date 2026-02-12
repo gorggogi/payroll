@@ -22,7 +22,6 @@ public class EmployeeSpecifications {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Search across multiple fields (OR condition)
             if (searchQuery != null && !searchQuery.isEmpty()) {
                 String searchPattern = "%" + searchQuery.toLowerCase() + "%";
                 
