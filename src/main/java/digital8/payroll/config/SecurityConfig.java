@@ -22,7 +22,24 @@ public class SecurityConfig {
     }
 }
 
-//
+// SECURITY CONFIG (disabled for now)
 
+// .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**").permitAll()
 
-//
+// .requestMatchers("/", "/index", "/forgotPassword").permitAll()
+
+// .anyRequest().authenticated()
+// )
+
+// .formLogin(form -> form
+// .loginPage("/index")
+// .permitAll()
+// .defaultSuccessUrl("/admin/home", true)
+// )
+
+// .logout(logout -> logout
+// .logoutUrl("/logout")
+// .logoutSuccessUrl("/index")
+// .permitAll()
+// )
+// .csrf(csrf -> csrf.disable());
