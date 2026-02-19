@@ -149,23 +149,23 @@ function displayEmployees(employees) {
     const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
 
     const cardsHTML = employees.map(emp => `
-        <div class="employee-card">
-            <div class="employee-header">
-                <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
-                <span class="employee-status">${emp.employmentStatus}</span>
+            <div class="employee-card">
+                <div class="employee-header">
+                    <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
+                    <span class="employee-status">${emp.employmentStatus}</span>
+                </div>
+                
+                <div class="employee-details">
+                    <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
+                    <p><strong>Email:</strong> ${emp.email || 'N/A'}</p>
+                    <p><strong>Contact:</strong> ${emp.contactNumber || 'N/A'}</p>
+                    <p><strong>Department:</strong> ${emp.department ? emp.department.departmentName : 'N/A'}</p>
+                    <p><strong>Position:</strong> ${emp.position ? emp.position.positionName : 'N/A'}</p>
+                    <p><strong>Type:</strong> ${emp.employmentType}</p>
+                    <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
+                    <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
+                </div>
             </div>
-            
-            <div class="employee-details">
-                <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
-                <p><strong>Email:</strong> ${emp.email || 'N/A'}</p>
-                <p><strong>Contact:</strong> ${emp.contactNumber || 'N/A'}</p>
-                <p><strong>Department:</strong> ${emp.department ? emp.department.departmentName : 'N/A'}</p>
-                <p><strong>Position:</strong> ${emp.position ? emp.position.positionName : 'N/A'}</p>
-                <p><strong>Type:</strong> ${emp.employmentType}</p>
-                <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
-                <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
-            </div>
-        </div>
     `).join('');
     container.innerHTML = infoHTML + cardsHTML;
 }
