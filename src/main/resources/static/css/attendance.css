@@ -1,0 +1,22 @@
+ .attendanceHeader th{
+    border: black 1px solid;
+    border-collapse: collapse;
+    border-radius: 10px;
+}
+.attendanceTable{
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    margin-top: 1rem;
+    justify-content: center;
+}
+.attendanceTable caption{
+    margin-bottom: 1rem;
+}
+.attendanceHeader{
+    display: flex;
+    justify-content: center;
+}
+.attendanceHeader th{
+    padding-inline: 1rem;
+}

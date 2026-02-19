@@ -2,6 +2,7 @@
 
 :root{
     --primary-color: #00000049;
+    --primary-light: #77747449;
     --secondary-color: #00000079;
     --tertiary-color: #00000099;
     --font-family: 'Cabin', sans-serif;
@@ -75,4 +76,29 @@ margin: 0;
 }
 *{
     font-family: var(--font-family);
+}
+a{
+  text-decoration: none;
+}
+li:hover{
+  background-color: var(--primary-light);
+  color: black;
+  transition: .3s;
+}
+li.active{
+  background-color: var(--primary-light);
+  color: black;
+}
+.logout{
+    padding: 1rem;
+    font-size: var(--font-size-300);
+    background-color: red;
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+
 }

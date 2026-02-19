@@ -28,19 +28,7 @@ ul li{
     border-radius: 1rem;
 }
 
-button{
-    padding: 1rem;
-    font-size: var(--font-size-300);
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: left;
-    align-items: center;
 
-}
 
 section {
     width: 80%;
