@@ -3,46 +3,6 @@
     width: 100%;
 }
 
-h1{
-    margin-bottom: 2rem;
-}
-
-nav {
-    width: 20%;
-    height: 100vh;
-    background-color: var(--primary-color);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-width: 20rem;
-}
-i {
-    margin-right: 1rem;
-}
-ul li{
-    margin-bottom: 1rem;
-    padding: 1rem;
-    color: white;
-    cursor: pointer;
-    background-color: var(--secondary-color);
-    border-radius: 1rem;
-}
-
-nav button{
-    padding: 1rem;
-    font-size: var(--font-size-300);
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: left;
-    align-items: center;
-
-}
-
 section {
     width: 80%;
     height: 100vh;
@@ -64,15 +24,16 @@ input {
     font-size: var(--font-size-300);
     border: 1px solid var(--tertiary-color);
     border-radius: 1rem;
-    width: 70%;
+    width: 80%;
 }
 
 section .buttons {
     display: flex;
     gap: .5rem;
+    width: 30%;
 }
 
-button {
+.buttons button {
     padding: 1rem;
     font-size: var(--font-size-300);
     background-color: var(--secondary-color);
@@ -83,6 +44,8 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 50%;
+    gap: 1rem;
 }
 
 /* Filter button in header - matches search button style */
@@ -137,6 +100,10 @@ button {
     padding: 20px;
     margin-bottom: 15px;
     transition: box-shadow 0.3s ease;
+}
+
+#employeeContainer {
+    gap: 15px;
 }
 
 .employee-card:hover {
