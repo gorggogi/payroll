@@ -3,14 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+
     <title>Employee Home</title>
 </head>
 <body>
-    <header>
-        <ul>
-            <li>Home</li>
-            <li>Settings</li>
-        </ul>
-    </header>
+    <div class="container">
+        <nav>
+            <ul>
+                <h1>Payroll System</h1>
+                <li class="active"><i class="fa-solid fa-house active"></i>Home</li>
+                <a href="/employee/attendance"><li><i class="fa-solid fa-people-group"></i>Attendance</li></a>
+                <a href="/employee/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+            </ul>
+           
+            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+
+        </nav>
+    <section>
+        <div class="head">
+            <h1>Analytics & Reports</h1>
+            <p>
+                Hello, ${employeeName}!
+                <i class="fa-solid fa-circle-user"></i>
+            </p>
+        </div>
+        
+        <div class="cards">
+            <div class="left">
+            <div class="card">
+                <h3>Reports and Analytics</h3>
+                <div>
+                    <p>Detailed reports here</p>
+                </div>
+            </div>
+            <div class="card">
+                <h3>Box 1</h3>
+                <p>Additional info</p>
+            </div>
+        </div>
+        <div class="right">
+            <div class="card">
+                <h3>Calendar</h3>
+                <p>Schedules</p>
+            </div>
+        </div>
+        </div>
+        
+    </section>
+    </div>
 </body>
 </html>

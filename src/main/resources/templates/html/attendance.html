@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance</title>
+      <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/attendance.css" />
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+
+</head>
+<body>
+     <div class="container">
+        <nav>
+            <ul>
+                <h1>Payroll System</h1>
+                <a href="/employee/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
+                <a href="/employee/attendance"><li class="active"><i class="fa-solid fa-people-group "></i>Attendance</li></a>
+                <a href="/employee/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+            </ul>
+            
+            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+
+        </nav>
+    <section>
+        <div class="head">
+            <h1>Attendance</h1>
+            <p>
+                Hello, ${employeeName}!
+                <i class="fa-solid fa-circle-user"></i>
+            </p>
+        </div>
+        <table class="attendanceTable">
+  <caption>Attendance for the month of  
+    <select name="Month" id="month">
+        <option value="January">January</option>
+        <option value="February">February</option>
+        <option value="March">March</option>
+        <option value="April">April</option>
+        <option value="May">May</option>
+        <option value="June">June</option>
+        <option value="July">July</option>
+        <option value="August">August</option>
+        <option value="September">September</option>
+        <option value="October">October</option>
+        <option value="November">November</option>
+        <option value="December">December</option>
+    </select>
+      year
+  </caption>
+  <tr class="attendanceHeader">
+    <th>Date</th>
+    <th>Time in</th>
+    <th>Time out</th>
+    <th>Work Hours</th>
+    <th>Late Minutes</th>
+    <th>Overtime Hours</th>
+  </tr>
+ 
+</table>
+
+    </section>
+    </div>
+</body>
+</html>
