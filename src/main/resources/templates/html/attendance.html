@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,7 +31,7 @@
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>
-        <table class="attendanceTable">
+          <table class="attendanceTable">
   <caption>Attendance for the month of  
     <select name="Month" id="month">
         <option value="January">January</option>
@@ -49,17 +49,28 @@
     </select>
       year
   </caption>
-  <tr class="attendanceHeader">
+    <tr class="attendanceHeader">
     <th>Date</th>
     <th>Time in</th>
     <th>Time out</th>
     <th>Work Hours</th>
     <th>Late Minutes</th>
     <th>Overtime Hours</th>
-  </tr>
- 
-</table>
+    </tr>
+    </thead>
+    <tbody class="attendanceBody" th:if="${attendances}">
+        <tr th:each="a : ${attendances}">
+            <td th:text="${a.attendance_date}"></td>
+            <td th:text="${a.time_in}"></td>
+            <td th:text="${a.time_out}"></td>
+            <td th:text="${a.work_hours}"></td>
+            <td th:text="${a.late_minutes}"></td>
+            <td th:text="${a.overtime_hours}"></td>
+        </tr>
+    </tbody>
 
+</table>
+Total Hours Rendered: 
     </section>
     </div>
 </body>
