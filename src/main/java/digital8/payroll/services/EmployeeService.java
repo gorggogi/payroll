@@ -30,12 +30,7 @@ public class EmployeeService {
         BigDecimal maxSalary,
         String sortBy,
         String direction) {
-    
-    System.out.println("========== FILTER EMPLOYEES DEBUG ==========");
-    System.out.println("Received sortBy: '" + sortBy + "'");
-    System.out.println("Received direction: '" + direction + "'");
-    System.out.println("Received employmentStatus: '" + employmentStatus + "'");
-    
+
  
     if (sortBy == null || sortBy.isEmpty()) {
         sortBy = "lastName";

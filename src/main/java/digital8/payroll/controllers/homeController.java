@@ -2,57 +2,34 @@ package digital8.payroll.controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-
-import digital8.payroll.entities.Users;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 public class homeController {
-    // @GetMapping("/index")
-    // public String index() {
-    //     return "html/index";
-    // }
-    @GetMapping("/admin/home")
-    public String adminHome(HttpSession session) {
-        Users user = (Users) session.getAttribute("user");
-        
-        if (user == null){
-            return "redirect:/index";
-        }
 
-        if (!"ADMIN".equals(user.getRole().getRoleName())){
-            return "redirect:/access-denied";
-        }
+    @GetMapping({"/", "/index"})
+    public String loginPage() {
+        return "html/index";
+    }
+    
+    @GetMapping("/forgotPassword")
+    public String forgotPasswordPage() {
+        return "html/forgotPassword";
+    }
+
+    @GetMapping("/admin/home")
+    public String adminHome() {
         return "html/homeAdmin";
     }
 
     @GetMapping("/employee/home")
-    public String employeeHome(HttpSession session) {
-
-        Users user = (Users) session.getAttribute("user");
-        
-        if (user == null){
-            return "redirect:/index";
-        }
-        
+    public String employeeHome() {
         return "html/homeEmployee";
     }
 
-    @GetMapping("/employees") 
-    public String employees(HttpSession session) {
-
-        Users user = (Users) session.getAttribute("user");
-
-        if (user == null) {
-
-            return "redirect:/index";
-            
-        }
-        if (!"ADMIN".equals(user.getRole().getRoleName())){
-            return "redirect:/access-denied";
-        }
+    @GetMapping("/admin/employees") 
+    public String employees() {
         return "html/employees";
     }
 
@@ -60,14 +37,13 @@ public class homeController {
     public String accessDenied() {
         return "html/access-denied";
     }
-    
 
-// @PostMapping("/validateLogin")
-// public String validateLogin(Employees emp, RedirectAttributes redi) {
-//     redi.addFlashAttribute("message", "User has been saved...");
-//     service.save(employees);
-//     return "html/homeEmployee";
-// }
+    @GetMapping("/generateHash") // Temporary for testing
+    @ResponseBody
+    public String generateHash(@RequestParam String password) {
+        org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder encoder = 
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+        String hash = encoder.encode(password);
+        return "Password: " + password + "<br>Hash: " + hash;
+    }
 }
-
-    

@@ -18,8 +18,14 @@
             <form action="/login" method="post">
                 <h1>Log in</h1>
                 
-                <p th:if="${error}" style="color: red; font-size: 14px; margin-bottom: 10px;">
-                    <strong th:text="${error}"></strong>
+                <!-- Show error if login fails -->
+                <p th:if="${param.error}" style="color: red; font-size: 14px; margin-bottom: 10px;">
+                    Invalid email or password
+                </p>
+                
+                <!-- Show message if logged out -->
+                <p th:if="${param.logout}" style="color: green; font-size: 14px; margin-bottom: 10px;">
+                    You have been logged out successfully
                 </p>
                 
                 <input type="email" name="email" placeholder="Email" required>
