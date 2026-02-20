@@ -149,7 +149,7 @@ function displayEmployees(employees) {
     const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
 
     const cardsHTML = employees.map(emp => `
-            <div class="employee-card">
+            <div class="employee-card" data-id="${emp.employeeId}" onclick="showEmployee(${emp.employeeId})">
                 <div class="employee-header">
                     <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
                     <span class="employee-status">${emp.employmentStatus}</span>
@@ -168,6 +168,140 @@ function displayEmployees(employees) {
             </div>
     `).join('');
     container.innerHTML = infoHTML + cardsHTML;
+}
+
+function showEmployee(employeeId) {
+    fetch(`/api/employees/${employeeId}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Employee not found');
+            return res.json();
+        })
+        .then(emp => renderEmployeeDetail(emp))
+        .catch(err => alert('Error loading employee: ' + err.message));
+}
+
+function renderEmployeeDetail(emp) {
+    // Remove existing modal if any
+    const existing = document.getElementById('employeeModal');
+    if (existing) existing.remove();
+
+    // Fetch departments and positions in parallel to populate selects
+    Promise.all([
+        fetch('/api/departments').then(r => { if (!r.ok) throw new Error('Failed to load departments'); return r.json(); }),
+        fetch('/api/positions').then(r => { if (!r.ok) throw new Error('Failed to load positions'); return r.json(); })
+    ])
+    .then(([departments, positions]) => {
+        const modal = document.createElement('div');
+        modal.id = 'employeeModal';
+        modal.className = 'employee-modal';
+
+        // build department options
+        const deptOptions = departments.map(d => `
+            <option value="${d.departmentId}" ${emp.department && emp.department.departmentId === d.departmentId ? 'selected' : ''}>
+                ${d.departmentName}
+            </option>
+        `).join('');
+
+        // build position options
+        const posOptions = positions.map(p => `
+            <option value="${p.positionId}" ${emp.position && emp.position.positionId === p.positionId ? 'selected' : ''}>
+                ${p.positionName}
+            </option>
+        `).join('');
+
+        modal.innerHTML = `
+            <div class="employee-modal-content">
+                <button class="close-btn" id="closeEmployeeModal">×</button>
+                <h2>Edit Employee: ${emp.firstName} ${emp.lastName}</h2>
+                <form id="employeeDetailForm">
+                    <input type="hidden" name="employeeId" value="${emp.employeeId}" />
+                    <label>First name: <input name="firstName" value="${emp.firstName || ''}" /></label>
+                    <label>Middle name: <input name="middleName" value="${emp.middleName || ''}" /></label>
+                    <label>Last name: <input name="lastName" value="${emp.lastName || ''}" /></label>
+                    <label>Email: <input type="email" name="email" value="${emp.email || ''}" /></label>
+                    <label>Contact: <input name="contactNumber" value="${emp.contactNumber || ''}" /></label>
+                    <label>Address: <input name="address" value="${emp.address || ''}" /></label>
+                    <label>Employment Status: <input name="employmentStatus" value="${emp.employmentStatus || ''}" /></label>
+                    <label>Employment Type: <input name="employmentType" value="${emp.employmentType || ''}" /></label>
+                    <label>Pay Type: <input name="payType" value="${emp.payType || ''}" /></label>
+                    <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
+                    <label>Department: <select name="departmentId">
+                        <option value="">-- Select Department --</option>
+                        ${deptOptions}
+                    </select></label>
+                    <label>Position: <select name="positionId">
+                        <option value="">-- Select Position --</option>
+                        ${posOptions}
+                    </select></label>
+                    <label>TIN: <input name="tin" value="${emp.tin || ''}" /></label>
+                    <label>SSS: <input name="sssNumber" value="${emp.sssNumber || ''}" /></label>
+                    <label>Philhealth: <input name="philhealthNumber" value="${emp.philhealthNumber || ''}" /></label>
+                    <label>Pagibig: <input name="pagibigNumber" value="${emp.pagibigNumber || ''}" /></label>
+                    <label>Bank Account: <input name="bank_Account" value="${emp.bank_Account || ''}" /></label>
+                    <div class="form-actions">
+                        <button type="button" id="saveEmployeeBtn">Save</button>
+                    </div>
+                </form>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('closeEmployeeModal').addEventListener('click', closeEmployeeModal);
+        document.getElementById('saveEmployeeBtn').addEventListener('click', function() { saveEmployee(emp.employeeId); });
+    })
+    .catch(err => {
+        alert('Error loading data for form: ' + err.message);
+    });
+}
+
+function closeEmployeeModal() {
+    const m = document.getElementById('employeeModal');
+    if (m) m.remove();
+}
+
+function saveEmployee(employeeId) {
+    const form = document.getElementById('employeeDetailForm');
+    const formData = new FormData(form);
+    const payload = {
+        employeeId: employeeId,
+        firstName: formData.get('firstName'),
+        middleName: formData.get('middleName'),
+        lastName: formData.get('lastName'),
+        email: formData.get('email'),
+        contactNumber: formData.get('contactNumber'),
+        address: formData.get('address'),
+        employmentStatus: formData.get('employmentStatus'),
+        employmentType: formData.get('employmentType'),
+        payType: formData.get('payType'),
+        basicSalary: formData.get('basicSalary') ? Number(formData.get('basicSalary')) : null,
+        tin: formData.get('tin'),
+        sssNumber: formData.get('sssNumber'),
+        philhealthNumber: formData.get('philhealthNumber'),
+        pagibigNumber: formData.get('pagibigNumber'),
+        bank_Account: formData.get('bank_Account')
+    };
+
+    const deptId = formData.get('departmentId');
+    if (deptId) payload.department = { departmentId: Number(deptId) };
+    const posId = formData.get('positionId');
+    if (posId) payload.position = { positionId: Number(posId) };
+
+    fetch(`/api/employees/${employeeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error('Failed to save');
+        return res.json();
+    })
+    .then(saved => {
+        alert('Employee saved');
+        closeEmployeeModal();
+        loadEmployees();
+    })
+    .catch(err => alert('Error saving employee: ' + err.message));
 }
 
 function toggleAdvancedFilters() {

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/employees")
@@ -53,6 +54,18 @@ public class EmployeeController {
             direction
         );
         return ResponseEntity.ok(employees);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<Employees> getEmployeeById(@PathVariable Integer id) {
+        Optional<Employees> emp = employeeService.getEmployeeById(id);
+        return emp.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Employees> updateEmployee(@PathVariable Integer id, @RequestBody Employees updated) {
+        Optional<Employees> saved = employeeService.updateEmployee(id, updated);
+        return saved.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
     
 }
