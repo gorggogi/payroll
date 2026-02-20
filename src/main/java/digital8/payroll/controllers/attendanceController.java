@@ -18,7 +18,7 @@ public class attendanceController {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
-    @GetMapping("/employee/attendance")
+        @GetMapping({"/employee/attendance", "/admin/attendance"})
     public String attendancePage(Model model, Authentication authentication) {
         Object principal = authentication != null ? authentication.getPrincipal() : null;
 
@@ -35,5 +35,4 @@ public class attendanceController {
 
         return "html/attendance";
     }
-    
 }

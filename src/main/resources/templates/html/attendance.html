@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,9 +15,14 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <a href="/employee/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
-                <a href="/employee/attendance"><li class="active"><i class="fa-solid fa-people-group "></i>Attendance</li></a>
-                <a href="/employee/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
+
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}"><li class="active"><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}"><li class="active"><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
             <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
@@ -27,7 +32,7 @@
         <div class="head">
             <h1>Attendance</h1>
             <p>
-                Hello, ${employeeName}!
+                Hello, <span></span>!
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>
