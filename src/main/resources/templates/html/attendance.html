@@ -17,7 +17,7 @@
                 <h1>Payroll System</h1>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
-
+                <a sec:authorize="hasRole('ADMIN')"  href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}"><li class="active"><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}"><li class="active"><i class="fa-solid fa-calendar"></i>Attendance</li></a>
 
