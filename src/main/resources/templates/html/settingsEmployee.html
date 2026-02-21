@@ -71,7 +71,7 @@
                     <p th:text="${errorMessage}"></p>
                 </div>
                 
-                <form action="/employee/settings/change-password" method="POST">
+                <form action="/employee/settings/change-password" method="POST" onsubmit="return validatePasswordForm()">
                     <div>
                         <label for="currentPassword">Current Password:</label>
                         <input type="password" id="currentPassword" name="currentPassword" required />
@@ -80,6 +80,9 @@
                     <div>
                         <label for="newPassword">New Password:</label>
                         <input type="password" id="newPassword" name="newPassword" required minlength="6" />
+                        <small style="color: #666; display: block; margin-top: 0.25rem;">
+                            Minimum 6 characters
+                        </small>
                     </div>
                     
                     <div>
@@ -92,5 +95,7 @@
             </div>
         </section>
     </div>
+    
+    <script src="/js/settings.js"></script>
 </body>
 </html>
