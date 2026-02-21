@@ -72,4 +72,12 @@ public class UserService {
         return true;
     }
 
+    public boolean resetPasswordByEmployeeId(Integer employeeId, String newPassword) {
+        Optional<Users> userOpt = usersRepository.findByEmployee_EmployeeId(employeeId);
+        if (userOpt.isEmpty()) return false;
+        Users user = userOpt.get();
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        usersRepository.save(user);
+        return true;
+    }
 }

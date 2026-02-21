@@ -14,5 +14,5 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
 
     List<Users> findByIsActive(Boolean isActive);
 
-    
+    Optional<Users> findByEmployee_EmployeeId(Integer employeeId);
 }
