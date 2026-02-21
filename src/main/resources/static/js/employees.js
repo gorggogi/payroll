@@ -140,13 +140,16 @@ function setSortOrder(order) {
 
 function displayEmployees(employees) {
     const container = document.getElementById('employeeContainer');
+    const infoContainer = document.getElementById('searchInfoContainer');
 
     if (!employees || employees.length === 0) {
+        infoContainer.innerHTML = '';
         container.innerHTML = '<p>No employees found.</p>';
         return;
     }
 
-    const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
+    const infoHTML = `<div class="search-info"><p><i class="fa-solid fa-users"></i><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
+    infoContainer.innerHTML = infoHTML;
 
     const cardsHTML = employees.map(emp => `
             <div class="employee-card" data-id="${emp.employeeId}" onclick="showEmployee(${emp.employeeId})">
@@ -167,7 +170,7 @@ function displayEmployees(employees) {
                 </div>
             </div>
     `).join('');
-    container.innerHTML = infoHTML + cardsHTML;
+    container.innerHTML = cardsHTML;
 }
 
 function showEmployee(employeeId) {
@@ -306,20 +309,23 @@ function saveEmployee(employeeId) {
 
 function toggleAdvancedFilters() {
     const panel = document.getElementById('advancedFilterSection');
-    const btn = document.getElementById('filterToggleBtn');
     
-    if (panel.style.display === 'none') {
-  
-        panel.style.display = 'block';
-        btn.innerHTML = '<i class="fa-solid fa-chevron-up"></i> Hide Filters';
-  
+    if (panel.style.display === 'none' || panel.style.display === '') {
+        panel.style.display = 'flex';
     } else {
-     
         panel.style.display = 'none';
-        btn.innerHTML = '<i class="fa-solid fa-chevron-down"></i> Show Filters';
-      
     }
 }
+
+// Close modal when clicking on the backdrop (outside the content)
+document.addEventListener('click', function(event) {
+    const panel = document.getElementById('advancedFilterSection');
+    const content = document.querySelector('.advanced-filter-section-content');
+    
+    if (panel && panel.style.display === 'flex' && event.target === panel) {
+        panel.style.display = 'none';
+    }
+});
 
 function applyAdvancedFilters(){
     
