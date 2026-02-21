@@ -85,3 +85,12 @@ section .cards .card {
     border-radius: 1rem;
     margin-bottom: 2rem;
 }
+
+section .cards .card .card-link {
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+section .cards .card .card-link:hover {
+    text-decoration: underline;
+}

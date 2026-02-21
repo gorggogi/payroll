@@ -33,3 +33,10 @@
 .attendanceTable{
     margin-left: 0;
 }
+
+.payroll-filters { margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+.payroll-filters select { padding: 0.35rem 0.5rem; }
+.payslip-table .gross-row td { border-top: 2px solid #333; padding-top: 0.5rem; }
+.payslip-table .deduct-row td { border-top: 1px solid #ccc; }
+.payslip-table .net-row td { border-top: 2px solid #333; font-weight: 700; padding-top: 0.5rem; }
+.no-payroll { color: #666; margin-top: 1rem; }

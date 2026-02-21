@@ -4,12 +4,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.AttendanceRepository;
+import digital8.payroll.repositories.SssTableRepository;
+import digital8.payroll.repositories.PhilhealthTableRepository;
+import digital8.payroll.repositories.TaxTableRepository;
+import digital8.payroll.repositories.EmployeeDeductionsRepository;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Attendance;
+import digital8.payroll.entities.SssTable;
+import digital8.payroll.entities.PhilhealthTable;
+import digital8.payroll.entities.TaxTable;
+import digital8.payroll.entities.EmployeeDeductions;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Month;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,81 +27,154 @@ import java.util.Optional;
 @Service
 public class PayrollService {
 
-	@Autowired
-	private EmployeeRepository employeeRepository;
+    private static final int SCALE = 2;
+    private static final RoundingMode ROUND = RoundingMode.HALF_UP;
+    private static final BigDecimal HOURS_PER_MONTH = new BigDecimal("208");
+    private static final BigDecimal OVERTIME_MULTIPLIER = new BigDecimal("1.5");
+    private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
+    private static final BigDecimal PAGIBIG_CAP_MONTHLY = new BigDecimal("100");
 
-	@Autowired
-	private AttendanceRepository attendanceRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+    @Autowired
+    private SssTableRepository sssTableRepository;
+    @Autowired
+    private PhilhealthTableRepository philhealthTableRepository;
+    @Autowired
+    private TaxTableRepository taxTableRepository;
+    @Autowired
+    private EmployeeDeductionsRepository employeeDeductionsRepository;
 
-	public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
-		Optional<Employees> empOpt = employeeRepository.findById(empId);
-		if (empOpt.isEmpty()) return new ArrayList<>();
+    public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
+        Optional<Employees> empOpt = employeeRepository.findById(empId);
+        if (empOpt.isEmpty()) return new ArrayList<>();
 
-		Employees emp = empOpt.get();
-		BigDecimal monthlySalary = emp.getBasicSalary();
-		if (monthlySalary == null) monthlySalary = BigDecimal.ZERO;
+        Employees emp = empOpt.get();
+        BigDecimal monthlySalary = emp.getBasicSalary() != null ? emp.getBasicSalary() : BigDecimal.ZERO;
 
-		// determine effective period: prefer explicit param, otherwise use employee payType
-		String effectivePeriod = period;
-		if (effectivePeriod == null || effectivePeriod.isBlank()) {
-			String pt = emp.getPayType();
-			effectivePeriod = (pt != null) ? pt : "monthly";
-		}
-		boolean isBiweekly = "biweekly".equalsIgnoreCase(effectivePeriod);
-		BigDecimal basicPay = isBiweekly ? monthlySalary.divide(new BigDecimal(2)) : monthlySalary;
+        String effectivePeriod = (period != null && !period.isBlank()) ? period : (emp.getPayType() != null ? emp.getPayType() : "monthly");
+        boolean isBiweekly = "biweekly".equalsIgnoreCase(effectivePeriod);
+        BigDecimal basicPay = isBiweekly ? monthlySalary.divide(BigDecimal.valueOf(2), SCALE, ROUND) : monthlySalary.setScale(SCALE, ROUND);
 
-		// Determine month filter
-		Month month = null;
-		if (monthName != null) {
-			try {
-				month = Month.valueOf(monthName.toUpperCase());
-			} catch (Exception e) { month = null; }
-		}
+        Month month = null;
+        if (monthName != null && !monthName.isBlank()) {
+            try {
+                month = Month.valueOf(monthName.toUpperCase());
+            } catch (Exception e) {
+                month = null;
+            }
+        }
+        int year = java.time.LocalDate.now().getYear();
+        if (month == null) {
+            month = java.time.LocalDate.now().getMonth();
+        }
 
-		// Fetch attendance and sum overtime hours for the month (if provided) or all records otherwise
-		List<Attendance> records = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
-		BigDecimal totalOvertime = BigDecimal.ZERO;
-		for (Attendance a : records) {
-			if (month != null) {
-				if (a.getAttendance_date() == null) continue;
-				if (a.getAttendance_date().getMonth() != month) continue;
-			}
-			if (a.getOvertime_hours() != null) totalOvertime = totalOvertime.add(a.getOvertime_hours());
-		}
+        List<Attendance> records = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
+        BigDecimal totalOvertime = BigDecimal.ZERO;
+        for (Attendance a : records) {
+            if (a.getAttendance_date() != null && a.getAttendance_date().getMonth() != month) continue;
+            if (a.getOvertime_hours() != null) totalOvertime = totalOvertime.add(a.getOvertime_hours());
+        }
 
-		// Calculate hourly rate - assume 208 working hours per month
-		BigDecimal hoursPerMonth = new BigDecimal(208);
-		BigDecimal hourlyRate = hoursPerMonth.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : monthlySalary.divide(hoursPerMonth, 6, BigDecimal.ROUND_HALF_UP);
+        BigDecimal hourlyRate = HOURS_PER_MONTH.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO
+                : monthlySalary.divide(HOURS_PER_MONTH, 6, ROUND);
+        BigDecimal overtimePay = totalOvertime.multiply(hourlyRate).multiply(OVERTIME_MULTIPLIER).setScale(SCALE, ROUND);
+        BigDecimal holidayPay = BigDecimal.ZERO;
+        BigDecimal allowances = BigDecimal.ZERO;
+        BigDecimal grossPay = basicPay.add(overtimePay).add(holidayPay).add(allowances).setScale(SCALE, ROUND);
 
-		BigDecimal overtimePay = totalOvertime.multiply(hourlyRate).multiply(new BigDecimal("1.5"));
+        BigDecimal monthlyForBracket = monthlySalary;
+        BigDecimal sss = computeSss(monthlyForBracket, year);
+        BigDecimal philhealth = computePhilhealth(monthlyForBracket, year);
+        BigDecimal pagibig = computePagibig(basicPay, isBiweekly);
+        BigDecimal taxable = grossPay.subtract(sss).subtract(philhealth).subtract(pagibig).max(BigDecimal.ZERO);
+        BigDecimal tax = computeTax(taxable, year);
 
-		BigDecimal grossPay = basicPay.add(overtimePay);
+        YearMonth ym = YearMonth.of(year, month);
+        BigDecimal otherDeductions = computeOtherDeductions(empId, ym.atDay(1), ym.atEndOfMonth());
 
-		// Simple placeholder deductions (could be replaced with real formulas)
-		BigDecimal sss = BigDecimal.ZERO;
-		BigDecimal philhealth = BigDecimal.ZERO;
-		BigDecimal pagibig = BigDecimal.ZERO;
-		BigDecimal tax = BigDecimal.ZERO;
-		BigDecimal otherDeductions = BigDecimal.ZERO;
+        BigDecimal totalDeductions = sss.add(philhealth).add(pagibig).add(tax).add(otherDeductions).setScale(SCALE, ROUND);
+        BigDecimal netPay = grossPay.subtract(totalDeductions).setScale(SCALE, ROUND);
 
-		BigDecimal totalDeductions = sss.add(philhealth).add(pagibig).add(tax).add(otherDeductions);
-		BigDecimal netPay = grossPay.subtract(totalDeductions);
+        PayrollItems item = new PayrollItems();
+        item.setEmployeeId(empId);
+        item.setBasicPay(basicPay);
+        item.setOvertimePay(overtimePay);
+        item.setHolidayPay(holidayPay);
+        item.setAllowances(allowances);
+        item.setGrossPay(grossPay);
+        item.setSss(sss);
+        item.setPhilhealth(philhealth);
+        item.setPagibig(pagibig);
+        item.setTax(tax);
+        item.setOtherDeductions(otherDeductions);
+        item.setTotalDeductions(totalDeductions);
+        item.setNetPay(netPay);
 
-		PayrollItems item = new PayrollItems();
-		item.setEmployeeId(empId);
-		item.setBasicPay(basicPay);
-		item.setOvertimePay(overtimePay);
-		item.setGrossPay(grossPay);
-		item.setSss(sss);
-		item.setPhilhealth(philhealth);
-		item.setPagibig(pagibig);
-		item.setTax(tax);
-		item.setOtherDeductions(otherDeductions);
-		item.setTotalDeductions(totalDeductions);
-		item.setNetPay(netPay);
+        List<PayrollItems> out = new ArrayList<>();
+        out.add(item);
+        return out;
+    }
 
-		List<PayrollItems> out = new ArrayList<>();
-		out.add(item);
-		return out;
-	}
+    private BigDecimal computeSss(BigDecimal monthlySalary, int year) {
+        List<SssTable> rows = sssTableRepository.findByEffectiveYearOrderByRangeFromAsc(year);
+        if (rows == null || rows.isEmpty()) return BigDecimal.ZERO;
+        for (SssTable row : rows) {
+            if (row.getRangeFrom() != null && row.getRangeTo() != null && row.getEmployeeShare() != null) {
+                if (monthlySalary.compareTo(row.getRangeFrom()) >= 0 && monthlySalary.compareTo(row.getRangeTo()) <= 0) {
+                    return row.getEmployeeShare().setScale(SCALE, ROUND);
+                }
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private BigDecimal computePhilhealth(BigDecimal monthlySalary, int year) {
+        List<PhilhealthTable> rows = philhealthTableRepository.findByEffectiveYearOrderByRangeFromAsc(year);
+        if (rows == null || rows.isEmpty()) return BigDecimal.ZERO;
+        for (PhilhealthTable row : rows) {
+            if (row.getRangeFrom() != null && row.getRangeTo() != null && row.getEmployeeShare() != null) {
+                if (monthlySalary.compareTo(row.getRangeFrom()) >= 0 && monthlySalary.compareTo(row.getRangeTo()) <= 0) {
+                    return row.getEmployeeShare().setScale(SCALE, ROUND);
+                }
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private BigDecimal computePagibig(BigDecimal basicPay, boolean isBiweekly) {
+        BigDecimal cap = isBiweekly ? PAGIBIG_CAP_MONTHLY.divide(BigDecimal.valueOf(2), SCALE, ROUND) : PAGIBIG_CAP_MONTHLY;
+        BigDecimal contribution = basicPay.multiply(PAGIBIG_RATE).setScale(SCALE, ROUND);
+        return contribution.min(cap);
+    }
+
+    private BigDecimal computeTax(BigDecimal taxableIncome, int year) {
+        List<TaxTable> rows = taxTableRepository.findByEffectiveYearOrderByCompensationFromAsc(year);
+        if (rows == null || rows.isEmpty()) return BigDecimal.ZERO;
+        for (TaxTable row : rows) {
+            if (row.getCompensationFrom() == null || row.getCompensationTo() == null) continue;
+            if (taxableIncome.compareTo(row.getCompensationFrom()) >= 0 && taxableIncome.compareTo(row.getCompensationTo()) <= 0) {
+                BigDecimal excess = taxableIncome.subtract(row.getCompensationFrom());
+                BigDecimal taxOnExcess = (row.getTaxRate() != null ? excess.multiply(row.getTaxRate()) : BigDecimal.ZERO).setScale(SCALE, ROUND);
+                BigDecimal base = row.getAdditionalTax() != null ? row.getAdditionalTax() : BigDecimal.ZERO;
+                return base.add(taxOnExcess).setScale(SCALE, ROUND);
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private BigDecimal computeOtherDeductions(Integer employeeId, java.time.LocalDate periodStart, java.time.LocalDate periodEnd) {
+        List<EmployeeDeductions> list = employeeDeductionsRepository.findByEmployeeId(employeeId);
+        if (list == null) return BigDecimal.ZERO;
+        BigDecimal sum = BigDecimal.ZERO;
+        for (EmployeeDeductions ed : list) {
+            if (!Boolean.TRUE.equals(ed.getIsRecurring())) continue;
+            if (ed.getStartDate() != null && ed.getStartDate().isAfter(periodEnd)) continue;
+            if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart)) continue;
+            if (ed.getAmount() != null) sum = sum.add(ed.getAmount());
+        }
+        return sum.setScale(SCALE, ROUND);
+    }
 }

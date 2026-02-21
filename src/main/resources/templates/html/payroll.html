@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/attendance.css" />
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <ul>
+                <h1>Payroll System</h1>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}"><li><i class="fa-solid fa-house"></i>Home</li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+            </ul>
+            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+        </nav>
+
+        <section>
+            <div class="head">
+                <h1>Payroll</h1>
+                <p>
+                    Hello, <span th:text="${employeeName}">Employee</span>!
+                    <i class="fa-solid fa-circle-user"></i>
+                </p>
+            </div>
+
+            <form th:action="@{/payroll/{id}(id=${emp_id})}" method="get" class="payroll-filters">
+                <label for="month">Month:</label>
+                <select name="month" id="month" onchange="this.form.submit()">
+                    <option value="JANUARY" th:selected="${selectedMonth == 'JANUARY'}">January</option>
+                    <option value="FEBRUARY" th:selected="${selectedMonth == 'FEBRUARY'}">February</option>
+                    <option value="MARCH" th:selected="${selectedMonth == 'MARCH'}">March</option>
+                    <option value="APRIL" th:selected="${selectedMonth == 'APRIL'}">April</option>
+                    <option value="MAY" th:selected="${selectedMonth == 'MAY'}">May</option>
+                    <option value="JUNE" th:selected="${selectedMonth == 'JUNE'}">June</option>
+                    <option value="JULY" th:selected="${selectedMonth == 'JULY'}">July</option>
+                    <option value="AUGUST" th:selected="${selectedMonth == 'AUGUST'}">August</option>
+                    <option value="SEPTEMBER" th:selected="${selectedMonth == 'SEPTEMBER'}">September</option>
+                    <option value="OCTOBER" th:selected="${selectedMonth == 'OCTOBER'}">October</option>
+                    <option value="NOVEMBER" th:selected="${selectedMonth == 'NOVEMBER'}">November</option>
+                    <option value="DECEMBER" th:selected="${selectedMonth == 'DECEMBER'}">December</option>
+                </select>
+                <label for="period">Period:</label>
+                <select name="period" id="period" onchange="this.form.submit()">
+                    <option value="" th:selected="${selectedPeriod == null || selectedPeriod == ''}">Monthly</option>
+                    <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
+                    <option value="monthly" th:selected="${selectedPeriod == 'monthly'}">Monthly</option>
+                </select>
+            </form>
+
+            <div th:if="${payrollItems != null and !payrollItems.isEmpty()}" class="payslip-wrap">
+                <table class="attendanceTable payslip-table">
+                    <caption>Payslip</caption>
+                    <thead>
+                        <tr><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr>
+                    </thead>
+                    <tbody th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
+                        <tr><td>Basic Pay</td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Overtime Pay</td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Holiday Pay</td><td th:text="${item.holidayPay != null ? #numbers.formatDecimal(item.holidayPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Allowances</td><td th:text="${item.allowances != null ? #numbers.formatDecimal(item.allowances, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="gross-row"><td><strong>Gross Pay</strong></td><td th:text="${item.grossPay != null ? #numbers.formatDecimal(item.grossPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>SSS</td><td th:text="${item.sss != null ? #numbers.formatDecimal(item.sss, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Philhealth</td><td th:text="${item.philhealth != null ? #numbers.formatDecimal(item.philhealth, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Pag-ibig</td><td th:text="${item.pagibig != null ? #numbers.formatDecimal(item.pagibig, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Other Deductions</td><td th:text="${item.otherDeductions != null ? #numbers.formatDecimal(item.otherDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="deduct-row"><td><strong>Total Deductions</strong></td><td th:text="${item.totalDeductions != null ? #numbers.formatDecimal(item.totalDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="net-row"><td><strong>Net Pay</strong></td><td th:text="${item.netPay != null ? #numbers.formatDecimal(item.netPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p th:if="${payrollItems == null || payrollItems.isEmpty()}" class="no-payroll">No payroll data for this period.</p>
+        </section>
+    </div>
+</body>
+</html>

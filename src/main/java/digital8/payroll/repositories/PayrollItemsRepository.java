@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface PayrollItemsRepository extends JpaRepository<PayrollItems, Integer> {
 	List<PayrollItems> findByEmployeeId(Integer employeeId);
+    List<PayrollItems> findByEmployeeIdOrderByPayrollItemIdDesc(Integer employeeId);
 }
