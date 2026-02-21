@@ -40,3 +40,9 @@
 .payslip-table .deduct-row td { border-top: 1px solid #ccc; }
 .payslip-table .net-row td { border-top: 2px solid #333; font-weight: 700; padding-top: 0.5rem; }
 .no-payroll { color: #666; margin-top: 1rem; }
+
+.attendance-filter { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.attendance-filter label { font-weight: 600; }
+.attendance-filter select { padding: 0.35rem 0.5rem; border-radius: 4px; }
+.total-hours { margin-top: 1rem; font-size: 1rem; }
+.total-hours strong { margin-left: 0.25rem; }

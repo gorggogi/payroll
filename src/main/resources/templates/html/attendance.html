@@ -32,50 +32,58 @@
         <div class="head">
             <h1>Attendance</h1>
             <p>
-                Hello, <span></span>!
+                Hello, <span th:text="${employeeName}">User</span>!
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>
-          <table class="attendanceTable">
-  <caption>Attendance for the month of  
-    <select name="Month" id="month">
-        <option value="January">January</option>
-        <option value="February">February</option>
-        <option value="March">March</option>
-        <option value="April">April</option>
-        <option value="May">May</option>
-        <option value="June">June</option>
-        <option value="July">July</option>
-        <option value="August">August</option>
-        <option value="September">September</option>
-        <option value="October">October</option>
-        <option value="November">November</option>
-        <option value="December">December</option>
-    </select>
-      year
-  </caption>
-    <tr class="attendanceHeader">
-    <th>Date</th>
-    <th>Time in</th>
-    <th>Time out</th>
-    <th>Work Hours</th>
-    <th>Late Minutes</th>
-    <th>Overtime Hours</th>
-    </tr>
-    </thead>
-    <tbody class="attendanceBody" th:if="${attendances}">
-        <tr th:each="a : ${attendances}">
-            <td th:text="${a.attendance_date}"></td>
-            <td th:text="${a.time_in}"></td>
-            <td th:text="${a.time_out}"></td>
-            <td th:text="${a.work_hours}"></td>
-            <td th:text="${a.late_minutes}"></td>
-            <td th:text="${a.overtime_hours}"></td>
-        </tr>
-    </tbody>
 
-</table>
-Total Hours Rendered: 
+        <form method="get" th:action="${attendanceFormAction}" id="attendanceFilterForm" class="attendance-filter">
+            <label for="month">Month</label>
+            <select name="month" id="month" onchange="this.form.submit()">
+                <option value="1" th:selected="${selectedMonth == 1}">January</option>
+                <option value="2" th:selected="${selectedMonth == 2}">February</option>
+                <option value="3" th:selected="${selectedMonth == 3}">March</option>
+                <option value="4" th:selected="${selectedMonth == 4}">April</option>
+                <option value="5" th:selected="${selectedMonth == 5}">May</option>
+                <option value="6" th:selected="${selectedMonth == 6}">June</option>
+                <option value="7" th:selected="${selectedMonth == 7}">July</option>
+                <option value="8" th:selected="${selectedMonth == 8}">August</option>
+                <option value="9" th:selected="${selectedMonth == 9}">September</option>
+                <option value="10" th:selected="${selectedMonth == 10}">October</option>
+                <option value="11" th:selected="${selectedMonth == 11}">November</option>
+                <option value="12" th:selected="${selectedMonth == 12}">December</option>
+            </select>
+            <label for="year">Year</label>
+            <select name="year" id="year" onchange="this.form.submit()">
+                <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
+            </select>
+        </form>
+
+        <table class="attendanceTable">
+            <caption>Attendance for <span th:text="${captionMonthYear}">Month Year</span></caption>
+            <thead>
+                <tr class="attendanceHeader">
+                    <th>Date</th>
+                    <th>Time in</th>
+                    <th>Time out</th>
+                    <th>Work Hours</th>
+                    <th>Late Minutes</th>
+                    <th>Overtime Hours</th>
+                </tr>
+            </thead>
+            <tbody class="attendanceBody" th:if="${attendances}">
+                <tr th:each="a : ${attendances}">
+                    <td th:text="${a.attendance_date}"></td>
+                    <td th:text="${a.time_in}"></td>
+                    <td th:text="${a.time_out}"></td>
+                    <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'POINT', 2, 'COMMA') : ''}"></td>
+                    <td th:text="${a.late_minutes}"></td>
+                    <td th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'POINT', 2, 'COMMA') : ''}"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="total-hours">Total Hours Rendered: <strong th:text="${totalHoursRendered != null ? #numbers.formatDecimal(totalHoursRendered, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</strong></p>
     </section>
     </div>
 </body>
