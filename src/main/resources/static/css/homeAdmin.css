@@ -9,6 +9,14 @@ h1{
 i {
     margin-right: 1rem;
 }
+ul li{
+    margin-bottom: 1rem;
+    padding: 1rem;
+    color: white;
+    cursor: pointer;
+    background-color: var(--secondary-color);
+    border-radius: 1rem;
+}
 
 section {
     width: 80%;

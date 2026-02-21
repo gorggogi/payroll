@@ -15,9 +15,9 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <li class="active"><button onclick="navigateTo('/employee/home')"><i class="fa-solid fa-house active"></i>Home</button></li>
-                <li><button onclick="navigateTo('/employee/attendance')"><i class="fa-solid fa-people-group"></i>Attendance</button></li>
-                <li><button onclick="navigateTo('/employee/settings')"><i class="fa-solid fa-gear"></i>Settings</button></li>
+                <li class="active"><i class="fa-solid fa-house active"></i>Home</li>
+                <a href="/employee/attendance"><li><i class="fa-solid fa-calendar"></i></i>Attendance</li></a>
+                <a href="/employee/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
            
             <button onclick="navigateTo('/logout')" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
@@ -27,7 +27,7 @@
         <div class="head">
             <h1>Analytics & Reports</h1>
             <p>
-                Hello, ${employeeName}!
+               Hello, <span th:text="${employeeName}"></span>
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>

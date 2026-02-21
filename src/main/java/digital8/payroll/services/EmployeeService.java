@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import digital8.payroll.repositories.DepartmentsRepository;
+import digital8.payroll.repositories.PositionsRepository;
+import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -18,6 +21,12 @@ public class EmployeeService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private DepartmentsRepository departmentsRepository;
+
+    @Autowired
+    private PositionsRepository positionsRepository;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -75,6 +84,49 @@ public class EmployeeService {
     System.out.println("============================================");
     
     return results;
+    }
+
+    public Optional<Employees> getEmployeeById(Integer id) {
+        return employeeRepository.findById(id);
+    }
+
+    public Optional<Employees> updateEmployee(Integer id, Employees updated) {
+        Optional<Employees> existingOpt = employeeRepository.findById(id);
+        if (!existingOpt.isPresent()) {
+            return Optional.empty();
+        }
+        Employees existing = existingOpt.get();
+
+        // Update basic fields
+        if (updated.getFirstName() != null) existing.setFirstName(updated.getFirstName());
+        if (updated.getMiddleName() != null) existing.setMiddleName(updated.getMiddleName());
+        if (updated.getLastName() != null) existing.setLastName(updated.getLastName());
+        if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
+        if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
+        if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
+        if (updated.getDateHired() != null) existing.setDateHired(updated.getDateHired());
+        if (updated.getEmploymentStatus() != null) existing.setEmploymentStatus(updated.getEmploymentStatus());
+        if (updated.getEmploymentType() != null) existing.setEmploymentType(updated.getEmploymentType());
+        if (updated.getPayType() != null) existing.setPayType(updated.getPayType());
+        if (updated.getBasicSalary() != null) existing.setBasicSalary(updated.getBasicSalary());
+        if (updated.getTin() != null) existing.setTin(updated.getTin());
+        if (updated.getSssNumber() != null) existing.setSssNumber(updated.getSssNumber());
+        if (updated.getPhilhealthNumber() != null) existing.setPhilhealthNumber(updated.getPhilhealthNumber());
+        if (updated.getPagibigNumber() != null) existing.setPagibigNumber(updated.getPagibigNumber());
+        if (updated.getBank_Account() != null) existing.setBank_Account(updated.getBank_Account());
+
+        // Update department if provided
+        if (updated.getDepartment() != null && updated.getDepartment().getDepartmentId() != null) {
+            departmentsRepository.findById(updated.getDepartment().getDepartmentId()).ifPresent(existing::setDepartment);
+        }
+
+        // Update position if provided
+        if (updated.getPosition() != null && updated.getPosition().getPositionId() != null) {
+            positionsRepository.findById(updated.getPosition().getPositionId()).ifPresent(existing::setPosition);
+        }
+
+        Employees saved = employeeRepository.save(existing);
+        return Optional.of(saved);
     }
 }
 
