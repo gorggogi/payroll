@@ -102,15 +102,12 @@ section .buttons {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    /* Make card visually square using aspect-ratio when available */
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
+    justify-content: flex-start;
 }
 
 #employeeContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     align-items: start;
 }
@@ -150,15 +147,30 @@ section .buttons {
 
 
 .advanced-filter-section {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 24px;
+}
+
+.advanced-filter-section-content {
     background: white;
     padding: 25px;
     border-radius: 12px;
-    margin-bottom: 25px;
     border: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 12px 40px rgba(9, 30, 66, 0.18);
+    max-width: 800px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
 }
 
-.advanced-filter-section h3 {
+.advanced-filter-section-content h3 {
     margin: 0 0 8px 0;
     color: #333;
     font-size: 18px;
@@ -168,11 +180,11 @@ section .buttons {
     gap: 10px;
 }
 
-.advanced-filter-section h3 i {
+.advanced-filter-section-content h3 i {
     color: #007bff;
 }
 
-.filter-hint {
+.advanced-filter-section-content .filter-hint {
     color: #666;
     font-size: 13px;
     margin: 0 0 20px 0;
@@ -286,6 +298,28 @@ section .buttons {
     margin-right: 0;
     font-size: 14px;
 }
+
+.advanced-filter-section .close-filters-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.advanced-filter-section .close-filters-btn:hover {
+    color: #333;
+}
 section{
     overflow-y: scroll;
 }
@@ -356,9 +390,14 @@ section{
     color: #444;
 }
 
+
 /* small screens adjustments */
+@media (max-width: 1024px) {
+    #employeeContainer { grid-template-columns: repeat(2, 1fr); }
+}
+
 @media (max-width: 600px) {
-    #employeeContainer { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    #employeeContainer { grid-template-columns: repeat(1, 1fr); }
     .employee-modal-content { padding: 14px; }
     .employee-modal-content form { grid-template-columns: 1fr; }
 }

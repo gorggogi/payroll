@@ -25,22 +25,16 @@
         </nav>
     
     <section>
-        <div class="head">
-            <input type="search" id="searchInput" placeholder="Search employees..." />
-            <div class="buttons">
-                <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
-                <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
-                    <i class="fa-solid fa-sliders"></i> Filters
-                </button>
-            </div>
-        </div>
 
-      
         <div class="advanced-filter-section" id="advancedFilterSection" style="display: none;">
-            <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
-            <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
-            
-            <form id="advancedFilterForm">
+            <div class="advanced-filter-section-content">
+                <button type="button" class="close-filters-btn" onclick="toggleAdvancedFilters()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
+                <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
+                
+                <form id="advancedFilterForm">
       
                 <div class="form-row">
                     <div class="form-group">
@@ -159,10 +153,21 @@
                     </button>
                 </div>
             </form>
+            </div>
         </div>
 
         <div class="employee-list">
             <h1>Employee List:</h1>
+            <div class="head">
+                <input type="search" id="searchInput" placeholder="Search employees..." />
+                <div class="buttons">
+                    <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+                    <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
+                        <i class="fa-solid fa-sliders"></i> Filters
+                    </button>
+                </div>
+            </div>
+            <div id="searchInfoContainer"></div>
             <div id="employeeContainer">
                 Loading...
             </div>

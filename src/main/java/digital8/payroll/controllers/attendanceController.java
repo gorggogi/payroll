@@ -30,6 +30,8 @@ public class attendanceController {
                 List<Attendance> records = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
                 model.addAttribute("attendances", records);
                 model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName());
+                model.addAttribute("emp_id", empId);
+                model.addAttribute("emp_payType", emp.getPayType());
             }
         }
 
