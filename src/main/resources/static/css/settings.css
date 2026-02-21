@@ -1,0 +1,122 @@
+
+
+.settings-card {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: block !important; 
+}
+
+.settings-card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+    font-weight: 600;
+    display: block !important; 
+}
+
+.settings-card table {
+    width: 100%;
+    border-collapse: collapse;
+    display: table !important;  
+}
+
+.settings-card table tr {
+    display: table-row !important;
+}
+
+.settings-card table td {
+    padding: 0.5rem 0;
+    display: table-cell !important; 
+}
+
+.settings-card table td:first-child {
+    font-weight: 600;
+    color: #555;
+    width: 150px;
+    padding-right: 2rem;
+}
+
+.settings-card table td:last-child {
+    color: #333;
+}
+
+.settings-card table td strong {
+    font-weight: 600;
+}
+
+.settings-card form {
+    display: block !important;  
+}
+
+.settings-card form div {
+    margin-bottom: 1rem;
+    display: block !important;  
+}
+
+.settings-card label {
+    display: block !important;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #555;
+    font-size: 0.9rem;
+}
+
+.settings-card input {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    display: block !important;
+}
+
+.settings-card input:focus {
+    outline: none;
+    border-color: #666;
+}
+
+.settings-card button {
+    padding: 0.6rem 1.5rem;
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+    display: inline-block !important;
+}
+
+.settings-card button:hover {
+    background-color: #555;
+}
+
+.alert-success,
+.alert-error {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    display: block !important;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-success p,
+.alert-error p {
+    margin: 0;
+}

@@ -1,37 +1,96 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings</title>
-      <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/settings.css" />
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
-
 </head>
 <body>
-     <div class="container">
+    <div class="container">
         <nav>
             <ul>
                 <h1>Payroll System</h1>
                 <a href="/employee/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
-                <a href="/employee/attendance"><li><i class="fa-solid fa-people-group "></i>Attendance</li></a>
+                <a href="/employee/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a href="/employee/settings"><li class="active"><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
             <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
-
         </nav>
-    <section>
-        <div class="head">
-            <h1>Settings</h1>
-            <p>
-                Hello, ${employeeName}!
-                <i class="fa-solid fa-circle-user"></i>
-            </p>
-        </div>
         
-    </section>
+        <section>
+            <div class="head">
+                <h1>Settings</h1>
+                <p>
+                    Hello, <span th:text="${employeeName}">Employee</span>!
+                    <i class="fa-solid fa-circle-user"></i>
+                </p>
+            </div>
+            
+            <div class="settings-card">
+                <h2>Profile Information</h2>
+                <table>
+                    <tr>
+                        <td><strong>Employee ID:</strong></td>
+                        <td th:text="${employee.employeeId}">001</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Full Name:</strong></td>
+                        <td th:text="${employee.firstName + ' ' + employee.lastName}">John Doe</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Email:</strong></td>
+                        <td th:text="${user.email}">john@example.com</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Department:</strong></td>
+                        <td th:text="${employee.department != null ? employee.department.departmentName : 'N/A'}">IT</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Position:</strong></td>
+                        <td th:text="${employee.position != null ? employee.position.positionName : 'N/A'}">Developer</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Date Hired:</strong></td>
+                        <td th:text="${employee.dateHired}">2025-01-01</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="settings-card">
+                <h2>Change Password</h2>
+                
+                <div th:if="${successMessage}" class="alert-success">
+                    <p th:text="${successMessage}"></p>
+                </div>
+                <div th:if="${errorMessage}" class="alert-error">
+                    <p th:text="${errorMessage}"></p>
+                </div>
+                
+                <form action="/employee/settings/change-password" method="POST">
+                    <div>
+                        <label for="currentPassword">Current Password:</label>
+                        <input type="password" id="currentPassword" name="currentPassword" required />
+                    </div>
+                    
+                    <div>
+                        <label for="newPassword">New Password:</label>
+                        <input type="password" id="newPassword" name="newPassword" required minlength="6" />
+                    </div>
+                    
+                    <div>
+                        <label for="confirmPassword">Confirm New Password:</label>
+                        <input type="password" id="confirmPassword" name="confirmPassword" required />
+                    </div>
+                    
+                    <button type="submit">Update Password</button>
+                </form>
+            </div>
+        </section>
     </div>
 </body>
 </html>
