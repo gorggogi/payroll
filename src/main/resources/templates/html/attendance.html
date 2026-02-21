@@ -32,7 +32,7 @@
         <div class="head">
             <h1>Attendance</h1>
             <p>
-                Hello, <span th:text="${employeeName}"></span>!
+                Hello, <span></span>!
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>
@@ -76,45 +76,7 @@
 
 </table>
 Total Hours Rendered: 
-    <select name="" id=""></select>
-    <div class="payroll-panel">
-        <h3>Payroll Options</h3>
-        <label for="period">Period:</label>
-        <select id="period">
-            <option value="biweekly">Biweekly</option>
-            <option value="monthly">Monthly</option>
-        </select>
-
-        <label for="month">Month:</label>
-        <select id="month">
-            <option value="January">January</option>
-            <option value="February">February</option>
-            <option value="March">March</option>
-            <option value="April">April</option>
-            <option value="May">May</option>
-            <option value="June">June</option>
-            <option value="July">July</option>
-            <option value="August">August</option>
-            <option value="September">September</option>
-            <option value="October">October</option>
-            <option value="November">November</option>
-            <option value="December">December</option>
-        </select>
-
-        <button id="computePayrollBtn">Compute Payroll</button>
-
-        <div id="payrollResult"></div>
-    </div>
-    
-
     </section>
     </div>
-    <script th:inline="javascript">
-        /*<![CDATA[*/
-        var empId = /*[[${emp_id}]]*/ 0;
-        var empPayType = /*[['' + ${emp_payType}]]*/ 'monthly';
-        /*]]>*/
-    </script>
-    <script src="/js/payroll.js"></script>
 </body>
 </html>

@@ -60,4 +60,16 @@ public class UserService {
         return usersRepository.save(user);
     }
     
+    public boolean changePassword(Users user, String currentPassword, String newPassword){
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())){
+            return false;
+        }
+
+        String hashedNewPassword = passwordEncoder.encode(newPassword);
+        user.setPasswordHash(hashedNewPassword);
+        usersRepository.save(user);
+
+        return true;
+    }
+
 }
