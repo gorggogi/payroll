@@ -20,7 +20,7 @@ public class settingsController {
 
     UserService userService;
     
-    @GetMapping("/employee/settings")
+    @GetMapping({"/employee/settings", "/admin/settings"})
     public String employeeSettingsPage  (Model model, Authentication authentication){
         Object principal = authentication != null ? authentication.getPrincipal() : null;
 
