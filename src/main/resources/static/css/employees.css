@@ -5,8 +5,10 @@
 
 section {
     width: 80%;
-    height: 100vh;
+    min-height: 100vh;
     padding: 3rem;
+    display: flex;
+    flex-direction: column;
 }
 
 .head {
@@ -14,7 +16,9 @@ section {
     justify-content: space-between;
     gap: 1rem;
     max-height: 4rem;
+    margin-top: 2rem;
     margin-bottom: 2rem;
+    order: 0;
 }
 
 input {
@@ -93,16 +97,21 @@ section .buttons {
     margin: 5px 0;
 }
 
+.employee-list {
+    order: 1;
+}
+
 .employee-card {
     background: white;
     border: 1px solid #ddd;
     border-radius: 8px;
     padding: 20px;
-    margin-bottom: 15px;
     transition: box-shadow 0.3s ease;
 }
 
 #employeeContainer {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
 }
 
@@ -146,6 +155,7 @@ section .buttons {
     margin-bottom: 25px;
     border: 1px solid #e0e0e0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    order: 2;
 }
 
 .advanced-filter-section h3 {

@@ -17,19 +17,11 @@ nav i {
     margin-right: 1rem;
 }
 
-ul li{
+nav button{
     margin-bottom: 1rem;
     padding: 1rem;
-    color: white;
-    cursor: pointer;
-    background-color: var(--secondary-color);
-    border-radius: 1rem;
-}
-
-nav button{
-    padding: 1rem;
     font-size: var(--font-size-300);
-    background-color: red;
+    background-color: var(--secondary-color);
     color: white;
     border: none;
     border-radius: 1rem;
@@ -37,5 +29,27 @@ nav button{
     display: flex;
     justify-content: left;
     align-items: center;
+    width: 100%;
+    font-family: inherit;
+}
 
+nav button:hover {
+    opacity: 0.9;
+    background-color: var(--primary-light);
+    color: black;
+    transition: .3s;
+}
+
+nav button.active {
+    background-color: var(--primary-light);
+    color: black;
+}
+
+nav .logout{
+    background-color: red;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
 }

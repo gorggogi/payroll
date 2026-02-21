@@ -80,25 +80,3 @@ margin: 0;
 a{
   text-decoration: none;
 }
-li:hover{
-  background-color: var(--primary-light);
-  color: black;
-  transition: .3s;
-}
-li.active{
-  background-color: var(--primary-light);
-  color: black;
-}
-.logout{
-    padding: 1rem;
-    font-size: var(--font-size-300);
-    background-color: red;
-    color: white;
-    border: none;
-    border-radius: 1rem;
-    cursor: pointer;
-    display: flex;
-    justify-content: left;
-    align-items: center;
-
-}

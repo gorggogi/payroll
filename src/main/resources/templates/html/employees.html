@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/employees.css">
     <link rel="stylesheet" href="/css/nav.css">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <script src="/js/nav.js"></script>
     <title>Digital8 Payroll System</title>
 </head>
 <body>
@@ -14,21 +15,23 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <li class="active"><i class="fa-solid fa-house"></i>Home</li>
-                <li><i class="fa-solid fa-people-group active"></i>Employees</li>
-                <li><i class="fa-solid fa-gear"></i>Settings</li>
+                <li><button onclick="navigateTo('/admin/home')"><i class="fa-solid fa-house"></i>Home</button></li>
+                <li class="active"><button onclick="navigateTo('/admin/employees')"><i class="fa-solid fa-people-group active"></i>Employees</button></li>
+                <li><button onclick="navigateTo('/admin/settings')"><i class="fa-solid fa-gear"></i>Settings</button></li>
             </ul>
             
-            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+            <button onclick="navigateTo('/logout')" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</button>
 
         </nav>
     
     <section>
-        <div class="head">
-            <input type="search" id="searchInput" placeholder="Search employees..." />
+        <div class="employee-list">
+            <h1>Employee List:</h1>
+                    <div class="head">
+            <input type="search" id="searchInput" placeholder="Search Employees" />
             <div class="buttons">
                 <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
-                <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
+                <button class="filter-toggle-btn" id="filterToggleBtn">
                     <i class="fa-solid fa-sliders"></i> Filters
                 </button>
             </div>
@@ -150,22 +153,21 @@
                 </div>
                 
                 <div class="form-actions">
-                    <button type="button" onclick="applyAdvancedFilters()" class="btn-apply">
+                    <button type="button" id="applyFiltersBtn" class="btn-apply">
                         <i class="fa-solid fa-check"></i> Apply Filters
                     </button>
-                    <button type="button" onclick="resetFilters()" class="btn-reset">
+                    <button type="button" id="resetFiltersBtn" class="btn-reset">
                         <i class="fa-solid fa-rotate-right"></i> Reset All
                     </button>
                 </div>
             </form>
         </div>
-
-        <div class="employee-list">
-            <h1>Employee List:</h1>
+            <div id="employeeListInfo"></div>
             <div id="employeeContainer">
                 Loading...
             </div>
         </div>
+
     </section>
     </div>
     <script src="/js/employees.js"></script>

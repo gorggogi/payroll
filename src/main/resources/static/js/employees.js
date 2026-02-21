@@ -41,6 +41,10 @@ window.addEventListener('load', function(){
 
     })
 
+    document.getElementById('filterToggleBtn').addEventListener('click', toggleAdvancedFilters);
+    document.getElementById('applyFiltersBtn').addEventListener('click', applyAdvancedFilters);
+    document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+
 })
 
 document.getElementById('searchButton').addEventListener('click', function(){
@@ -138,15 +142,25 @@ function setSortOrder(order) {
 
 }
 
-function displayEmployees(employees) {
-    const container = document.getElementById('employeeContainer');
-
+function displayEmployeeListInfo(employees) {
+    const infoContainer = document.getElementById('employeeListInfo');
+    
     if (!employees || employees.length === 0) {
-        container.innerHTML = '<p>No employees found.</p>';
+        infoContainer.innerHTML = '<div class="search-info"><p>No employees found.</p></div>';
         return;
     }
 
     const infoHTML = `<div class="search-info"><p><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
+    infoContainer.innerHTML = infoHTML;
+}
+
+function displayEmployeeCards(employees) {
+    const container = document.getElementById('employeeContainer');
+
+    if (!employees || employees.length === 0) {
+        container.innerHTML = '<p>No employee cards to display.</p>';
+        return;
+    }
 
     const cardsHTML = employees.map(emp => `
             <div class="employee-card">
@@ -167,7 +181,12 @@ function displayEmployees(employees) {
                 </div>
             </div>
     `).join('');
-    container.innerHTML = infoHTML + cardsHTML;
+    container.innerHTML = cardsHTML;
+}
+
+function displayEmployees(employees) {
+    displayEmployeeListInfo(employees);
+    displayEmployeeCards(employees);
 }
 
 function toggleAdvancedFilters() {
