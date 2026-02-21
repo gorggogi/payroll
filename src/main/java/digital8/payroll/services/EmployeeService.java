@@ -90,6 +90,31 @@ public class EmployeeService {
         return employeeRepository.findById(id);
     }
 
+    public Optional<Employees> createEmployee(Employees emp) {
+        if (emp.getEmail() != null && employeeRepository.existsByEmail(emp.getEmail())) {
+            return Optional.empty();
+        }
+        if (emp.getEmployeeNumber() == null || emp.getEmployeeNumber().isBlank()) {
+            emp.setEmployeeNumber(generateEmployeeNumber());
+        } else if (employeeRepository.existsByEmployeeNumber(emp.getEmployeeNumber())) {
+            return Optional.empty();
+        }
+        if (emp.getDepartment() != null && emp.getDepartment().getDepartmentId() != null) {
+            departmentsRepository.findById(emp.getDepartment().getDepartmentId()).ifPresent(emp::setDepartment);
+        }
+        if (emp.getPosition() != null && emp.getPosition().getPositionId() != null) {
+            positionsRepository.findById(emp.getPosition().getPositionId()).ifPresent(emp::setPosition);
+        }
+        Employees saved = employeeRepository.save(emp);
+        return Optional.of(saved);
+    }
+
+    private String generateEmployeeNumber() {
+        return employeeRepository.findFirstByOrderByEmployeeIdDesc()
+                .map(e -> "EMP" + String.format("%05d", e.getEmployeeId() + 1))
+                .orElse("EMP00001");
+    }
+
     public Optional<Employees> updateEmployee(Integer id, Employees updated) {
         Optional<Employees> existingOpt = employeeRepository.findById(id);
         if (!existingOpt.isPresent()) {

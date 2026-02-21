@@ -19,6 +19,7 @@
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>

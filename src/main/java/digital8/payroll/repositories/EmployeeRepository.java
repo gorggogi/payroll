@@ -10,10 +10,12 @@ import digital8.payroll.entities.Positions;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employees, Integer>, JpaSpecificationExecutor<Employees> {
 
+    Optional<Employees> findFirstByOrderByEmployeeIdDesc();
     Employees findByEmployeeNumber(String employeeNumber);
     Employees findByEmail(String email);
     boolean existsByEmployeeNumber(String employeeNumber);
