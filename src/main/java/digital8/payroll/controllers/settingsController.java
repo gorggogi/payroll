@@ -37,7 +37,6 @@ public class settingsController {
 
          return "html/settingsEmployee";
     }
-
     @PostMapping("/employee/settings/change-password")
     public String changePassword(
             @RequestParam("currentPassword") String currentPassword,
