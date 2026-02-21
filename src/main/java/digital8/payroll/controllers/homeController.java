@@ -4,9 +4,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import java.security.Principal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.entities.Users;
@@ -18,9 +20,19 @@ public class homeController {
     private UsersRepository usersRepository;
 
     @GetMapping({"/", "/index"})
-    public String loginPage() {
-        return "html/index";
+    public String loginPage(Authentication authentication) {
+    if (authentication != null && authentication.isAuthenticated() 
+        && !(authentication.getPrincipal() instanceof String)) {
+    
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            return "redirect:/admin/home";
+        } else {
+            return "redirect:/employee/home";
+        }
     }
+    
+    return "html/index";
+}
     
     @GetMapping("/forgotPassword")
     public String forgotPasswordPage() {
