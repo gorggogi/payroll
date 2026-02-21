@@ -13,9 +13,10 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <li class="active"><i class="fa-solid fa-house"></i>Home</li>
+                <a href="/admin/home"><li class="active"><i class="fa-solid fa-house"></i>Home</li></a>
                 <a href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
-                 <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i></i>Attendance</li></a>
+                <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a href="/admin/deductions"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
@@ -24,10 +25,9 @@
         </nav>
     <section>
         <div class="head">
-            <h1>Analytics & Reports</h1>
-            
+            <h1>Dashboard</h1>
             <p>
-                Hello, ${adminName}!
+                Hello, <span th:text="${adminName}">Admin</span>!
                 <i class="fa-solid fa-circle-user"></i>
             </p>
         </div>
@@ -35,27 +35,31 @@
         <div class="cards">
             <div class="left">
                 <div class="card">
-                    <h3>Reports and Analytics</h3>
-                    <div>
-                        <p>Detailed reports here</p>
-                    </div>
+                    <h3><i class="fa-solid fa-people-group"></i> Employees</h3>
+                    <p>Manage employee records, add new staff, and update profiles.</p>
+                    <a href="/admin/employees" class="card-link">Go to Employees &rarr;</a>
                 </div>
                 <div class="card">
-                    <h3>Box 1</h3>
-                    <p>Additional info</p>
+                    <h3><i class="fa-solid fa-calendar-check"></i> Attendance</h3>
+                    <p>View and manage attendance records across the organization.</p>
+                    <a href="/admin/attendance" class="card-link">Go to Attendance &rarr;</a>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-minus-circle"></i> Deductions</h3>
+                    <p>Define deduction types and assign them to employees.</p>
+                    <a href="/admin/deductions" class="card-link">Go to Deductions &rarr;</a>
                 </div>
             </div>
             <div class="right">
                 <div class="card">
-                    <h3>Calendar</h3>
-                    <p>Schedules</p>
+                    <h3><i class="fa-solid fa-gear"></i> Settings</h3>
+                    <p>System and account settings.</p>
+                    <a href="/admin/settings" class="card-link">Settings &rarr;</a>
                 </div>
             </div>
         </div>
         
     </section>
     </div>
-    
-   
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,8 +16,9 @@
                 <h1>Payroll System</h1>
                 <a href="/admin/home"><li ><i class="fa-solid fa-house"></i>Home</li></a>
                 <li class="active"><i class="fa-solid fa-people-group "></i>Employees</li>
-                <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i></i>Attendance</li></a>
-                <li><i class="fa-solid fa-gear"></i>Settings</li>
+                <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a href="/admin/deductions"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
+                <a href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
             <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
@@ -157,10 +158,12 @@
         </div>
 
         <div class="employee-list">
-            <h1>Employee List:</h1>
+            <h1>Employee List</h1>
+            <p th:if="${message}" class="search-info" th:text="${message}"></p>
             <div class="head">
                 <input type="search" id="searchInput" placeholder="Search employees..." />
                 <div class="buttons">
+                    <a href="/admin/employees/add" class="btn-add-employee"><i class="fa-solid fa-plus"></i> Add Employee</a>
                     <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
                     <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
                         <i class="fa-solid fa-sliders"></i> Filters

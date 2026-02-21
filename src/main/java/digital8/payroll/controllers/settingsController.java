@@ -20,7 +20,7 @@ public class settingsController {
 
     UserService userService;
     
-    @GetMapping({"/employee/settings", "/admin/settings"})
+    @GetMapping({"/employee/settings"})
     public String employeeSettingsPage  (Model model, Authentication authentication){
         Object principal = authentication != null ? authentication.getPrincipal() : null;
 
@@ -37,6 +37,25 @@ public class settingsController {
 
          return "html/settingsEmployee";
     }
+    
+    @GetMapping({"/admin/settings"})
+    public String adminSettingsPage  (Model model, Authentication authentication){
+        Object principal = authentication != null ? authentication.getPrincipal() : null;
+
+        if (principal instanceof Users) {
+            Users user = (Users) principal;
+            Employees emp = user.getEmployee();
+
+            if (emp != null){
+                model.addAttribute("employee", emp);
+                model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName());
+                model.addAttribute("user", user);
+            }
+         }
+
+         return "html/settingsAdmin";
+    }
+
     @PostMapping("/employee/settings/change-password")
     public String changePassword(
             @RequestParam("currentPassword") String currentPassword,

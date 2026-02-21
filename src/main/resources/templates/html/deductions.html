@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/homeAdmin.css">
+    <link rel="stylesheet" href="/css/employees.css">
+    <link rel="stylesheet" href="/css/nav.css">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <title>Deductions</title>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <ul>
+                <h1>Payroll System</h1>
+                <a href="/admin/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
+                <a href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
+                <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a href="/admin/deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
+                <a href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+            </ul>
+            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+        </nav>
+
+        <section>
+            <h1>Deductions</h1>
+            <p th:if="${message}" class="alert-success" th:text="${message}"></p>
+
+            <div class="deduction-section">
+                <div class="section-head">
+                    <h2><i class="fa-solid fa-tags"></i> Deduction types</h2>
+                    <button type="button" class="btn-apply" onclick="openModal('modalAddType')"><i class="fa-solid fa-plus"></i> Add type</button>
+                </div>
+                <table class="attendanceTable deduction-table" th:if="${deductionTypes != null and !deductionTypes.isEmpty()}">
+                    <thead>
+                        <tr><th>ID</th><th>Name</th><th>Type</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="d : ${deductionTypes}">
+                            <td th:text="${d.deductionId}"></td>
+                            <td th:text="${d.deductionName}"></td>
+                            <td th:text="${d.deductionType}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p th:if="${deductionTypes == null or deductionTypes.isEmpty()}" class="no-data">No deduction types. Click "Add type" to create one.</p>
+            </div>
+
+            <div class="deduction-section">
+                <div class="section-head">
+                    <h2><i class="fa-solid fa-user-minus"></i> Employee deductions</h2>
+                    <button type="button" class="btn-apply" onclick="openModal('modalAddDeduction')"><i class="fa-solid fa-plus"></i> Add deduction</button>
+                </div>
+                <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">
+                    <thead>
+                        <tr><th>Employee</th><th>Deduction</th><th>Amount</th><th>Recurring</th><th>Start</th><th>End</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="row : ${assignmentRows}">
+                            <td th:text="${row.employeeName}"></td>
+                            <td th:text="${row.deductionName}"></td>
+                            <td th:text="${row.amount != null ? #numbers.formatDecimal(row.amount, 1, 'POINT', 2, 'COMMA') : ''}"></td>
+                            <td th:text="${row.recurring ? 'Yes' : 'No'}"></td>
+                            <td th:text="${row.startDate}"></td>
+                            <td th:text="${row.endDate}"></td>
+                            <td>
+                                <form action="/admin/deductions/assign/remove" method="post" style="display:inline;">
+                                    <input type="hidden" name="id" th:value="${row.employeeDeductionId}">
+                                    <button type="submit" class="btn-remove" title="Remove"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No employee deductions. Click "Add deduction" to assign one.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal: Add deduction type -->
+    <div id="modalAddType" class="deduction-modal" style="display:none;">
+        <div class="deduction-modal-content">
+            <button type="button" class="modal-close" onclick="closeModal('modalAddType')">&times;</button>
+            <h3>Add deduction type</h3>
+            <form action="/admin/deductions/types" method="post">
+                <div class="form-group">
+                    <label for="deductionName">Name *</label>
+                    <input type="text" id="deductionName" name="deductionName" required placeholder="e.g. SSS Loan">
+                </div>
+                <div class="form-group">
+                    <label for="deductionType">Type *</label>
+                    <select id="deductionType" name="deductionType">
+                        <option value="Loan">Loan</option>
+                        <option value="Advance">Advance</option>
+                        <option value="Union">Union</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-reset" onclick="closeModal('modalAddType')">Cancel</button>
+                    <button type="submit" class="btn-apply"><i class="fa-solid fa-plus"></i> Add type</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add deduction (assign to employee) -->
+    <div id="modalAddDeduction" class="deduction-modal" style="display:none;">
+        <div class="deduction-modal-content">
+            <button type="button" class="modal-close" onclick="closeModal('modalAddDeduction')">&times;</button>
+            <h3>Add deduction (assign to employee)</h3>
+            <form action="/admin/deductions/assign" method="post">
+                <div class="form-group">
+                    <label for="employeeId">Employee *</label>
+                    <select id="employeeId" name="employeeId" required>
+                        <option value="">Select employee</option>
+                        <option th:each="e : ${employees}" th:value="${e.employeeId}" th:text="${e.lastName + ', ' + e.firstName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="deductionId">Deduction type *</label>
+                    <select id="deductionId" name="deductionId" required>
+                        <option value="">Select type</option>
+                        <option th:each="d : ${deductionTypes}" th:value="${d.deductionId}" th:text="${d.deductionName + ' (' + d.deductionType + ')'}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Amount (PHP) *</label>
+                    <input type="number" id="amount" name="amount" required min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" name="isRecurring" value="true"> Recurring (every pay period)</label>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start date *</label>
+                    <input type="date" id="startDate" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="endDate">End date *</label>
+                    <input type="date" id="endDate" name="endDate" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-reset" onclick="closeModal('modalAddDeduction')">Cancel</button>
+                    <button type="submit" class="btn-apply"><i class="fa-solid fa-link"></i> Assign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        document.querySelectorAll('.deduction-modal').forEach(function(modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal(modal.id);
+            });
+        });
+    </script>
+</body>
+</html>

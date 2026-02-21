@@ -40,7 +40,20 @@ public class homeController {
     }
 
     @GetMapping("/admin/home")
-    public String adminHome() {
+    public String adminHome(Model model, Principal principal) {
+        if (principal != null) {
+            usersRepository.findByEmail(principal.getName()).ifPresent(u -> {
+                if (u.getEmployee() != null) {
+                    String name = u.getEmployee().getFirstName() + " " + u.getEmployee().getLastName();
+                    model.addAttribute("adminName", name);
+                } else {
+                    model.addAttribute("adminName", u.getEmail());
+                }
+            });
+        }
+        if (!model.containsAttribute("adminName")) {
+            model.addAttribute("adminName", "Admin");
+        }
         return "html/homeAdmin";
     }
 
