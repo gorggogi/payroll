@@ -8,6 +8,9 @@ import digital8.payroll.repositories.SssTableRepository;
 import digital8.payroll.repositories.PhilhealthTableRepository;
 import digital8.payroll.repositories.TaxTableRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
+import digital8.payroll.repositories.DeductionsRepository;
+import digital8.payroll.dto.DeductionBreakdownItem;
+import digital8.payroll.entities.Deductions;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Attendance;
@@ -18,6 +21,7 @@ import digital8.payroll.entities.EmployeeDeductions;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.Month;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -25,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class PayrollService {
+public class PayrollService { // used by payrollController and payrollViewController
 
     private static final int SCALE = 2;
     private static final RoundingMode ROUND = RoundingMode.HALF_UP;
@@ -46,6 +50,8 @@ public class PayrollService {
     private TaxTableRepository taxTableRepository;
     @Autowired
     private EmployeeDeductionsRepository employeeDeductionsRepository;
+    @Autowired
+    private DeductionsRepository deductionsRepository;
 
     public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
         Optional<Employees> empOpt = employeeRepository.findById(empId);
@@ -165,16 +171,47 @@ public class PayrollService {
         return BigDecimal.ZERO;
     }
 
-    private BigDecimal computeOtherDeductions(Integer employeeId, java.time.LocalDate periodStart, java.time.LocalDate periodEnd) {
+    private BigDecimal computeOtherDeductions(Integer employeeId, LocalDate periodStart, LocalDate periodEnd) {
         List<EmployeeDeductions> list = employeeDeductionsRepository.findByEmployeeId(employeeId);
         if (list == null) return BigDecimal.ZERO;
         BigDecimal sum = BigDecimal.ZERO;
         for (EmployeeDeductions ed : list) {
-            if (!Boolean.TRUE.equals(ed.getIsRecurring())) continue;
-            if (ed.getStartDate() != null && ed.getStartDate().isAfter(periodEnd)) continue;
-            if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart)) continue;
-            if (ed.getAmount() != null) sum = sum.add(ed.getAmount());
+            if (ed.getAmount() == null) continue;
+            boolean recurring = Boolean.TRUE.equals(ed.getIsRecurring());
+            if (recurring) {
+                if (ed.getStartDate() != null && ed.getStartDate().isAfter(periodEnd)) continue;
+                if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart)) continue;
+            } else {
+                if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd) || ed.getStartDate().isBefore(periodStart)) continue;
+            }
+            sum = sum.add(ed.getAmount());
         }
         return sum.setScale(SCALE, ROUND);
+    }
+
+    public List<DeductionBreakdownItem> getOtherDeductionsBreakdown(Integer employeeId, LocalDate periodStart, LocalDate periodEnd) {
+        List<EmployeeDeductions> list = employeeDeductionsRepository.findByEmployeeId(employeeId);
+        List<DeductionBreakdownItem> result = new ArrayList<>();
+        if (list == null) return result;
+        for (EmployeeDeductions ed : list) {
+            if (ed.getAmount() == null) continue;
+            boolean recurring = Boolean.TRUE.equals(ed.getIsRecurring());
+            if (recurring) {
+                if (ed.getStartDate() != null && ed.getStartDate().isAfter(periodEnd)) continue;
+                if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart)) continue;
+            } else {
+                if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd) || ed.getStartDate().isBefore(periodStart)) continue;
+            }
+            String name = "Other";
+            if (ed.getDeductionId() != null) {
+                Optional<Deductions> d = deductionsRepository.findById(ed.getDeductionId());
+                if (d.isPresent() && d.get().getDeductionName() != null) name = d.get().getDeductionName();
+            }
+            DeductionBreakdownItem item = new DeductionBreakdownItem();
+            item.setDeductionName(name);
+            item.setAmount(ed.getAmount().setScale(SCALE, ROUND));
+            result.add(item);
+        }
+        return result;
     }
 }
