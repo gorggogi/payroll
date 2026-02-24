@@ -40,12 +40,20 @@ public class homeController {
     }
 
     @GetMapping("/admin/home")
-    public String adminHome(Model model, Principal principal) {
-        if (principal != null) {
-            usersRepository.findByEmail(principal.getName()).ifPresent(u -> {
+    public String adminHome(Model model, Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users u = (Users) authentication.getPrincipal();
+            if (u.getEmployee() != null) {
+                model.addAttribute("adminName", u.getEmployee().getFirstName() + " " + u.getEmployee().getLastName());
+                model.addAttribute("emp_id", u.getEmployee().getEmployeeId());
+            } else {
+                model.addAttribute("adminName", u.getEmail());
+            }
+        } else if (authentication != null) {
+            usersRepository.findByEmail(authentication.getName()).ifPresent(u -> {
                 if (u.getEmployee() != null) {
-                    String name = u.getEmployee().getFirstName() + " " + u.getEmployee().getLastName();
-                    model.addAttribute("adminName", name);
+                    model.addAttribute("adminName", u.getEmployee().getFirstName() + " " + u.getEmployee().getLastName());
+                    model.addAttribute("emp_id", u.getEmployee().getEmployeeId());
                 } else {
                     model.addAttribute("adminName", u.getEmail());
                 }

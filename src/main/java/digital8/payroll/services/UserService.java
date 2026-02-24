@@ -80,4 +80,15 @@ public class UserService {
         usersRepository.save(user);
         return true;
     }
+
+    /** Returns false if newEmail is already used by another user. */
+    public boolean updateEmail(Users user, String newEmail) {
+        if (newEmail == null || newEmail.isBlank()) return false;
+        Optional<Users> existing = usersRepository.findByEmail(newEmail);
+        if (existing.isPresent() && !existing.get().getUserId().equals(user.getUserId()))
+            return false;
+        user.setEmail(newEmail.trim());
+        usersRepository.save(user);
+        return true;
+    }
 }
