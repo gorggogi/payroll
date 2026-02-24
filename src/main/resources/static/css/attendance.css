@@ -39,6 +39,7 @@
 .payslip-table .gross-row td { border-top: 2px solid #333; padding-top: 0.5rem; }
 .payslip-table .deduct-row td { border-top: 1px solid #ccc; }
 .payslip-table .net-row td { border-top: 2px solid #333; font-weight: 700; padding-top: 0.5rem; }
+.payslip-table td.other-breakdown { padding-left: 1.25rem; }
 .no-payroll { color: #666; margin-top: 1rem; }
 
 .attendance-filter { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }

@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.security.Principal;
 import java.time.Month;
+import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import digital8.payroll.dto.DeductionBreakdownItem;
 import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.repositories.PayrollItemsRepository;
 import digital8.payroll.entities.PayrollItems;
@@ -55,6 +57,17 @@ public class payrollViewController {
         model.addAttribute("payrollItems", items != null ? items : List.of());
         model.addAttribute("selectedMonth", monthName);
         model.addAttribute("selectedPeriod", period != null ? period : "");
+
+        int year = java.time.LocalDate.now().getYear();
+        Month monthEnum;
+        try {
+            monthEnum = monthName != null ? Month.valueOf(monthName.toUpperCase()) : Month.from(java.time.LocalDate.now());
+        } catch (Exception e) {
+            monthEnum = Month.from(java.time.LocalDate.now());
+        }
+        YearMonth ym = YearMonth.of(year, monthEnum);
+        List<DeductionBreakdownItem> otherBreakdown = payrollService.getOtherDeductionsBreakdown(empId, ym.atDay(1), ym.atEndOfMonth());
+        model.addAttribute("otherDeductionsBreakdown", otherBreakdown != null ? otherBreakdown : List.of());
 
         return "html/payroll";
     }

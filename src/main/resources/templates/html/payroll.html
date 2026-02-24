@@ -20,6 +20,7 @@
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
+                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li class="active"><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
@@ -75,6 +76,7 @@
                         <tr><td>Philhealth</td><td th:text="${item.philhealth != null ? #numbers.formatDecimal(item.philhealth, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Pag-ibig</td><td th:text="${item.pagibig != null ? #numbers.formatDecimal(item.pagibig, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr th:each="bd : ${otherDeductionsBreakdown}" th:if="${otherDeductionsBreakdown != null and !otherDeductionsBreakdown.isEmpty()}"><td class="other-breakdown"><span th:text="${bd.deductionName}">—</span></td><td th:text="${bd.amount != null ? #numbers.formatDecimal(bd.amount, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Other Deductions</td><td th:text="${item.otherDeductions != null ? #numbers.formatDecimal(item.otherDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr class="deduct-row"><td><strong>Total Deductions</strong></td><td th:text="${item.totalDeductions != null ? #numbers.formatDecimal(item.totalDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr class="net-row"><td><strong>Net Pay</strong></td><td th:text="${item.netPay != null ? #numbers.formatDecimal(item.netPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
