@@ -13,7 +13,7 @@ section {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    max-height: 4rem;
+    height: 3rem;
     margin-bottom: 2rem;
 }
 
@@ -112,6 +112,10 @@ section .buttons {
 
 .search-info p {
     margin: 5px 0;
+}
+
+.search-info p i {
+    margin-right: 1rem;
 }
 
 .employee-card {
