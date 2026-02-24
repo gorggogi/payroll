@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/global.css">
-    <link rel="stylesheet" href="/css/homeAdmin.css">
-    <link rel="stylesheet" href="/css/employees.css">
     <link rel="stylesheet" href="/css/nav.css">
+    <link rel="stylesheet" href="/css/deductions.css">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
     <title>Deductions</title>
 </head>
@@ -27,26 +26,6 @@
         <section>
             <h1>Deductions</h1>
             <p th:if="${message}" class="alert-success" th:text="${message}"></p>
-
-            <div class="deduction-section">
-                <div class="section-head">
-                    <h2><i class="fa-solid fa-tags"></i> Deduction types</h2>
-                    <button type="button" class="btn-apply" onclick="openModal('modalAddType')"><i class="fa-solid fa-plus"></i> Add type</button>
-                </div>
-                <table class="attendanceTable deduction-table" th:if="${deductionTypes != null and !deductionTypes.isEmpty()}">
-                    <thead>
-                        <tr><th>ID</th><th>Name</th><th>Type</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="d : ${deductionTypes}">
-                            <td th:text="${d.deductionId}"></td>
-                            <td th:text="${d.deductionName}"></td>
-                            <td th:text="${d.deductionType}"></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p th:if="${deductionTypes == null or deductionTypes.isEmpty()}" class="no-data">No deduction types. Click "Add type" to create one.</p>
-            </div>
 
             <div class="deduction-section">
                 <div class="section-head">
@@ -80,7 +59,7 @@
     </div>
 
     <!-- Modal: Add deduction type -->
-    <div id="modalAddType" class="deduction-modal" style="display:none;">
+    <div id="modalAddType" class="deduction-modal" style="display:none; z-index: 2000;">
         <div class="deduction-modal-content">
             <button type="button" class="modal-close" onclick="closeModal('modalAddType')">&times;</button>
             <h3>Add deduction type</h3>
@@ -107,7 +86,7 @@
     </div>
 
     <!-- Modal: Add deduction (assign to employee) -->
-    <div id="modalAddDeduction" class="deduction-modal" style="display:none;">
+    <div id="modalAddDeduction" class="deduction-modal" style="display:none; z-index: 1000;">
         <div class="deduction-modal-content">
             <button type="button" class="modal-close" onclick="closeModal('modalAddDeduction')">&times;</button>
             <h3>Add deduction (assign to employee)</h3>
@@ -124,6 +103,7 @@
                     <select id="deductionId" name="deductionId" required>
                         <option value="">Select type</option>
                         <option th:each="d : ${deductionTypes}" th:value="${d.deductionId}" th:text="${d.deductionName + ' (' + d.deductionType + ')'}"></option>
+                        <option value="ADD_TYPE">── Add new type ──</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -160,6 +140,14 @@
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) closeModal(modal.id);
             });
+        });
+        
+        // Handle "Add new type" option in deduction dropdown
+        document.getElementById('deductionId').addEventListener('change', function(e) {
+            if (this.value === 'ADD_TYPE') {
+                openModal('modalAddType');
+                this.value = ''; // Reset dropdown
+            }
         });
     </script>
 </body>

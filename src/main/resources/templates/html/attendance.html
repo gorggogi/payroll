@@ -30,11 +30,7 @@
         </nav>
     <section>
         <div class="head">
-            <h1>Attendance</h1>
-            <p>
-                Hello, <span th:text="${employeeName}">User</span>!
-                <i class="fa-solid fa-circle-user"></i>
-            </p>
+            <h1>Attendance of <span th:text="${employeeName}">User</span></h1>
         </div>
 
         <form method="get" th:action="${attendanceFormAction}" id="attendanceFilterForm" class="attendance-filter">

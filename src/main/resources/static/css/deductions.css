@@ -1,0 +1,290 @@
+/* Alert styles */
+.alert-success { 
+    background: #d4edda; 
+    color: #155724; 
+    padding: 0.75rem; 
+    border-radius: 6px; 
+    margin-bottom: 1rem; 
+}
+
+.alert-error { 
+    background: #f8d7da; 
+    color: #721c24; 
+    padding: 0.75rem; 
+    border-radius: 6px; 
+    margin-bottom: 1rem; 
+}
+
+/* Container and layout */
+.container {
+    display: flex;
+    width: 100%;
+}
+
+section {
+    width: 80%;
+    height: 100vh;
+    padding: 3rem;
+    overflow-y: auto;
+}
+
+section h1 {
+    margin-bottom: 2rem;
+}
+
+/* Form styles */
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.form-group label i {
+    color: #007bff;
+    font-size: 14px;
+}
+
+.form-group select,
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group input[type="date"],
+.form-group input[type="checkbox"] {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.5rem;
+}
+
+.form-group select:focus,
+.form-group input[type="number"]:focus,
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-group select:hover,
+.form-group input[type="number"]:hover,
+.form-group input[type="text"]:hover,
+.form-group input[type="date"]:hover {
+    border-color: #999;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-apply,
+.btn-reset {
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-apply {
+    background: #28a745;
+    color: white;
+}
+
+.btn-apply:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-apply:active {
+    transform: translateY(0);
+}
+
+.btn-reset {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-reset:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-reset:active {
+    transform: translateY(0);
+}
+
+.btn-apply i,
+.btn-reset i {
+    margin-right: 0;
+    font-size: 14px;
+}
+
+/* Deduction section styles */
+.deduction-section { 
+    margin-bottom: 2rem; 
+}
+
+.deduction-section .section-head { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 0.75rem; 
+    margin-bottom: 1rem; 
+}
+
+.deduction-section .section-head h2 { 
+    font-size: 1.1rem; 
+    margin: 0; 
+}
+
+/* Table styles for deductions */
+.attendanceTable {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.attendanceTable caption {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.attendanceTable th,
+.attendanceTable td {
+    border: 1px solid #000;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.attendanceHeader th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.attendanceBody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.deduction-table { 
+    max-width: 100%; 
+}
+
+.no-data { 
+    color: #666; 
+    font-style: italic; 
+    margin-top: 0.5rem; 
+}
+
+.btn-remove { 
+    background: transparent; 
+    border: none; 
+    color: #c00; 
+    cursor: pointer; 
+    padding: 0.25rem; 
+}
+
+.btn-remove:hover { 
+    color: #a00; 
+}
+
+/* Modal styles for deductions */
+.deduction-modal { 
+    position: fixed; 
+    inset: 0; 
+    background: rgba(0, 0, 0, 0.5); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    z-index: 1000; 
+    padding: 1rem; 
+}
+
+.deduction-modal-content { 
+    background: #fff; 
+    border-radius: 10px; 
+    padding: 1.5rem; 
+    max-width: 420px; 
+    width: 100%; 
+    max-height: 90vh; 
+    overflow-y: auto; 
+    position: relative; 
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2); 
+}
+
+.deduction-modal-content h3 { 
+    margin: 0 0 1rem 0; 
+    font-size: 1.1rem; 
+}
+
+.deduction-modal-content .form-group { 
+    margin-bottom: 1rem; 
+}
+
+.deduction-modal-content .form-group label { 
+    display: block; 
+    margin-bottom: 0.35rem; 
+    font-weight: 600; 
+    font-size: 14px; 
+}
+
+.deduction-modal-content .form-group input[type="text"],
+.deduction-modal-content .form-group input[type="number"],
+.deduction-modal-content .form-group input[type="date"],
+.deduction-modal-content .form-group select { 
+    width: 100%; 
+    padding: 8px 10px; 
+    border: 1px solid #ddd; 
+    border-radius: 6px; 
+    font-size: 14px; 
+}
+
+.deduction-modal-content .form-actions { 
+    display: flex; 
+    gap: 0.5rem; 
+    margin-top: 1.25rem; 
+}
+
+.deduction-modal .modal-close { 
+    position: absolute; 
+    top: 0.75rem; 
+    right: 1rem; 
+    background: none; 
+    border: none; 
+    font-size: 1.5rem; 
+    cursor: pointer; 
+    color: #666; 
+    line-height: 1; 
+    padding: 0; 
+}
+
+.deduction-modal .modal-close:hover { 
+    color: #333; 
+}
