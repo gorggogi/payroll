@@ -16,9 +16,11 @@ nav {
     justify-content: space-between;
     min-width: 20rem;
 }
+
 i {
     margin-right: 1rem;
 }
+
 ul li{
     margin-bottom: 1rem;
     padding: 1rem;
@@ -39,15 +41,6 @@ section div {
     justify-content: space-between;
 }
 
-section .head {
-    justify-content: space-between;
-}
-
-section .head h1 {
-    font-size: var(--font-size-200);
-    margin-bottom: 0;
-}
-
 section .head p {
     display: flex;
     font-size: var(--font-size-300);
@@ -61,8 +54,7 @@ section .head p i {
 }
 
 section .cards {
-    padding: 2rem;
-    gap : 2rem;
+    gap : 1rem;
 }
 
 section .cards .left {
