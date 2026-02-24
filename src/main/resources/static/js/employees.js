@@ -249,7 +249,7 @@ function renderEmployeeDetail(emp) {
                     <div class="form-actions">
                         <a href="/admin/attendance?empId=${emp.employeeId}" class="btn-view-attendance" target="_blank"><i class="fa-solid fa-calendar-check"></i> View Attendance</a>
                         <button type="button" id="resetPasswordBtn" class="btn-reset-pw"><i class="fa-solid fa-key"></i> Reset Password</button>
-                        <button type="button" id="saveEmployeeBtn">Save</button>
+                        <button type="button" id="saveEmployeeBtn" class="btn-save-emp"><i class="fa-solid fa-floppy-disk"></i>Save</button>
                     </div>
                 </form>
             </div>

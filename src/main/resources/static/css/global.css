@@ -117,3 +117,14 @@ section .head {
 section .head h1 {
   margin: 0;
 }
+
+section .head p {
+  display: flex;
+  font-size: var(--font-size-300);
+  gap: .25rem;
+  align-items: center;
+}
+
+section .head p i {
+  margin-left: 1rem;
+}
