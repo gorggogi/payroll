@@ -42,8 +42,8 @@ public class LeaveTypes {
         return leaveName;
     }
 
-    public void setLeaveTypeName(String leaveTypeName) {
-        this.leaveName = leaveTypeName;
+    public void setLeaveName(String leaveName) {
+        this.leaveName = leaveName;
     }
    
     

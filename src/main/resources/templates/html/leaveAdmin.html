@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leave Management - Admin</title>
+    
+    <!-- Prevent caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/leave.css" />
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <ul>
+                <h1>Payroll System</h1>
+                <a href="/admin/home"><li>Home</li></a>
+                <a href="/admin/employees"><li>Employees</li></a>
+                <a href="/admin/leave"><li class="active">Leave</li></a>
+                <a href="/admin/payroll"><li>Payroll</li></a>
+                <a href="/admin/settings"><li>Settings</li></a>
+            </ul>
+            
+            <a href="/logout" class="logout">Logout</a>
+        </nav>
+        
+        <section>
+            <div class="head">
+                <h1>Leave Management</h1>
+                <p>Hello, Admin!</p>
+            </div>
+            
+            <!-- Pending approvals Card -->
+            <div class="leave-card">
+                <h2>Pending approvals 
+                <span class="badge-count" th:text="'(' + ${pendingCount} + ')'">( 3)</span>
+                </h2>
+                
+                <!-- Success/Error Messages -->
+                <div th:if="${successMessage}" class="alert-success">
+                    <p th:text="${successMessage}"></p>
+                </div>
+                <div th:if="${errorMessage}" class="alert-error">
+                    <p th:text="${errorMessage}"></p>
+                </div>
+                
+                <div th:if="${#lists.isEmpty(pendingRequests)}" class="no-data">
+                    <p>No pending leave requests</p>
+                </div>
+                
+                <div class="pending-requests">
+                    <div class="request-card" th:each="request : ${pendingRequests}">
+                        <div class="request-header">
+                            <div class="employee-info">
+                                <h3>
+                                    <span th:text="${request.employee.firstName + ' ' + request.employee.lastName}">John Doe</span>
+                                </h3>
+                                <span class="employee-id" th:text="'EMP-' + ${request.employee.employeeId}">EMP-001</span>
+                            </div>
+                            <span class="leave-type-badge" th:text="${request.leaveType.leaveName}">Sick Leave</span>
+                        </div>
+                        
+                        <div class="request-details">
+                            <div class="detail-item">
+                                <strong>Duration:</strong>
+                                <span th:text="${#temporals.format(request.startDate, 'MMM dd')} + ' - ' + 
+                                               ${#temporals.format(request.endDate, 'MMM dd, yyyy')}">Feb 20 - Feb 21, 2026</span>
+                                <span class="days-badge" th:text="'(' + ${request.totalDays} + ' days)'">( 2 days)</span>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <strong>Reason:</strong>
+                                <span th:text="${request.reason}">Medical appointment</span>
+                            </div>
+                            
+                            <div class="detail-item">
+                                <strong>Requested:</strong>
+                                <span th:text="${#temporals.format(request.requestedDate, 'MMM dd, yyyy')}">Feb 19, 2026</span>
+                            </div>
+                        </div>
+                        
+                        <div class="request-actions">
+                            <form th:action="@{/admin/leave/approve/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn-approve">Approve</button>
+                            </form>
+                            
+                            <form th:action="@{/admin/leave/reject/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn-reject">Reject</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- All Leave Requests Card -->
+            <div class="leave-card">
+                <h2>All Leave Requests</h2>
+                
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <a th:href="@{/admin/leave}" 
+                       th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
+                        All
+                    </a>
+                    <a th:href="@{/admin/leave(filter='pending')}" 
+                       th:classappend="${filter == 'pending' ? 'active' : ''}">
+                        Pending
+                    </a>
+                    <a th:href="@{/admin/leave(filter='approved')}" 
+                       th:classappend="${filter == 'approved' ? 'active' : ''}">
+                        Approved
+                    </a>
+                    <a th:href="@{/admin/leave(filter='rejected')}" 
+                       th:classappend="${filter == 'rejected' ? 'active' : ''}">
+                        Rejected
+                    </a>
+                </div>
+                
+                <div class="table-container">
+                    <table class="leave-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Leave Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Days</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Requested On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(allRequests)}">
+                                <td colspan="8" class="no-data">
+                                    <p>No leave requests found</p>
+                                </td>
+                            </tr>
+                            <tr th:each="request : ${allRequests}">
+                                <td>
+                                    <strong th:text="${request.employee.firstName + ' ' + request.employee.lastName}">John Doe</strong>
+                                    <br>
+                                    <small th:text="'EMP-' + ${request.employee.employeeId}">EMP-001</small>
+                                </td>
+                                <td>
+                                    <span class="leave-type-badge" th:text="${request.leaveType.leaveName}">Sick Leave</span>
+                                </td>
+                                <td th:text="${#temporals.format(request.startDate, 'MMM dd, yyyy')}">Feb 20, 2026</td>
+                                <td th:text="${#temporals.format(request.endDate, 'MMM dd, yyyy')}">Feb 21, 2026</td>
+                                <td>
+                                    <strong th:text="${request.totalDays} + ' days'">2 days</strong>
+                                </td>
+                                <td th:text="${request.reason}">Medical appointment</td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${request.status == 'Approved' ? 'status-approved' : 
+                                                          (request.status == 'Rejected' ? 'status-rejected' : 'status-pending')}"
+                                          th:text="${request.status}">Pending</span>
+                                </td>
+                                <td th:text="${#temporals.format(request.requestedDate, 'MMM dd, yyyy')}">Feb 19, 2026</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script src="/js/leave.js"></script>
+</body>
+</html>

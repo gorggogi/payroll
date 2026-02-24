@@ -1,11 +1,17 @@
 package digital8.payroll.entities;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
+
+import jakarta.persistence.Transient;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table (name="leaveRequests")
@@ -16,11 +22,13 @@ public class LeaveRequests{
     @Column (nullable = false, unique = true)
     private Integer leaveRequestId;
 
-    @Column (nullable = false, unique = false)
-    private Integer employeeId;
+    @ManyToOne (fetch = FetchType.EAGER)
+    @JoinColumn (name = "employeeId", nullable = false)
+    private Employees employee; 
 
-    @Column (nullable = false, unique = false)
-    private Integer leaveTypeId;
+    @ManyToOne (fetch = FetchType.EAGER)
+    @JoinColumn (name = "leaveTypeId", nullable = false)
+    private LeaveTypes leaveType;
 
     @Column (nullable = false, unique = false)
     private LocalDate startDate;
@@ -28,12 +36,34 @@ public class LeaveRequests{
     @Column (nullable = false, unique = false)
     private LocalDate endDate;
 
+    @Column (nullable = false, length = 500)
+    private String reason;
+
     @Column (nullable = false, unique = false)
     private String status;
 
-    @Column (nullable = false, unique = false)
+    @Column (nullable = true, unique = false)
     private Integer approved_by;
 
+    @Column (nullable = false, unique = false)
+    private LocalDate requestedDate;
+
+    @Transient
+    public Integer getTotalDays() {
+        if (startDate != null && endDate != null){
+            return (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
+        }
+
+        return 0;
+    }
+
+    public Employees getEmployee() {
+        return employee;
+    }
+
+    public void setEmployee(Employees employee) {
+        this.employee = employee;
+    }
     public Integer getLeaveRequestId() {
         return leaveRequestId;
     }
@@ -42,20 +72,12 @@ public class LeaveRequests{
         this.leaveRequestId = leaveRequestId;
     }
 
-    public Integer getEmployeeId() {
-        return employeeId;
+    public LeaveTypes getLeaveType() {
+        return leaveType;
     }
 
-    public void setEmployeeId(Integer employeeId) {
-        this.employeeId = employeeId;
-    }
-
-    public Integer getLeaveTypeId() {
-        return leaveTypeId;
-    }
-
-    public void setLeaveTypeId(Integer leaveTypeId) {
-        this.leaveTypeId = leaveTypeId;
+    public void setLeaveType(LeaveTypes leaveType) {
+        this.leaveType = leaveType;
     }
 
     public LocalDate getStartDate() {
@@ -74,6 +96,14 @@ public class LeaveRequests{
         this.endDate = endDate;
     }
 
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
     public String getStatus() {
         return status;
     }
@@ -88,6 +118,14 @@ public class LeaveRequests{
 
     public void setApproved_by(Integer approved_by) {
         this.approved_by = approved_by;
+    }
+
+    public LocalDate getRequestedDate() {
+        return requestedDate;
+    }
+
+    public void setRequestedDate(LocalDate requestedDate) {
+        this.requestedDate = requestedDate;
     }
 
 }
