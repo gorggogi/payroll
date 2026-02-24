@@ -41,15 +41,9 @@ section div {
     justify-content: space-between;
 }
 
-section .head p {
-    display: flex;
-    font-size: var(--font-size-300);
-    gap: 2rem;
-    align-items: center;
-}
-
 section .head p i {
     font-size: 2rem;
+    
     margin-right: 0;
 }
 

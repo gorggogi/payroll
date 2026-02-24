@@ -1,8 +1,3 @@
-section .head {
-    display: block;
-}
-
-
 .attendanceTable{
     width: 100%;
     margin-top: 1rem;
