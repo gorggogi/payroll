@@ -1,8 +1,79 @@
 /* Leave Management - Basic Layout with Borders */
 
-.leave-card {
+.leave-pending, .leave-requests {
     padding: 20px;
     margin-bottom: 20px;
+    border: 1px solid #ddd;
+}
+
+.leave-pending, .request-header, .employee-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.leave-pending h2 {
+    margin-bottom: 1rem;
+}
+
+.leave-type-badge {
+    color: white;
+    background-color: red;
+    padding: .25rem .75rem;
+    border-radius: 3rem;
+    text-align: center;
+    width: fit-content;
+}
+
+.request-details{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.request-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.leave-requests {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 30px;
+}
+
+.leave-requests h2 {
+    margin-bottom: 0;
+    flex: 0 0 auto;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 0;
+    border-bottom: 1px solid #ddd;
+    flex: 1;
+}
+
+.filter-tabs a {
+    padding: 10px 15px;
+}
+
+.table-container {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.leave-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leave-table th,
+.leave-table td {
+    padding: 10px;
+    text-align: left;
     border: 1px solid #ddd;
 }
 
@@ -53,18 +124,6 @@
     border: 1px solid #ddd;
 }
 
-.leave-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.leave-table th,
-.leave-table td {
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
-
 .pending-requests {
     display: flex;
     flex-direction: column;
@@ -76,28 +135,9 @@
     border: 1px solid #ddd;
 }
 
-.request-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #ddd;
-}
-
 .request-actions {
     display: flex;
     gap: 10px;
-}
-
-.filter-tabs {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid #ddd;
-}
-
-.filter-tabs a {
-    padding: 10px 15px;
 }
 
 .no-data {
@@ -112,5 +152,17 @@
     }
     .request-header {
         flex-direction: column;
+    }
+    .leave-requests {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .leave-requests h2 {
+        width: 100%;
+    }
+    .filter-tabs {
+        width: 100%;
+        flex-wrap: wrap;
     }
 }
