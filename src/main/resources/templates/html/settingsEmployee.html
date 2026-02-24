@@ -34,8 +34,15 @@
                 </p>
             </div>
             
+            <div th:if="${successMessage}" class="alert-success">
+                <p th:text="${successMessage}"></p>
+            </div>
+            <div th:if="${errorMessage}" class="alert-error">
+                <p th:text="${errorMessage}"></p>
+            </div>
+
             <div class="settings-card">
-                <h2>Profile Information</h2>
+                <h2>Profile</h2>
                 <table>
                     <tr>
                         <td><strong>Employee ID:</strong></td>
@@ -63,17 +70,9 @@
                     </tr>
                 </table>
             </div>
-            
+
             <div class="settings-card">
                 <h2>Change Password</h2>
-                
-                <div th:if="${successMessage}" class="alert-success">
-                    <p th:text="${successMessage}"></p>
-                </div>
-                <div th:if="${errorMessage}" class="alert-error">
-                    <p th:text="${errorMessage}"></p>
-                </div>
-                
                 <form action="/employee/settings/change-password" method="POST" onsubmit="return validatePasswordForm()">
                     <div>
                         <label for="currentPassword">Current Password:</label>

@@ -127,6 +127,7 @@ public class EmployeeService {
         if (updated.getMiddleName() != null) existing.setMiddleName(updated.getMiddleName());
         if (updated.getLastName() != null) existing.setLastName(updated.getLastName());
         if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
+        if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
         if (updated.getDateHired() != null) existing.setDateHired(updated.getDateHired());
@@ -152,6 +153,13 @@ public class EmployeeService {
 
         Employees saved = employeeRepository.save(existing);
         return Optional.of(saved);
+    }
+
+    /** True if another employee (not excludeEmployeeId) has this employeeNumber. */
+    public boolean isEmployeeNumberTakenByOther(String employeeNumber, Integer excludeEmployeeId) {
+        if (employeeNumber == null || employeeNumber.isBlank()) return false;
+        Employees other = employeeRepository.findByEmployeeNumber(employeeNumber.trim());
+        return other != null && !other.getEmployeeId().equals(excludeEmployeeId);
     }
 }
 
