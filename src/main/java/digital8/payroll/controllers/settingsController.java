@@ -51,6 +51,7 @@ public class settingsController {
 
             if (emp != null){
                 model.addAttribute("employee", emp);
+                model.addAttribute("emp_id", emp.getEmployeeId());
                 model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName());
                 model.addAttribute("user", user);
             }
