@@ -38,6 +38,7 @@
         </div>
 
         <form method="get" th:action="${attendanceFormAction}" id="attendanceFilterForm" class="attendance-filter">
+            <input type="hidden" name="empId" th:value="${viewingEmployeeId}" th:if="${viewingEmployeeId != null}" />
             <label for="month">Month</label>
             <select name="month" id="month" onchange="this.form.submit()">
                 <option value="1" th:selected="${selectedMonth == 1}">January</option>

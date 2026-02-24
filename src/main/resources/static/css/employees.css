@@ -166,6 +166,11 @@ section .buttons {
     color: #155724;
 }
 
+.employee-status.status-terminated {
+    background: #f8d7da;
+    color: #721c24;
+}
+
 .employee-details strong {
     color: #333;
 }
@@ -452,6 +457,44 @@ section{
     cursor: pointer;
     color: #444;
 }
+
+.btn-view-attendance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 14px;
+    background: #17a2b8;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.btn-view-attendance:hover { color: white; background: #138496; }
+.btn-reset-pw {
+    padding: 8px 14px;
+    font-size: 14px;
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-reset-pw:hover { background: #5a6268; }
+
+.card-link-attendance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #17a2b8;
+    text-decoration: none;
+}
+.card-link-attendance:hover { text-decoration: underline; color: #138496; }
 
 
 /* small screens adjustments */

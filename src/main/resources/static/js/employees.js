@@ -155,9 +155,8 @@ function displayEmployees(employees) {
             <div class="employee-card" data-id="${emp.employeeId}" onclick="showEmployee(${emp.employeeId})">
                 <div class="employee-header">
                     <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
-                    <span class="employee-status">${emp.employmentStatus}</span>
+                    <span class="employee-status ${(emp.employmentStatus || '') === 'Terminated' ? 'status-terminated' : ''}">${emp.employmentStatus}</span>
                 </div>
-                
                 <div class="employee-details">
                     <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
                     <p><strong>Email:</strong> ${emp.email || 'N/A'}</p>
@@ -167,6 +166,7 @@ function displayEmployees(employees) {
                     <p><strong>Type:</strong> ${emp.employmentType}</p>
                     <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
                     <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
+                    <a href="/admin/attendance?empId=${emp.employeeId}" class="card-link-attendance" onclick="event.stopPropagation()" title="View attendance"><i class="fa-solid fa-calendar-check"></i> View attendance</a>
                 </div>
             </div>
     `).join('');
@@ -226,7 +226,12 @@ function renderEmployeeDetail(emp) {
                     <label>Address: <input name="address" value="${emp.address || ''}" /></label>
                     <label>Employment Status: <input name="employmentStatus" value="${emp.employmentStatus || ''}" /></label>
                     <label>Employment Type: <input name="employmentType" value="${emp.employmentType || ''}" /></label>
-                    <label>Pay Type: <input name="payType" value="${emp.payType || ''}" /></label>
+                    <label>Pay Type: <select name="payType">
+                        <option value="monthly" ${(emp.payType || '').toLowerCase() === 'monthly' ? 'selected' : ''}>Monthly</option>
+                        <option value="biweekly" ${(emp.payType || '').toLowerCase() === 'biweekly' ? 'selected' : ''}>Biweekly</option>
+                        <option value="daily" ${(emp.payType || '').toLowerCase() === 'daily' ? 'selected' : ''}>Daily</option>
+                        <option value="hourly" ${(emp.payType || '').toLowerCase() === 'hourly' ? 'selected' : ''}>Hourly</option>
+                    </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
                     <label>Department: <select name="departmentId">
                         <option value="">-- Select Department --</option>
@@ -242,6 +247,8 @@ function renderEmployeeDetail(emp) {
                     <label>Pagibig: <input name="pagibigNumber" value="${emp.pagibigNumber || ''}" /></label>
                     <label>Bank Account: <input name="bank_Account" value="${emp.bank_Account || ''}" /></label>
                     <div class="form-actions">
+                        <a href="/admin/attendance?empId=${emp.employeeId}" class="btn-view-attendance" target="_blank"><i class="fa-solid fa-calendar-check"></i> View Attendance</a>
+                        <button type="button" id="resetPasswordBtn" class="btn-reset-pw"><i class="fa-solid fa-key"></i> Reset Password</button>
                         <button type="button" id="saveEmployeeBtn">Save</button>
                     </div>
                 </form>
@@ -252,6 +259,7 @@ function renderEmployeeDetail(emp) {
 
         document.getElementById('closeEmployeeModal').addEventListener('click', closeEmployeeModal);
         document.getElementById('saveEmployeeBtn').addEventListener('click', function() { saveEmployee(emp.employeeId); });
+        document.getElementById('resetPasswordBtn').addEventListener('click', function() { resetEmployeePassword(emp.employeeId, emp.firstName + ' ' + emp.lastName); });
     })
     .catch(err => {
         alert('Error loading data for form: ' + err.message);
@@ -261,6 +269,36 @@ function renderEmployeeDetail(emp) {
 function closeEmployeeModal() {
     const m = document.getElementById('employeeModal');
     if (m) m.remove();
+}
+
+function resetEmployeePassword(employeeId, employeeName) {
+    var newPassword = prompt('Enter new password for ' + employeeName + ' (min 6 characters):');
+    if (newPassword === null) return;
+    if (newPassword.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+    }
+    var confirmPassword = prompt('Confirm new password:');
+    if (confirmPassword !== newPassword) {
+        alert('Passwords do not match.');
+        return;
+    }
+    fetch('/admin/api/employees/' + employeeId + '/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword: newPassword })
+    })
+    .then(function(res) {
+        if (res.ok) return res.json();
+        if (res.status === 404) throw new Error('User account not found for this employee.');
+        return res.json().then(function(data) { throw new Error(data.error || 'Failed to reset password'); });
+    })
+    .then(function() {
+        alert('Password reset successfully.');
+    })
+    .catch(function(err) {
+        alert(err.message || 'Error resetting password');
+    });
 }
 
 function saveEmployee(employeeId) {

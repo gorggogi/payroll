@@ -4,7 +4,9 @@ import digital8.payroll.entities.Attendance;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.AttendanceRepository;
+import digital8.payroll.repositories.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,10 +28,14 @@ public class attendanceController {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     @GetMapping({"/employee/attendance", "/admin/attendance"})
     public String attendancePage(
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer empId,
             HttpServletRequest request,
             Model model,
             Authentication authentication) {
@@ -47,29 +53,40 @@ public class attendanceController {
         for (int y = currentYear - 5; y <= currentYear + 2; y++) years.add(y);
         model.addAttribute("years", years);
 
-        Object principal = authentication != null ? authentication.getPrincipal() : null;
-        if (principal instanceof Users) {
-            Users user = (Users) principal;
-            Employees emp = user.getEmployee();
-            if (emp != null) {
-                Integer empId = emp.getEmployeeId();
-                List<Attendance> all = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
-                List<Attendance> filtered = all.stream()
-                        .filter(a -> a.getAttendance_date() != null
-                                && a.getAttendance_date().getMonthValue() == selectedMonth
-                                && a.getAttendance_date().getYear() == selectedYear)
-                        .collect(Collectors.toList());
-                model.addAttribute("attendances", filtered);
-                model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName());
-                model.addAttribute("emp_id", empId);
-                model.addAttribute("emp_payType", emp.getPayType());
+        boolean isAdmin = authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        Integer targetEmpId = null;
+        Employees targetEmp = null;
 
-                BigDecimal total = filtered.stream()
-                        .map(Attendance::getWork_hours)
-                        .filter(h -> h != null)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-                model.addAttribute("totalHoursRendered", total);
+        if (isAdmin && empId != null && request.getRequestURI().startsWith("/admin")) {
+            targetEmpId = empId;
+            targetEmp = employeeRepository.findById(empId).orElse(null);
+            model.addAttribute("viewingEmployeeId", empId);
+        }
+        if (targetEmp == null) {
+            Object principal = authentication != null ? authentication.getPrincipal() : null;
+            if (principal instanceof Users) {
+                Users user = (Users) principal;
+                targetEmp = user.getEmployee();
+                if (targetEmp != null) targetEmpId = targetEmp.getEmployeeId();
             }
+        }
+
+        if (targetEmpId != null && targetEmp != null) {
+            List<Attendance> all = attendanceRepository.findByEmployeeIdOrderByDateDesc(targetEmpId);
+            List<Attendance> filtered = all.stream()
+                    .filter(a -> a.getAttendance_date() != null
+                            && a.getAttendance_date().getMonthValue() == selectedMonth
+                            && a.getAttendance_date().getYear() == selectedYear)
+                    .collect(Collectors.toList());
+            model.addAttribute("attendances", filtered);
+            model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
+            model.addAttribute("emp_id", targetEmpId);
+            model.addAttribute("emp_payType", targetEmp.getPayType());
+            BigDecimal total = filtered.stream()
+                    .map(Attendance::getWork_hours)
+                    .filter(h -> h != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            model.addAttribute("totalHoursRendered", total);
         }
         if (!model.containsAttribute("attendances")) {
             model.addAttribute("attendances", List.<Attendance>of());

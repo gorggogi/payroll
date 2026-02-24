@@ -14,7 +14,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.repositories.PayrollItemsRepository;
-import digital8.payroll.entities.Users;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.services.PayrollService;
 
