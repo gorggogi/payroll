@@ -65,9 +65,9 @@
                 <table class="attendanceTable payslip-table">
                     <caption>Payslip</caption>
                     <thead>
-                        <tr><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr>
+                        <tr class="attendanceHeader"><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr>
                     </thead>
-                    <tbody th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
+                    <tbody class="attendanceBody" th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
                         <tr><td>Basic Pay</td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Overtime Pay</td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Holiday Pay</td><td th:text="${item.holidayPay != null ? #numbers.formatDecimal(item.holidayPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>

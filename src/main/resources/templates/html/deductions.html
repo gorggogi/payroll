@@ -40,13 +40,13 @@
                 </div>
                 <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">
                     <thead>
-                        <tr>
+                        <tr class="attendanceHeader">
                             <th sec:authorize="hasRole('ADMIN')">Employee</th>
                             <th>Deduction</th><th>Amount</th><th>Recurring</th><th>Start</th><th>End</th>
                             <th sec:authorize="hasRole('ADMIN')"></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="attendanceBody">
                         <tr th:each="row : ${assignmentRows}">
                             <td sec:authorize="hasRole('ADMIN')" th:text="${row.employeeName}"></td>
                             <td th:text="${row.deductionName}"></td>
