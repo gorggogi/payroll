@@ -27,6 +27,7 @@ public class Users{
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name ="employeeId", nullable = false) 
+    @JsonIgnoreProperties ({"user"})
     private Employees employee;
 
     // @Column (nullable = false, unique = false)
@@ -49,7 +50,7 @@ public class Users{
     @Column (nullable = false, unique = false)
     private Boolean isActive;
 
-    @Column (nullable = false, unique = false)
+    @Column (nullable = true, unique = false)
     private LocalDateTime lastLogin;
 
     @Column (nullable = false, unique = false)
@@ -87,7 +88,7 @@ public class Users{
     }
 
     public String getEmail() {
-        return email;
+    return email;
     }
 
     public void setEmail(String email) {
