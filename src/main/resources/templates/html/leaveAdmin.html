@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
     <link rel="stylesheet" href="/css/leave.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
 </head>
 <body>
@@ -20,11 +22,13 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <a href="/admin/home"><li>Home</li></a>
-                <a href="/admin/employees"><li>Employees</li></a>
-                <a href="/admin/leave"><li class="active">Leave</li></a>
-                <a href="/admin/payroll"><li>Payroll</li></a>
-                <a href="/admin/settings"><li>Settings</li></a>
+                <a href="/admin/home"><li class="active"><i class="fa-solid fa-house"></i>Home</li></a>
+                <a href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
+                <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
+                <a href="/admin/deductions"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
+                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
+                <a href="/admin/leave"><li><i class="fa-solid fa-calendar"></i>Leave</li></a>
+                <a href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
             <a href="/logout" class="logout">Logout</a>
@@ -37,7 +41,7 @@
             </div>
             
             <!-- Pending approvals Card -->
-            <div class="leave-card">
+            <div class="leave-pending">
                 <h2>Pending approvals 
                 <span class="badge-count" th:text="'(' + ${pendingCount} + ')'">( 3)</span>
                 </h2>
@@ -99,7 +103,7 @@
             </div>
             
             <!-- All Leave Requests Card -->
-            <div class="leave-card">
+            <div class="leave-requests">
                 <h2>All Leave Requests</h2>
                 
                 <!-- Filter Tabs -->
