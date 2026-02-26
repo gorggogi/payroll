@@ -32,11 +32,8 @@
 
         <section>
             <div class="head">
-                <h1>Payroll</h1>
-                <p>
-                    Hello, <span th:text="${employeeName}">Employee</span>!
-                    <i class="fa-solid fa-circle-user"></i>
-                </p>
+                <h1>Payroll of <span th:text="${employeeName}">User</span></h1>
+                
             </div>
 
             <form th:action="@{/payroll/{id}(id=${emp_id})}" method="get" class="payroll-filters">
