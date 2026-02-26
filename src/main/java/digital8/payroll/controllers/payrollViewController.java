@@ -14,17 +14,17 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.dto.DeductionBreakdownItem;
-import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.repositories.PayrollItemsRepository;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.services.PayrollService;
+import digital8.payroll.services.EmployeeService;
 
 @Controller
 @RequestMapping("/payroll")
 public class payrollViewController {
 
     @Autowired
-    private UsersRepository usersRepository;
+    private EmployeeService employeeService;
     @Autowired
     private PayrollService payrollService;
     @Autowired
@@ -39,14 +39,10 @@ public class payrollViewController {
             Principal principal) {
         model.addAttribute("emp_id", empId);
 
-        if (principal != null) {
-            String email = principal.getName();
-            usersRepository.findByEmail(email).ifPresent(u -> {
-                if (u.getEmployee() != null) {
-                    String fullName = u.getEmployee().getFirstName() + " " + u.getEmployee().getLastName();
-                    model.addAttribute("employeeName", fullName);
-                }
-            });
+        employeeService.getEmployeeById(empId).ifPresent(emp ->
+                model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName()));
+        if (!model.containsAttribute("employeeName")) {
+            model.addAttribute("employeeName", "Employee");
         }
 
         String monthName = (month != null && !month.isBlank()) ? month : Month.of(java.time.LocalDate.now().getMonthValue()).name();
