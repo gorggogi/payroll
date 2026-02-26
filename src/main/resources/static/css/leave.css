@@ -1,98 +1,276 @@
-/* Leave Management - Basic Layout with Borders */
+/* Leave Management - Responsive Layout */
 
-.leave-pending, .leave-requests {
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
+/* ==================== ROOT VARIABLES & GLOBAL ==================== */
+:root {
+    --primary-border: 1px solid #ddd;
+    --padding-mobile: 15px;
+    --padding-desktop: 20px;
+    --gap-small: 10px;
+    --gap-medium: 15px;
+    --gap-large: 20px;
 }
 
-.leave-pending, .request-header, .employee-info {
+* {
+    box-sizing: border-box;
+}
+
+/* ==================== PENDING APPROVALS SECTION ==================== */
+.leave-pending, .leave-card {
+    margin-bottom: 3rem;
     display: flex;
     flex-direction: column;
 }
 
 .leave-pending h2 {
     margin-bottom: 1rem;
+    margin-top: 0;
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
 }
 
-.leave-type-badge {
+.request-actions {
+    gap: .5rem;
+}
+
+.request-actions button {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.request-actions button i {
+    margin: 0;
+}
+
+.request-actions button:hover {
+    transform: translateY(-6px);
+}
+
+.request-actions .btn-approve {
+    background-color: green;
+    border: none;
     color: white;
+}
+
+.request-actions .btn-approve:hover {
+    background-color: darkgreen;
+}
+
+.request-actions .btn-reject {
     background-color: red;
-    padding: .25rem .75rem;
+    border: none;
+    color: white;
+}
+
+.request-actions .btn-reject:hover {
+    background-color: darkred;
+}
+
+.pending-requests {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap-medium);
+    overflow-x: auto;
+    overflow: hidden;
+}
+
+.request-card {
+    padding: var(--padding-desktop);
+    border: var(--primary-border);
+    border-radius: .75rem;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-medium);
+}
+
+.request-card .leave-type-badge {
+    background: var(--secondary-color);
+    color: white;
+    line-height: 100%;
+    padding: 0.25rem 0.75rem;
     border-radius: 3rem;
     text-align: center;
     width: fit-content;
-}
-
-.request-details{
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    height: fit-content;
 }
 
 .request-header {
     display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    flex-direction: row;
+    gap: var(--gap-medium);
+    width: 100%;
 }
 
+.employee-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.leave-type-badge {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.request-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-medium);
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detail-item strong {
+    font-size: 0.95rem;
+}
+
+.request-actions {
+    display: flex;
+    justify-content: right;
+}
+
+.request-actions i {
+    display: flex;
+    justify-content: center;
+}
+
+/* ==================== ALL REQUESTS SECTION ==================== */
 .leave-requests {
+    margin-bottom: var(--padding-desktop);
+    background-color: #fff;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 30px;
+    gap: var(--gap-medium);
 }
 
 .leave-requests h2 {
     margin-bottom: 0;
-    flex: 0 0 auto;
+    flex: 0 0 100%;
+    font-size: clamp(1.25rem, 4vw, 1.75rem);
 }
 
 .filter-tabs {
     display: flex;
-    gap: 5px;
-    margin-bottom: 0;
-    border-bottom: 1px solid #ddd;
-    flex: 1;
+    gap: .5rem;
 }
 
 .filter-tabs a {
-    padding: 10px 15px;
+    height: fit-content;
+    width: fit-content;
+    padding: 0.25rem 0.75rem;
+    text-align: center;
+    border-radius: 3rem;
+    transition: all 0.2s ease;
+}
+
+.filter-tabs a.active {
+    background: none !important;
+    border: black solid 1px !important;
+    color: black !important;
+    height: fit-content;
+    width: fit-content;
+}
+
+.filter-tabs #all-tab {
+    background-color: black;
+    color: white;
+    height: fit-content;
+    width: fit-content;
+}
+
+.filter-tabs #pending-tab {
+    background-color: orange;
+    color: white;
+    height: fit-content;
+    width: fit-content;
+}
+
+.filter-tabs #approved-tab {
+    background-color: green;
+    color: white;
+    height: fit-content;
+    width: fit-content;
+}
+
+.filter-tabs #rejected-tab {
+    background-color: red;
+    color: white;
+    height: fit-content;
+    width: fit-content;
+}
+
+.filter-tabs a:hover {
+    transform: translateY(-6px);
 }
 
 .table-container {
     width: 100%;
-    margin-top: 20px;
+    overflow-x: auto;
 }
 
 .leave-table {
     width: 100%;
     border-collapse: collapse;
+    background-color: #fff;
+}
+
+.leave-table .leave-type-badge{
+    background: none;
+    color: black;
 }
 
 .leave-table th,
 .leave-table td {
-    padding: 10px;
+    padding: 12px;
     text-align: left;
-    border: 1px solid #ddd;
+    border: var(--primary-border);
 }
 
+.leave-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.leave-table td {
+    font-size: 0.925rem;
+}
+
+/* ==================== BALANCE SECTION ==================== */
 .balance-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--gap-medium);
 }
 
 .balance-item {
-    padding: 15px;
-    border: 1px solid #ddd;
+    padding: var(--padding-desktop);
+    border: var(--primary-border);
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    transition: box-shadow 0.2s ease;
 }
 
+.balance-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* ==================== FORM SECTION ==================== */
 .form-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-    margin-bottom: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--gap-medium);
+    margin-bottom: var(--gap-medium);
 }
 
 .form-group {
@@ -102,67 +280,69 @@
 
 .form-group label {
     margin-bottom: 5px;
+    font-weight: 500;
+    font-size: 0.95rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 8px;
-    border: 1px solid #ddd;
+    padding: 10px;
+    border: var(--primary-border);
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
 
 .form-actions {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: var(--gap-small);
+    margin-top: var(--gap-medium);
 }
 
 .btn-primary,
 .btn-secondary,
 .btn-approve,
 .btn-reject {
-    padding: 10px 20px;
-    border: 1px solid #ddd;
+    padding: 10px 18px;
+    border: var(--primary-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-size: 0.95rem;
 }
 
-.pending-requests {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+.btn-primary:hover {
+    background-color: #e0e0e0;
 }
 
-.request-card {
-    padding: 15px;
-    border: 1px solid #ddd;
+.btn-secondary:hover {
+    background-color: #f0f0f0;
 }
 
-.request-actions {
-    display: flex;
-    gap: 10px;
-}
-
+/* ==================== UTILITY CLASSES ==================== */
 .no-data {
     text-align: center;
-    padding: 40px;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 1.05rem;
 }
 
-@media (max-width: 768px) {
-    .balance-grid,
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    .request-header {
-        flex-direction: column;
-    }
-    .leave-requests {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    .leave-requests h2 {
-        width: 100%;
-    }
-    .filter-tabs {
-        width: 100%;
-        flex-wrap: wrap;
-    }
+/* ==================== LEAVE CARD - EMP LEAVE ==================== */
+
+.leave-card h2 {
+    margin-bottom: 1rem;
+    margin-top: 0;
 }

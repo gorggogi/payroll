@@ -21,12 +21,12 @@
         <nav>
             <ul>
                 <h1>Payroll System</h1>
-                <a href="/admin/home"><li class="active"><i class="fa-solid fa-house"></i>Home</li></a>
+                <a href="/admin/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
                 <a href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
                 <a href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
                 <a href="/admin/deductions"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
-                <a href="/admin/leave"><li><i class="fa-solid fa-calendar"></i>Leave</li></a>
+                <a href="/admin/leave"><li class="active"><i class="fa-solid fa-calendar"></i>Leave</li></a>
                 <a href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
             
@@ -90,11 +90,11 @@
                         
                         <div class="request-actions">
                             <form th:action="@{/admin/leave/approve/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn-approve">Approve</button>
+                                <button type="submit" class="btn-approve"><i class="fas fa-check"></i></button>
                             </form>
                             
                             <form th:action="@{/admin/leave/reject/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn-reject">Reject</button>
+                                <button type="submit" class="btn-reject"><i class="fas fa-times"></i></button>
                             </form>
                         </div>
                     </div>
@@ -107,19 +107,19 @@
                 
                 <!-- Filter Tabs -->
                 <div class="filter-tabs">
-                    <a th:href="@{/admin/leave}" 
+                    <a id="all-tab" th:href="@{/admin/leave}" 
                        th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
                         All
                     </a>
-                    <a th:href="@{/admin/leave(filter='pending')}" 
+                    <a id="pending-tab" th:href="@{/admin/leave(filter='pending')}" 
                        th:classappend="${filter == 'pending' ? 'active' : ''}">
                         Pending
                     </a>
-                    <a th:href="@{/admin/leave(filter='approved')}" 
+                    <a id="approved-tab" th:href="@{/admin/leave(filter='approved')}" 
                        th:classappend="${filter == 'approved' ? 'active' : ''}">
                         Approved
                     </a>
-                    <a th:href="@{/admin/leave(filter='rejected')}" 
+                    <a id="rejected-tab" th:href="@{/admin/leave(filter='rejected')}" 
                        th:classappend="${filter == 'rejected' ? 'active' : ''}">
                         Rejected
                     </a>
