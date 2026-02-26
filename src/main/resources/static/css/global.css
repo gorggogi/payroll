@@ -136,3 +136,33 @@ i {
 h2 {
   font-size: 1.25rem !important;
 }
+
+/* ==================== BUTTON AND INPUT STYLES ==================== */
+
+.head #searchInput, .leave-requests input, .deduction-search-form input {
+    padding: .65rem .8rem;
+    border: 1px solid var(--tertiary-color);
+    border-radius: .5rem;
+    font-size: var(--font-size-300);
+    height: 2.5rem;
+}
+
+.head .buttons button, .section-head button, .deduction-search-form button, .leave-search-form button {
+    padding: .65rem .8rem;
+    font-size: .85rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: .5rem;
+    cursor: pointer;
+    height: 2.5rem;
+}
+
+select {
+    padding: .65rem .8rem;
+    background-color: var(--primary-light);
+    border-radius: .5rem;
+    border: none;
+    font-size: .85rem;
+    height: 2.5rem;;
+}
