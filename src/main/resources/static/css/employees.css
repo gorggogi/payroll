@@ -67,9 +67,10 @@ section .buttons {
 
 #employeeContainer {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    align-items: start;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    overflow-x: auto;
+    overflow: hidden;
 }
 
 .employee-card:hover {

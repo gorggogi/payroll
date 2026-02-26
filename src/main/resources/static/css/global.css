@@ -139,7 +139,7 @@ h2 {
 
 /* ==================== BUTTON AND INPUT STYLES ==================== */
 
-.head #searchInput, .leave-requests input, .deduction-search-form input {
+input {
     padding: .65rem .8rem;
     border: 1px solid var(--tertiary-color);
     border-radius: .5rem;
@@ -147,7 +147,7 @@ h2 {
     height: 2.5rem;
 }
 
-.head .buttons button, .section-head button, .deduction-search-form button, .leave-search-form button {
+button {
     padding: .65rem .8rem;
     font-size: .85rem;
     background-color: var(--secondary-color);
@@ -158,6 +158,12 @@ h2 {
     height: 2.5rem;
 }
 
+button:hover {
+    background-color: var(--primary-light);
+    color: black;
+    transition: .3s;
+}
+
 select {
     padding: .65rem .8rem;
     background-color: var(--primary-light);
@@ -165,4 +171,9 @@ select {
     border: none;
     font-size: .85rem;
     height: 2.5rem;;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
 }

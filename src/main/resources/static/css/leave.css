@@ -74,7 +74,7 @@
 .pending-requests {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: var(--gap-medium);
+    gap: 1rem;
     overflow-x: auto;
     overflow: hidden;
 }
@@ -336,28 +336,6 @@
     margin-top: var(--gap-medium);
 }
 
-.btn-primary,
-.btn-secondary,
-.btn-approve,
-.btn-reject {
-    padding: 10px 18px;
-    border: var(--primary-border);
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-    font-size: 0.95rem;
-}
-
-.btn-primary:hover {
-    background-color: #e0e0e0;
-}
-
-.btn-secondary:hover {
-    background-color: #f0f0f0;
-}
-
 /* ==================== UTILITY CLASSES ==================== */
 .no-data {
     text-align: center;
@@ -371,4 +349,16 @@
 .leave-card h2 {
     margin-bottom: 1rem;
     margin-top: 0;
+}
+
+.leave-card form {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+.leave-card .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: .5rem;
 }
