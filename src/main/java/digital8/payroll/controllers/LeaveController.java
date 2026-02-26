@@ -24,6 +24,7 @@ public class LeaveController {
         Integer employeeId = user.getEmployee().getEmployeeId();
         String employeeName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
 
+        model.addAttribute("emp_id", employeeId);
         model.addAttribute("employeeName", employeeName);
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
