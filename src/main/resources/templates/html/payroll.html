@@ -23,7 +23,8 @@
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li class="active"><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
-                <a href="/admin/leave"><li><i class="fa-regular fa-calendar-minus"></i>Leave</li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}"><li><i class="fa-solid fa-minus-circle"></i>Leave</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/leave}"><li><i class="fa-solid fa-minus-circle"></i>Leave</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
