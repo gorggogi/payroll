@@ -136,3 +136,44 @@ i {
 h2 {
   font-size: 1.25rem !important;
 }
+
+/* ==================== BUTTON AND INPUT STYLES ==================== */
+
+input {
+    padding: .65rem .8rem;
+    border: 1px solid var(--tertiary-color);
+    border-radius: .5rem;
+    font-size: var(--font-size-300);
+    height: 2.5rem;
+}
+
+button {
+    padding: .65rem .8rem;
+    font-size: .85rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: .5rem;
+    cursor: pointer;
+    height: 2.5rem;
+}
+
+button:hover {
+    background-color: var(--primary-light);
+    color: black;
+    transition: .3s;
+}
+
+select {
+    padding: .65rem .8rem;
+    background-color: var(--primary-light);
+    border-radius: .5rem;
+    border: none;
+    font-size: .85rem;
+    height: 2.5rem;;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+}

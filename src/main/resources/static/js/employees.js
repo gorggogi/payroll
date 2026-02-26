@@ -41,6 +41,10 @@ window.addEventListener('load', function(){
 
     })
 
+    document.getElementById('addEmployee').addEventListener('click', function(){
+        window.location.href = '/admin/employees/add';
+    })
+
 })
 
 document.getElementById('searchButton').addEventListener('click', function(){
