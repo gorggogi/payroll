@@ -92,7 +92,19 @@ public class homeController {
     }
 
     @GetMapping("/admin/employees") 
-    public String employees() {
+    public String employees(Model model, Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users u = (Users) authentication.getPrincipal();
+            if (u.getEmployee() != null) {
+                model.addAttribute("emp_id", u.getEmployee().getEmployeeId());
+            }
+        } else if (authentication != null) {
+            usersRepository.findByEmail(authentication.getName()).ifPresent(u -> {
+                if (u.getEmployee() != null) {
+                    model.addAttribute("emp_id", u.getEmployee().getEmployeeId());
+                }
+            });
+        }
         return "html/employees";
     }
 
