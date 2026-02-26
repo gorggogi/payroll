@@ -58,7 +58,8 @@ public class LeaveController {
     @GetMapping("/admin/leave")
     public String adminLeavePage(
             @RequestParam(required = false) String filter,
-            Model model, Authentication authentication){
+            @RequestParam(required = false) String search,
+            Model model, Authentication authentication) {
         Users user = (Users) authentication.getPrincipal();
         Integer adminId = user.getUserId();
         model.addAttribute("emp_id", adminId);
@@ -66,9 +67,9 @@ public class LeaveController {
         model.addAttribute("employeeName", fullName);
         model.addAttribute("pendingRequests", leaveService.getPendingLeaveRequests());
         model.addAttribute("pendingCount", leaveService.getPendingCount());
-        model.addAttribute("allRequests", leaveService.getAllLeaveRequests(filter));
+        model.addAttribute("allRequests", leaveService.getAllLeaveRequests(filter, search));
         model.addAttribute("filter", filter);
-                
+        model.addAttribute("search", search);
         return "html/leaveAdmin";
     }
 

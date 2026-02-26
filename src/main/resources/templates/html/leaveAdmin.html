@@ -106,21 +106,28 @@
             <div class="leave-requests">
                 <h2>All Leave Requests</h2>
                 
+                <!-- Search bar -->
+                <form th:action="@{/admin/leave}" method="get" class="leave-search-form">
+                    <input type="hidden" name="filter" th:value="${filter}">
+                    <input type="search" name="search" th:value="${search}" placeholder="Search by employee name, leave type, or reason..." class="leave-search-input" aria-label="Search leave requests">
+                    <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                </form>
+                
                 <!-- Filter Tabs -->
                 <div class="filter-tabs">
-                    <a th:href="@{/admin/leave}" 
+                    <a th:href="@{/admin/leave(search=${search})}" 
                        th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
                         All
                     </a>
-                    <a th:href="@{/admin/leave(filter='pending')}" 
+                    <a th:href="@{/admin/leave(filter='pending', search=${search})}" 
                        th:classappend="${filter == 'pending' ? 'active' : ''}">
                         Pending
                     </a>
-                    <a th:href="@{/admin/leave(filter='approved')}" 
+                    <a th:href="@{/admin/leave(filter='approved', search=${search})}" 
                        th:classappend="${filter == 'approved' ? 'active' : ''}">
                         Approved
                     </a>
-                    <a th:href="@{/admin/leave(filter='rejected')}" 
+                    <a th:href="@{/admin/leave(filter='rejected', search=${search})}" 
                        th:classappend="${filter == 'rejected' ? 'active' : ''}">
                         Rejected
                     </a>

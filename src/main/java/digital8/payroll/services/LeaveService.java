@@ -66,8 +66,18 @@ public class LeaveService {
         return leaveRequestRepository.countByStatus("Pending");
     }
 
-    public List<LeaveRequests> getAllLeaveRequests(String filter){
-        if (filter != null && !filter.isEmpty() && !filter.equals("all")){
+    public List<LeaveRequests> getAllLeaveRequests(String filter, String search) {
+        boolean hasSearch = search != null && !search.isBlank();
+        if (hasSearch) {
+            String status = (filter != null && !filter.isEmpty() && !filter.equals("all"))
+                    ? filter.substring(0, 1).toUpperCase() + filter.substring(1)
+                    : null;
+            if (status != null) {
+                return leaveRequestRepository.searchByKeywordAndStatusOrderByRequestedDateDesc(search.trim(), status);
+            }
+            return leaveRequestRepository.searchByKeywordOrderByRequestedDateDesc(search.trim());
+        }
+        if (filter != null && !filter.isEmpty() && !filter.equals("all")) {
             String status = filter.substring(0, 1).toUpperCase() + filter.substring(1);
             return leaveRequestRepository.findByStatusOrderByRequestedDateDesc(status);
         }
