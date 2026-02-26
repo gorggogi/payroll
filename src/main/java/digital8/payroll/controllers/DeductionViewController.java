@@ -13,10 +13,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.dto.EmployeeDeductionRowDto;
@@ -40,7 +43,13 @@ public class DeductionViewController {
     private EmployeeRepository employeeRepository;
 
     @GetMapping
-    public String deductionsPage(Model model, Authentication authentication) {
+    public String deductionsPage(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Integer filterMonth,
+            @RequestParam(required = false) Integer filterYear,
+            @RequestParam(required = false) String filterType,
+            @RequestParam(required = false) String filterRecurring,
+            Model model, Authentication authentication) {
         boolean isAdmin = authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
 
         List<Deductions> types = deductionsRepository.findAllByOrderByDeductionNameAsc();
@@ -70,6 +79,8 @@ public class DeductionViewController {
                 : Map.of();
         Map<Integer, String> deductionNames = types.stream()
                 .collect(Collectors.toMap(Deductions::getDeductionId, Deductions::getDeductionName));
+        Map<Integer, String> deductionTypeMap = types.stream()
+                .collect(Collectors.toMap(Deductions::getDeductionId, Deductions::getDeductionType));
 
         List<EmployeeDeductionRowDto> rows = new ArrayList<>();
         for (EmployeeDeductions ed : assignments) {
@@ -79,6 +90,7 @@ public class DeductionViewController {
             dto.setEmployeeName(employeeNames.getOrDefault(ed.getEmployeeId(), "?"));
             dto.setDeductionId(ed.getDeductionId());
             dto.setDeductionName(deductionNames.getOrDefault(ed.getDeductionId(), "?"));
+            dto.setDeductionType(deductionTypeMap.getOrDefault(ed.getDeductionId(), "?"));
             dto.setAmount(ed.getAmount());
             dto.setRecurring(ed.getIsRecurring());
             dto.setStartDate(ed.getStartDate());
@@ -86,9 +98,44 @@ public class DeductionViewController {
             rows.add(dto);
         }
 
+        Stream<EmployeeDeductionRowDto> stream = rows.stream();
+        if (search != null && !search.isBlank()) {
+            String term = search.trim().toLowerCase();
+            stream = stream.filter(r -> (r.getEmployeeName() != null && r.getEmployeeName().toLowerCase().contains(term))
+                    || (r.getDeductionName() != null && r.getDeductionName().toLowerCase().contains(term)));
+        }
+        if (filterType != null && !filterType.isBlank() && !"all".equalsIgnoreCase(filterType)) {
+            String type = filterType.trim();
+            stream = stream.filter(r -> type.equals(deductionTypeMap.get(r.getDeductionId())));
+        }
+        if (filterRecurring != null && !filterRecurring.isBlank() && !"all".equalsIgnoreCase(filterRecurring)) {
+            boolean recurring = "yes".equalsIgnoreCase(filterRecurring.trim());
+            stream = stream.filter(r -> Boolean.valueOf(recurring).equals(r.getRecurring()));
+        }
+        if (filterMonth != null && filterMonth >= 1 && filterMonth <= 12) {
+            stream = stream.filter(r -> r.getStartDate() != null && r.getStartDate().getMonthValue() == filterMonth);
+        }
+        if (filterYear != null) {
+            stream = stream.filter(r -> r.getStartDate() != null && r.getStartDate().getYear() == filterYear);
+        }
+        rows = stream.collect(Collectors.toList());
+
+        List<Integer> filterYears = IntStream.rangeClosed(Year.now().getValue() - 5, Year.now().getValue() + 1)
+                .boxed().sorted((a, b) -> Integer.compare(b, a)).toList();
+        List<String> filterMonthNames = List.of("January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December");
+
         model.addAttribute("deductionTypes", isAdmin ? types : List.of());
         model.addAttribute("assignmentRows", rows);
         model.addAttribute("employees", employees);
+        model.addAttribute("search", search);
+        model.addAttribute("filterMonth", filterMonth);
+        model.addAttribute("filterYear", filterYear);
+        model.addAttribute("filterYears", filterYears);
+        model.addAttribute("filterMonthNames", filterMonthNames);
+        model.addAttribute("filterType", filterType);
+        model.addAttribute("filterRecurring", filterRecurring);
+        model.addAttribute("deductionsFormAction", isAdmin ? "/admin/deductions" : "/employee/deductions");
         return "html/deductions";
     }
 

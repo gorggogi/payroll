@@ -40,11 +40,36 @@
                     <h2><i class="fa-solid fa-user-minus"></i> <span sec:authorize="hasRole('ADMIN')">Employee deductions</span><span sec:authorize="hasRole('EMPLOYEE')">My deductions</span></h2>
                     <button sec:authorize="hasRole('ADMIN')" type="button" class="btn-apply" onclick="openModal('modalAddDeduction')"><i class="fa-solid fa-plus"></i> Add deduction</button>
                 </div>
+                <!-- Search & filter (admin: by employee/deduction name + type + recurring; employee: by deduction name + type + recurring) -->
+                <form th:action="@{${deductionsFormAction}}" method="get" class="deduction-search-form">
+                    <input sec:authorize="hasRole('ADMIN')" type="search" name="search" th:value="${search}" placeholder="Search by employee or deduction name..." class="deduction-search-input" aria-label="Search deductions">
+                    <select name="filterMonth" class="deduction-filter-select" aria-label="Month">
+                        <option value="">Month</option>
+                        <option th:each="m, iterStat : ${filterMonthNames}" th:value="${iterStat.count}" th:text="${m}" th:selected="${filterMonth != null and filterMonth == iterStat.count}"></option>
+                    </select>
+                    <select name="filterYear" class="deduction-filter-select" aria-label="Year">
+                        <option value="">Year</option>
+                        <option th:each="y : ${filterYears}" th:value="${y}" th:text="${y}" th:selected="${filterYear != null and filterYear == y}"></option>
+                    </select>
+                    <select name="filterType" class="deduction-filter-select" aria-label="Filter by type">
+                        <option value="">All types</option>
+                        <option value="Loan" th:selected="${filterType == 'Loan'}">Loan</option>
+                        <option value="Advance" th:selected="${filterType == 'Advance'}">Advance</option>
+                        <option value="Union" th:selected="${filterType == 'Union'}">Union</option>
+                        <option value="Other" th:selected="${filterType == 'Other'}">Other</option>
+                    </select>
+                    <select name="filterRecurring" class="deduction-filter-select" aria-label="Filter by recurring">
+                        <option value="">All</option>
+                        <option value="yes" th:selected="${filterRecurring == 'yes'}">Recurring</option>
+                        <option value="no" th:selected="${filterRecurring == 'no'}">One-time</option>
+                    </select>
+                    <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                </form>
                 <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">
                     <thead>
                         <tr class="attendanceHeader">
                             <th sec:authorize="hasRole('ADMIN')">Employee</th>
-                            <th>Deduction</th><th>Amount</th><th>Recurring</th><th>Start</th><th>End</th>
+                            <th>Deduction</th><th>Type</th><th>Amount</th><th>Recurring</th><th>Start</th><th>End</th>
                             <th sec:authorize="hasRole('ADMIN')"></th>
                         </tr>
                     </thead>
@@ -52,6 +77,7 @@
                         <tr th:each="row : ${assignmentRows}">
                             <td sec:authorize="hasRole('ADMIN')" th:text="${row.employeeName}"></td>
                             <td th:text="${row.deductionName}"></td>
+                            <td th:text="${row.deductionType}"></td>
                             <td th:text="${row.amount != null ? #numbers.formatDecimal(row.amount, 1, 'POINT', 2, 'COMMA') : ''}"></td>
                             <td th:text="${row.recurring ? 'Yes' : 'No'}"></td>
                             <td th:text="${row.startDate}"></td>
@@ -65,6 +91,7 @@
                         </tr>
                     </tbody>
                 </table>
+                <p th:if="${assignmentRows != null and !assignmentRows.isEmpty()}" class="deduction-table-help">Recurring = deducted each pay period between Start and End. In Payroll, pick Year + Month to see deductions for that period.</p>
                 <p sec:authorize="hasRole('ADMIN')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No employee deductions. Click "Add deduction" to assign one.</p>
                 <p sec:authorize="hasRole('EMPLOYEE')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No deductions assigned to you.</p>
             </div>
@@ -124,7 +151,7 @@
                     <input type="number" id="amount" name="amount" required min="0" step="0.01">
                 </div>
                 <div class="form-group">
-                    <label><input type="checkbox" name="isRecurring" value="true" checked> Recurring (every pay period)</label>
+                    <label><input type="checkbox" name="isRecurring" value="true" checked> Recurring (deduct every pay period)</label>
                 </div>
                 <div class="form-group">
                     <label for="startDate">Start date *</label>
@@ -134,6 +161,7 @@
                     <label for="endDate">End date *</label>
                     <input type="date" id="endDate" name="endDate" required>
                 </div>
+                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6‑month loan would use Start = first month, End = 6 months later.</p>
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalAddDeduction')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-link"></i> Assign</button>

@@ -37,6 +37,10 @@
             </div>
 
             <form th:action="@{/payroll/{id}(id=${emp_id})}" method="get" class="payroll-filters">
+                <label for="year">Year:</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    <option th:each="y : ${payrollYears}" th:value="${y}" th:text="${y}" th:selected="${selectedYear == y}"></option>
+                </select>
                 <label for="month">Month:</label>
                 <select name="month" id="month" onchange="this.form.submit()">
                     <option value="JANUARY" th:selected="${selectedMonth == 'JANUARY'}">January</option>

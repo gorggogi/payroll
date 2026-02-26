@@ -34,6 +34,7 @@ public class payrollViewController {
     public String payrollPage(
             @PathVariable Integer empId,
             @RequestParam(required = false) String month,
+            @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String period,
             Model model,
             Principal principal) {
@@ -45,23 +46,26 @@ public class payrollViewController {
             model.addAttribute("employeeName", "Employee");
         }
 
+        int currentYear = java.time.Year.now().getValue();
+        int selectedYear = (year != null) ? year : currentYear;
         String monthName = (month != null && !month.isBlank()) ? month : Month.of(java.time.LocalDate.now().getMonthValue()).name();
-        List<PayrollItems> items = payrollService.computePayroll(empId, period, monthName);
+        List<PayrollItems> items = payrollService.computePayroll(empId, period, monthName, selectedYear);
         if (items == null || items.isEmpty()) {
             items = payrollItemsRepository.findByEmployeeIdOrderByPayrollItemIdDesc(empId);
         }
         model.addAttribute("payrollItems", items != null ? items : List.of());
         model.addAttribute("selectedMonth", monthName);
+        model.addAttribute("selectedYear", selectedYear);
         model.addAttribute("selectedPeriod", period != null ? period : "");
+        model.addAttribute("payrollYears", java.util.List.of(currentYear + 1, currentYear, currentYear - 1));
 
-        int year = java.time.LocalDate.now().getYear();
         Month monthEnum;
         try {
             monthEnum = monthName != null ? Month.valueOf(monthName.toUpperCase()) : Month.from(java.time.LocalDate.now());
         } catch (Exception e) {
             monthEnum = Month.from(java.time.LocalDate.now());
         }
-        YearMonth ym = YearMonth.of(year, monthEnum);
+        YearMonth ym = YearMonth.of(selectedYear, monthEnum);
         List<DeductionBreakdownItem> otherBreakdown = payrollService.getOtherDeductionsBreakdown(empId, ym.atDay(1), ym.atEndOfMonth());
         model.addAttribute("otherDeductionsBreakdown", otherBreakdown != null ? otherBreakdown : List.of());
 

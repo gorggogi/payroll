@@ -9,6 +9,7 @@ public class EmployeeDeductionRowDto {
     private String employeeName;
     private Integer deductionId;
     private String deductionName;
+    private String deductionType;
     private BigDecimal amount;
     private Boolean recurring;
     private LocalDate startDate;
@@ -24,6 +25,8 @@ public class EmployeeDeductionRowDto {
     public void setDeductionId(Integer deductionId) { this.deductionId = deductionId; }
     public String getDeductionName() { return deductionName; }
     public void setDeductionName(String deductionName) { this.deductionName = deductionName; }
+    public String getDeductionType() { return deductionType; }
+    public void setDeductionType(String deductionType) { this.deductionType = deductionType; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public Boolean getRecurring() { return recurring; }
