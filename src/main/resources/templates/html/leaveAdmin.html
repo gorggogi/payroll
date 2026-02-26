@@ -91,11 +91,11 @@
                         
                         <div class="request-actions">
                             <form th:action="@{/admin/leave/approve/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn-approve">Approve</button>
+                                <button type="submit" class="btn-approve"><i class="fas fa-check"></i></button>
                             </form>
                             
                             <form th:action="@{/admin/leave/reject/{id}(id=${request.leaveRequestId})}" method="POST" style="display: inline;">
-                                <button type="submit" class="btn-reject">Reject</button>
+                                <button type="submit" class="btn-reject"><i class="fas fa-times"></i></button>
                             </form>
                         </div>
                     </div>
@@ -115,19 +115,19 @@
                 
                 <!-- Filter Tabs -->
                 <div class="filter-tabs">
-                    <a th:href="@{/admin/leave(search=${search})}" 
+                    <a id="all-tab" th:href="@{/admin/leave(search=${search})}" 
                        th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
                         All
                     </a>
-                    <a th:href="@{/admin/leave(filter='pending', search=${search})}" 
+                    <a id="pending-tab" th:href="@{/admin/leave(filter='pending', search=${search})}" 
                        th:classappend="${filter == 'pending' ? 'active' : ''}">
                         Pending
                     </a>
-                    <a th:href="@{/admin/leave(filter='approved', search=${search})}" 
+                    <a id="approved-tab" th:href="@{/admin/leave(filter='approved', search=${search})}" 
                        th:classappend="${filter == 'approved' ? 'active' : ''}">
                         Approved
                     </a>
-                    <a th:href="@{/admin/leave(filter='rejected', search=${search})}" 
+                    <a id="rejected-tab" th:href="@{/admin/leave(filter='rejected', search=${search})}" 
                        th:classappend="${filter == 'rejected' ? 'active' : ''}">
                         Rejected
                     </a>
