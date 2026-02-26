@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Positions;
 
@@ -86,7 +87,6 @@ public class Employees{
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departmentId", nullable = false)
-    @JsonIgnoreProperties({"employees"})
     private Departments department;
 
     @Column (nullable = false, unique = false)
@@ -112,8 +112,20 @@ public class Employees{
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "positionId", nullable = false)
-    @JsonIgnoreProperties({"employees"})
     private Positions position;
+
+    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties ({"employee"})
+    private Users user;
+    
+
+    public Users getUser() {
+        return user;
+    }
+
+    public void setUser(Users user) {
+        this.user = user;
+    }
 
     public Positions getPosition() {
         return position;
@@ -188,9 +200,12 @@ public class Employees{
     }
 
     public String getEmail() {
+        if (user != null && user.getEmail() != null) {
+            return user.getEmail();
+        }
         return email;
     }
-
+    @Deprecated
     public void setEmail(String email) {
         this.email = email;
     }

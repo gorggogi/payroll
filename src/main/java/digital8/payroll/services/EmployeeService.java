@@ -1,14 +1,20 @@
 package digital8.payroll.services;
 
 import digital8.payroll.entities.Employees;
+import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.specifications.EmployeeSpecifications;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import digital8.payroll.repositories.DepartmentsRepository;
 import digital8.payroll.repositories.PositionsRepository;
+import digital8.payroll.repositories.UsersRepository;
+
+
+
 import java.util.Optional;
 
 import java.math.BigDecimal;
@@ -27,6 +33,9 @@ public class EmployeeService {
 
     @Autowired
     private PositionsRepository positionsRepository;
+
+    @Autowired 
+    private UsersRepository usersRepository;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -126,7 +135,19 @@ public class EmployeeService {
         if (updated.getFirstName() != null) existing.setFirstName(updated.getFirstName());
         if (updated.getMiddleName() != null) existing.setMiddleName(updated.getMiddleName());
         if (updated.getLastName() != null) existing.setLastName(updated.getLastName());
-        if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
+        if (updated.getEmail() != null) {
+            Optional<Users> userOpt = usersRepository.findByEmployee_EmployeeId(id);
+            if(userOpt.isPresent()) {
+                Users user = userOpt.get();
+            if(!user.getEmail().equals(updated.getEmail())){
+                user.setEmail(updated.getEmail());
+                usersRepository.save(user);
+            }
+
+           }
+
+        }
+        // if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());

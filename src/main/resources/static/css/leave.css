@@ -159,6 +159,27 @@
     font-size: clamp(1.25rem, 4vw, 1.75rem);
 }
 
+.leave-search-form {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.leave-search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+}
+
+.btn-search {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
 .filter-tabs {
     display: flex;
     gap: .5rem;

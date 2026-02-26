@@ -54,6 +54,10 @@ public class PayrollService { // used by payrollController and payrollViewContro
     private DeductionsRepository deductionsRepository;
 
     public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
+        return computePayroll(empId, period, monthName, null);
+    }
+
+    public List<PayrollItems> computePayroll(Integer empId, String period, String monthName, Integer yearParam) {
         Optional<Employees> empOpt = employeeRepository.findById(empId);
         if (empOpt.isEmpty()) return new ArrayList<>();
 
@@ -72,7 +76,7 @@ public class PayrollService { // used by payrollController and payrollViewContro
                 month = null;
             }
         }
-        int year = java.time.LocalDate.now().getYear();
+        int year = (yearParam != null) ? yearParam : java.time.LocalDate.now().getYear();
         if (month == null) {
             month = java.time.LocalDate.now().getMonth();
         }
@@ -80,7 +84,8 @@ public class PayrollService { // used by payrollController and payrollViewContro
         List<Attendance> records = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
         BigDecimal totalOvertime = BigDecimal.ZERO;
         for (Attendance a : records) {
-            if (a.getAttendance_date() != null && a.getAttendance_date().getMonth() != month) continue;
+            if (a.getAttendance_date() == null) continue;
+            if (a.getAttendance_date().getMonth() != month || a.getAttendance_date().getYear() != year) continue;
             if (a.getOvertime_hours() != null) totalOvertime = totalOvertime.add(a.getOvertime_hours());
         }
 

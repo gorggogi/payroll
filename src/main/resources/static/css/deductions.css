@@ -167,6 +167,46 @@ section h1 {
     margin: 0; 
 }
 
+.deduction-search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.deduction-search-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.deduction-filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.btn-search {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-search:hover {
+    background: #e8e8e8;
+}
+
 /* Table styles for deductions */
 .attendanceTable {
     width: 100%;
@@ -291,4 +331,16 @@ section h1 {
 
 .deduction-modal .modal-close:hover { 
     color: #333; 
+}
+
+.deduction-help,
+.deduction-table-help {
+    font-size: 12px;
+    color: #555;
+    margin: 0.5rem 0 0 0;
+    line-height: 1.4;
+}
+
+.deduction-table-help {
+    margin-top: 0.75rem;
 }

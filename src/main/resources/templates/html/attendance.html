@@ -7,6 +7,7 @@
       <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
     <link rel="stylesheet" href="/css/attendance.css" />
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
 
 </head>
@@ -23,7 +24,8 @@
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}"><li><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
                 <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
-                <a href="/admin/leave"><li><i class="fa-solid fa-calendar"></i>Leave</li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/leave"><li><i class="fa-solid fa-calendar"></i>Leave</li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/leave"><li><i class="fa-solid fa-calendar"></i>Leave</li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
             </ul>
@@ -84,7 +86,10 @@
         </table>
 
         <p class="total-hours">Total Hours Rendered: <strong th:text="${totalHoursRendered != null ? #numbers.formatDecimal(totalHoursRendered, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</strong></p>
+        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">View Payroll &rarr;</a>
+    
     </section>
     </div>
+                
 </body>
 </html>

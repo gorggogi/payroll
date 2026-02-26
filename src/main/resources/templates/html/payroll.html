@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
     <link rel="stylesheet" href="/css/payroll.css" />
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -31,14 +32,15 @@
 
         <section>
             <div class="head">
-                <h1>Payroll</h1>
-                <p>
-                    Hello, <span th:text="${employeeName}">Employee</span>!
-                    <i class="fa-solid fa-circle-user"></i>
-                </p>
+                <h1>Payroll of <span th:text="${employeeName}">User</span></h1>
+                
             </div>
 
             <form th:action="@{/payroll/{id}(id=${emp_id})}" method="get" class="payroll-filters">
+                <label for="year">Year:</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    <option th:each="y : ${payrollYears}" th:value="${y}" th:text="${y}" th:selected="${selectedYear == y}"></option>
+                </select>
                 <label for="month">Month:</label>
                 <select name="month" id="month" onchange="this.form.submit()">
                     <option value="JANUARY" th:selected="${selectedMonth == 'JANUARY'}">January</option>
