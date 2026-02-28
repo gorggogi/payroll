@@ -195,7 +195,6 @@ public class EmployeeService {
         return Optional.of(saved);
     }
 
-    /** True if another employee (not excludeEmployeeId) has this employeeNumber. */
     public boolean isEmployeeNumberTakenByOther(String employeeNumber, Integer excludeEmployeeId) {
         if (employeeNumber == null || employeeNumber.isBlank()) return false;
         Employees other = employeeRepository.findByEmployeeNumber(employeeNumber.trim());
