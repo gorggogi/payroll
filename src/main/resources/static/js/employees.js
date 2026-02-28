@@ -171,6 +171,7 @@ function displayEmployees(employees) {
                     <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
                     <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
                     <a href="/admin/attendance?empId=${emp.employeeId}" class="card-link-attendance" onclick="event.stopPropagation()" title="View attendance"><i class="fa-solid fa-calendar-check"></i> View attendance</a>
+                    <a href="/payroll/${emp.employeeId}" class="card-link-payroll" onclick="event.stopPropagation()" title="View payroll"><i class="fa-solid fa-money-bill"></i> View payroll</a>
                 </div>
             </div>
     `).join('');
@@ -228,8 +229,16 @@ function renderEmployeeDetail(emp) {
                     <label>Email: <input type="email" name="email" value="${emp.email || ''}" /></label>
                     <label>Contact: <input name="contactNumber" value="${emp.contactNumber || ''}" /></label>
                     <label>Address: <input name="address" value="${emp.address || ''}" /></label>
-                    <label>Employment Status: <input name="employmentStatus" value="${emp.employmentStatus || ''}" /></label>
-                    <label>Employment Type: <input name="employmentType" value="${emp.employmentType || ''}" /></label>
+                    <label>Employment Status: <select name="employmentStatus">
+                        <option value="Active" ${(emp.employmentStatus || '') === 'Active' ? 'selected' : ''}>Active</option>
+                        <option value="Resigned" ${(emp.employmentStatus || '') === 'Resigned' ? 'selected' : ''}>Resigned</option>
+                        <option value="Terminated" ${(emp.employmentStatus || '') === 'Terminated' ? 'selected' : ''}>Terminated</option>
+                    </select></label>
+                    <label>Employment Type: <select name="employmentType">
+                        <option value="Regular" ${(emp.employmentType || '') === 'Regular' ? 'selected' : ''}>Regular</option>
+                        <option value="Probationary" ${(emp.employmentType || '') === 'Probationary' ? 'selected' : ''}>Probationary</option>
+                        <option value="Contractual" ${(emp.employmentType || '') === 'Contractual' ? 'selected' : ''}>Contractual</option>
+                    </select></label>
                     <label>Pay Type: <select name="payType">
                         <option value="monthly" ${(emp.payType || '').toLowerCase() === 'monthly' ? 'selected' : ''}>Monthly</option>
                         <option value="biweekly" ${(emp.payType || '').toLowerCase() === 'biweekly' ? 'selected' : ''}>Biweekly</option>
@@ -252,6 +261,7 @@ function renderEmployeeDetail(emp) {
                     <label>Bank Account: <input name="bank_Account" value="${emp.bank_Account || ''}" /></label>
                     <div class="form-actions">
                         <a href="/admin/attendance?empId=${emp.employeeId}" class="btn-view-attendance" target="_blank"><i class="fa-solid fa-calendar-check"></i> View Attendance</a>
+                        <a href="/payroll/${emp.employeeId}" class="btn-view-payroll" target="_blank"><i class="fa-solid fa-money-bill"></i> View Payroll</a>
                         <button type="button" id="resetPasswordBtn" class="btn-reset-pw"><i class="fa-solid fa-key"></i> Reset Password</button>
                         <button type="button" id="saveEmployeeBtn" class="btn-save-emp"><i class="fa-solid fa-floppy-disk"></i>Save</button>
                     </div>
