@@ -43,8 +43,8 @@ section h1 {
     font-weight: 600;
     color: #333;
     font-size: 14px;
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
     gap: 6px;
 }
 
@@ -208,6 +208,39 @@ section h1 {
 }
 
 /* Modal styles for deductions */
+
+.deduction-search-form {
+    gap: 0.75rem;
+    display: flex;
+    margin-bottom: 1rem;
+    flex-direction: column;
+}
+
+.deduction-section .search-input {
+    width: 100%;
+}
+
+.deduction-section .filter-search {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.deduction-filter-select,
+.btn-search {
+    flex: 1;
+    min-width: 6.25rem;
+}
+
+.search-input input {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-wrap: ;
+}
+
 .deduction-modal { 
     position: fixed; 
     inset: 0; 

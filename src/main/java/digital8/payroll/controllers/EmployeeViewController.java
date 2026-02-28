@@ -10,14 +10,20 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Positions;
+import digital8.payroll.entities.Users;
+import digital8.payroll.entities.PasswordResetToken;
 import digital8.payroll.services.EmployeeService;
+import digital8.payroll.services.UserService;
+import digital8.payroll.services.EmailNotificationService;
 import digital8.payroll.repositories.DepartmentsRepository;
 import digital8.payroll.repositories.PositionsRepository;
+import digital8.payroll.repositories.UsersRepository;
 
 @Controller
 @RequestMapping("/admin/employees")
@@ -29,6 +35,12 @@ public class EmployeeViewController {
     private DepartmentsRepository departmentsRepository;
     @Autowired
     private PositionsRepository positionsRepository;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private EmailNotificationService emailNotificationService;
+    @Autowired
+    private UsersRepository usersRepository;
 
     @GetMapping("/add")
     public String addEmployeeForm(Model model) {
@@ -93,14 +105,33 @@ public class EmployeeViewController {
                 redirectAttributes.addFlashAttribute("error", "Could not add employee. Email or employee number may already exist");
                 return "redirect:/admin/employees/add";
             }
-            String defaultPassword = lastName.replace(" ", "") + "123";
-            redirectAttributes.addFlashAttribute("message", "Employee added successfully! Login " + email + " / Password: " + defaultPassword);
+            
+            Employees savedEmp = savedEmpOpt.get();
+
+            if (email != null && email.trim().toLowerCase().endsWith("@gmail.com")) {
+ 
+                Optional<Users> userOpt = usersRepository.findByEmail(email);
+                
+                if (userOpt.isPresent()) {
+                    Users user = userOpt.get();
+        
+                    PasswordResetToken tokenEntity = userService.generatePasswordSetupToken(user);
+       
+                    emailNotificationService.sendSetupEmail(email, savedEmp.getFirstName(), tokenEntity.getToken());
+                    
+                    redirectAttributes.addFlashAttribute("message", "Employee added! A setup email has been sent to " + email);
+                }
+            } else {
+             
+                String defaultPassword = lastName.replace(" ", "") + "123";
+                redirectAttributes.addFlashAttribute("message", "Employee added successfully! Login " + email + " / Password: " + defaultPassword);
+            }
+
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Failed to create employee: " + e.getMessage());
             return "redirect:/admin/employees/add";
         }
 
         return "redirect:/admin/employees";
-
     }
 }

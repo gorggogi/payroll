@@ -1,5 +1,4 @@
 
-// set default period from empPayType if available
 document.addEventListener('DOMContentLoaded', function(){
     try {
         if (typeof empPayType !== 'undefined' && empPayType) {

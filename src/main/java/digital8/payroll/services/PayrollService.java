@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class PayrollService { // used by payrollController and payrollViewController
+public class PayrollService { 
 
     private static final int SCALE = 2;
     private static final RoundingMode ROUND = RoundingMode.HALF_UP;

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to Digital8</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+    <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; max-width: 600px; margin: 0 auto;">
+        <h2 style="text-align: center; color: #333333;">Welcome to Digital8!</h2>
+        
+        <p style="font-size: 16px; color: #555555;">Hello <span th:text="${name}">Employee</span>,</p>
+        <p style="font-size: 16px; color: #555555;">Your employee account has been created. To securely access your dashboard, please set up your permanent password by clicking the button below.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a th:href="${setupLink}" style="background-color: #000000; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Set Up My Password</a>
+        </div>
+        
+        <p style="font-size: 14px; color: #777777;"><em>Note: For security reasons, this link will expire in 24 hours.</em></p>
+    </div>
+</body>
+</html>

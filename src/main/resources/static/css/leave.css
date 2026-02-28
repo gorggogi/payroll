@@ -167,19 +167,9 @@
 
 .leave-search-input {
     flex: 1;
-    min-width: 0;
-    padding: .65rem .8rem;
-    border: 1px solid var(--tertiary-color);
-    border-radius: 1rem;
 }
 
 .btn-search {
-    padding: .65rem .8rem;
-    font-size: .85rem;
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 1rem;
     cursor: pointer;
     justify-content: center;
     align-items: center;

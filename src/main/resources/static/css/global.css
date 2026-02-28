@@ -149,7 +149,7 @@ input {
 
 button {
     padding: .65rem .8rem;
-    font-size: .85rem;
+    font-size: .80rem;
     background-color: var(--secondary-color);
     color: white;
     border: none;
@@ -171,9 +171,4 @@ select {
     border: none;
     font-size: .85rem;
     height: 2.5rem;;
-}
-
-form {
-  display: flex;
-  gap: 0.5rem;
 }
