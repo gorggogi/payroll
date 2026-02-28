@@ -188,11 +188,9 @@ function showEmployee(employeeId) {
 }
 
 function renderEmployeeDetail(emp) {
-    // Remove existing modal if any
     const existing = document.getElementById('employeeModal');
     if (existing) existing.remove();
 
-    // Fetch departments and positions in parallel to populate selects
     Promise.all([
         fetch('/api/departments').then(r => { if (!r.ok) throw new Error('Failed to load departments'); return r.json(); }),
         fetch('/api/positions').then(r => { if (!r.ok) throw new Error('Failed to load positions'); return r.json(); })
@@ -202,14 +200,12 @@ function renderEmployeeDetail(emp) {
         modal.id = 'employeeModal';
         modal.className = 'employee-modal';
 
-        // build department options
         const deptOptions = departments.map(d => `
             <option value="${d.departmentId}" ${emp.department && emp.department.departmentId === d.departmentId ? 'selected' : ''}>
                 ${d.departmentName}
             </option>
         `).join('');
 
-        // build position options
         const posOptions = positions.map(p => `
             <option value="${p.positionId}" ${emp.position && emp.position.positionId === p.positionId ? 'selected' : ''}>
                 ${p.positionName}
@@ -358,8 +354,7 @@ function toggleAdvancedFilters() {
         panel.style.display = 'none';
     }
 }
-
-// Close modal when clicking on the backdrop (outside the content)
+        
 document.addEventListener('click', function(event) {
     const panel = document.getElementById('advancedFilterSection');
     const content = document.querySelector('.advanced-filter-section-content');

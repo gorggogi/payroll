@@ -188,11 +188,10 @@
             });
         });
         
-        // Handle "Add new type" option in deduction dropdown
         document.getElementById('deductionId').addEventListener('change', function(e) {
             if (this.value === 'ADD_TYPE') {
                 openModal('modalAddType');
-                this.value = ''; // Reset dropdown
+                this.value = ''; 
             }
         });
     </script>

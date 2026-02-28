@@ -39,42 +39,34 @@ public class EmployeeSpecifications {
                 predicates.add(searchPredicate);
             }
 
-            // Filter by department (AND condition)
             if (departmentId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("department").get("departmentId"), departmentId));
             }
 
-            // Filter by position
             if (positionId != null) {
                 predicates.add(criteriaBuilder.equal(root.get("position").get("positionId"), positionId));
             }
 
-            // Filter by employment status
             if (employmentStatus != null && !employmentStatus.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("employmentStatus"), employmentStatus));
             }
 
-            // Filter by employment type
             if (employmentType != null && !employmentType.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("employmentType"), employmentType));
             }
 
-            // Filter by pay type
             if (payType != null && !payType.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("payType"), payType));
             }
 
-            // Filter by minimum salary
             if (minSalary != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("basicSalary"), minSalary));
             }
 
-            // Filter by maximum salary
             if (maxSalary != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("basicSalary"), maxSalary));
             }
 
-            // Combine all predicates with AND
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
