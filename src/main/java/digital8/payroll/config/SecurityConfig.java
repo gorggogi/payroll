@@ -81,10 +81,6 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            .headers(headers -> headers
-                .cacheControl(cache -> cache.disable())
-            )
-
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .invalidSessionUrl("/index?session=expired")
