@@ -154,7 +154,6 @@ public class settingsController {
                 redirectAttributes.addFlashAttribute("errorMessage", "Email already in use");
                 return "redirect:/admin/settings";
             }
-            emp.setEmail(email.trim());
         }
         if (firstName != null && !firstName.isBlank()) emp.setFirstName(firstName.trim());
         if (lastName != null && !lastName.isBlank()) emp.setLastName(lastName.trim());

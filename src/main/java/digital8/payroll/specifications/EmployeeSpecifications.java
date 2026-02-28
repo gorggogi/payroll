@@ -2,6 +2,7 @@ package digital8.payroll.specifications;
 
 import digital8.payroll.entities.Employees;
 import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class EmployeeSpecifications {
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("lastName")), searchPattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("middleName")), searchPattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("employeeNumber")), searchPattern),
-                    criteriaBuilder.like(criteriaBuilder.lower(root.get("email")), searchPattern),
+                    criteriaBuilder.like(criteriaBuilder.lower(root.join("user", JoinType.LEFT).get("email")), searchPattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("department").get("departmentName")), searchPattern),
                     criteriaBuilder.like(criteriaBuilder.lower(root.get("position").get("positionName")), searchPattern)
                 );

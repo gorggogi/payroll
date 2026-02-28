@@ -1,26 +1,26 @@
 package digital8.payroll.services;
 
 import digital8.payroll.entities.Employees;
+import digital8.payroll.entities.Roles;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.EmployeeRepository;
+import digital8.payroll.repositories.RolesRepository;
 import digital8.payroll.specifications.EmployeeSpecifications;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import digital8.payroll.repositories.DepartmentsRepository;
 import digital8.payroll.repositories.PositionsRepository;
 import digital8.payroll.repositories.UsersRepository;
 
-
-
 import java.util.Optional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
@@ -36,6 +36,12 @@ public class EmployeeService {
 
     @Autowired 
     private UsersRepository usersRepository;
+
+    @Autowired
+    private RolesRepository rolesRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -99,8 +105,9 @@ public class EmployeeService {
         return employeeRepository.findById(id);
     }
 
-    public Optional<Employees> createEmployee(Employees emp) {
-        if (emp.getEmail() != null && employeeRepository.existsByEmail(emp.getEmail())) {
+    @Transactional
+    public Optional<Employees> createEmployee(Employees emp, String email) {
+        if (email != null && usersRepository.existsByEmail(email)) {
             return Optional.empty();
         }
         if (emp.getEmployeeNumber() == null || emp.getEmployeeNumber().isBlank()) {
@@ -115,6 +122,18 @@ public class EmployeeService {
             positionsRepository.findById(emp.getPosition().getPositionId()).ifPresent(emp::setPosition);
         }
         Employees saved = employeeRepository.save(emp);
+
+        String defaultPassword = saved.getLastName().replace(" ", "") + "123";
+        Users user = new Users();
+        user.setEmployee(saved);
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(defaultPassword));
+        Roles employeeRole = rolesRepository.findById(2)
+                .orElseThrow(() -> new RuntimeException("Employee role not found"));
+        user.setRole(employeeRole);
+        user.setIsActive(true);
+        usersRepository.save(user);
+
         return Optional.of(saved);
     }
 
@@ -182,6 +201,43 @@ public class EmployeeService {
         Employees other = employeeRepository.findByEmployeeNumber(employeeNumber.trim());
         return other != null && !other.getEmployeeId().equals(excludeEmployeeId);
     }
+
+    // @Transactional
+    // public int createMissingUserAccounts() {
+    //     Roles employeeRole = rolesRepository.findById(2)
+    //             .orElseThrow(() -> new RuntimeException("Employee role not found"));
+
+    //     List<Employees> allEmployees = employeeRepository.findAll();
+    //     int created = 0;
+
+    //     for (Employees emp : allEmployees) {
+    //         boolean hasAccount = usersRepository.findByEmployee_EmployeeId(emp.getEmployeeId()).isPresent();
+    //         if (hasAccount) continue;
+
+    //         String firstName = emp.getFirstName().replaceAll("\\s+", "").toLowerCase();
+    //         String lastName = emp.getLastName().replaceAll("\\s+", "").toLowerCase();
+    //         String email = firstName + "." + lastName + "@company.com";
+
+    //         int suffix = 1;
+    //         while (usersRepository.existsByEmail(email)) {
+    //             email = firstName + "." + lastName + suffix + "@company.com";
+    //             suffix++;
+    //         }
+
+    //         String defaultPassword = emp.getLastName().replace(" ", "") + "123";
+
+    //         Users user = new Users();
+    //         user.setEmployee(emp);
+    //         user.setEmail(email);
+    //         user.setPasswordHash(passwordEncoder.encode(defaultPassword));
+    //         user.setRole(employeeRole);
+    //         user.setIsActive(true);
+    //         usersRepository.save(user);
+    //         created++;
+    //     }
+
+    //     return created;
+    // }
 }
 
 
