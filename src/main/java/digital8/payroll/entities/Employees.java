@@ -7,10 +7,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
-import digital8.payroll.entities.Departments;
-import digital8.payroll.entities.Positions;
-
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
@@ -19,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table (name="employees")
@@ -28,7 +25,6 @@ import jakarta.persistence.Table;
     "lastName",
     "firstName",
     "middleName",
-    "email",
     "contactNumber",
     "department",
     "position",
@@ -70,7 +66,7 @@ public class Employees{
     @Column (nullable = false, unique = false)
     private String address;
 
-    @Column (nullable = false, unique = true)
+    @Transient
     private String email;
 
     @Column (nullable = false, unique = true)
@@ -114,7 +110,7 @@ public class Employees{
     @JoinColumn(name = "positionId", nullable = false)
     private Positions position;
 
-    @OneToOne(mappedBy = "employee", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "employee", fetch = FetchType.EAGER)
     @JsonIgnoreProperties ({"employee"})
     private Users user;
     
@@ -200,12 +196,12 @@ public class Employees{
     }
 
     public String getEmail() {
-        if (user != null && user.getEmail() != null) {
-            return user.getEmail();
+        if (this.user != null && this.user.getEmail() != null) {
+            return this.user.getEmail();
         }
-        return email;
+        return this.email;
     }
-    @Deprecated
+
     public void setEmail(String email) {
         this.email = email;
     }

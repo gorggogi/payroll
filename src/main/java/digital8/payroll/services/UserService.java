@@ -2,18 +2,27 @@ package digital8.payroll.services;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import digital8.payroll.entities.PasswordResetToken;
 import digital8.payroll.entities.Users;
+import digital8.payroll.repositories.PasswordResetRepository;
 import digital8.payroll.repositories.UsersRepository;
+// UUID
+// tokenRepository
 
 @Service
 public class UserService {
 
     @Autowired
     private UsersRepository usersRepository;
+
+    @Autowired
+    private PasswordResetRepository passwordResetRepository;
 
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -91,4 +100,17 @@ public class UserService {
         usersRepository.save(user);
         return true;
     }
+
+    public PasswordResetToken generatePasswordSetupToken(Users user){
+        String rawToken = UUID.randomUUID().toString();
+
+        PasswordResetToken token = new PasswordResetToken(rawToken, user);
+
+        return passwordResetRepository.save(token);
+    }
+    // generate Password token
+    // get raw token use UUID.randomUUID, then convert to string with .toString
+    // use constructor PasswordResetToken (String token, User user)
+    // save token using repository method
+    
 }

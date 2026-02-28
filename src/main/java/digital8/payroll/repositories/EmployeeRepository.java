@@ -17,9 +17,7 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>, J
 
     Optional<Employees> findFirstByOrderByEmployeeIdDesc();
     Employees findByEmployeeNumber(String employeeNumber);
-    Employees findByEmail(String email);
     boolean existsByEmployeeNumber(String employeeNumber);
-    boolean existsByEmail(String email);
 
     // Optional: 
     List<Employees> findByDepartment(Departments department);
