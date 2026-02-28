@@ -13,23 +13,26 @@
 <body>
     <div class="container">
         <nav>
+            <div class="nav-header">
+                <h1><span class="nav-brand">Payroll System</span></h1>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
+            </div>
             <ul>
-                <h1>Payroll System</h1>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/home"><li><i class="fa-solid fa-house"></i>Home</li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees"><li><i class="fa-solid fa-people-group"></i>Employees</li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/attendance"><li><i class="fa-solid fa-calendar"></i>Attendance</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i>Deductions</li></a>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#"><li><i class="fa-solid fa-money-bill"></i>Payroll</li></a>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}"><li><i class="fa-solid fa-minus-circle"></i>Leave</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/leave}"><li><i class="fa-solid fa-minus-circle"></i>Leave</li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/settings"><li><i class="fa-solid fa-gear"></i>Settings</li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/deductions" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/deductions" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}" title="Leave"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Leave</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/leave}" title="Leave"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Leave</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
-            <a href="/logout" class="logout"><i class="fa-solid fa-right-from-bracket"></i>Logout</a>
+            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
         </nav>
 
         <section>
@@ -195,5 +198,6 @@
             }
         });
     </script>
+    <script src="/js/nav.js"></script>
 </body>
 </html>
