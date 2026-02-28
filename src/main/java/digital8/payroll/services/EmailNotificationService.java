@@ -26,7 +26,7 @@ public class EmailNotificationService {
             Context context = new Context();
             context.setVariable("name", firstName);
           
-            String setupLink = "http://localhost:8080/setup-password?token=" + token;
+            String setupLink = "https://payroll-jt2w.onrender.com/setup-password?token=" + token;
             context.setVariable("setupLink", setupLink);
 
             String htmlBody = templateEngine.process("/html/email/setup-email", context);
