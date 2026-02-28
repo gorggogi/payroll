@@ -43,28 +43,32 @@
                 </div>
                 <!-- Search & filter (admin: by employee/deduction name + type + recurring; employee: by deduction name + type + recurring) -->
                 <form th:action="@{${deductionsFormAction}}" method="get" class="deduction-search-form">
-                    <input sec:authorize="hasRole('ADMIN')" type="search" name="search" th:value="${search}" placeholder="Search by employee or deduction name..." class="deduction-search-input" aria-label="Search deductions">
-                    <select name="filterMonth" class="deduction-filter-select" aria-label="Month">
-                        <option value="">Month</option>
-                        <option th:each="m, iterStat : ${filterMonthNames}" th:value="${iterStat.count}" th:text="${m}" th:selected="${filterMonth != null and filterMonth == iterStat.count}"></option>
-                    </select>
-                    <select name="filterYear" class="deduction-filter-select" aria-label="Year">
-                        <option value="">Year</option>
-                        <option th:each="y : ${filterYears}" th:value="${y}" th:text="${y}" th:selected="${filterYear != null and filterYear == y}"></option>
-                    </select>
-                    <select name="filterType" class="deduction-filter-select" aria-label="Filter by type">
-                        <option value="">All types</option>
-                        <option value="Loan" th:selected="${filterType == 'Loan'}">Loan</option>
-                        <option value="Advance" th:selected="${filterType == 'Advance'}">Advance</option>
-                        <option value="Union" th:selected="${filterType == 'Union'}">Union</option>
-                        <option value="Other" th:selected="${filterType == 'Other'}">Other</option>
-                    </select>
-                    <select name="filterRecurring" class="deduction-filter-select" aria-label="Filter by recurring">
-                        <option value="">All</option>
-                        <option value="yes" th:selected="${filterRecurring == 'yes'}">Recurring</option>
-                        <option value="no" th:selected="${filterRecurring == 'no'}">One-time</option>
-                    </select>
-                    <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                    <div class="search-input"> 
+                        <input sec:authorize="hasRole('ADMIN')" type="search" name="search" th:value="${search}" placeholder="Search by employee or deduction name..." class="deduction-search-input" aria-label="Search deductions">
+                    </div>
+                    <div class="filter-search">
+                        <select name="filterMonth" class="deduction-filter-select" aria-label="Month">
+                            <option value="">Month</option>
+                            <option th:each="m, iterStat : ${filterMonthNames}" th:value="${iterStat.count}" th:text="${m}" th:selected="${filterMonth != null and filterMonth == iterStat.count}"></option>
+                        </select>
+                        <select name="filterYear" class="deduction-filter-select" aria-label="Year">
+                            <option value="">Year</option>
+                            <option th:each="y : ${filterYears}" th:value="${y}" th:text="${y}" th:selected="${filterYear != null and filterYear == y}"></option>
+                        </select>
+                        <select name="filterType" class="deduction-filter-select" aria-label="Filter by type">
+                            <option value="">All types</option>
+                            <option value="Loan" th:selected="${filterType == 'Loan'}">Loan</option>
+                            <option value="Advance" th:selected="${filterType == 'Advance'}">Advance</option>
+                            <option value="Union" th:selected="${filterType == 'Union'}">Union</option>
+                            <option value="Other" th:selected="${filterType == 'Other'}">Other</option>
+                        </select>
+                        <select name="filterRecurring" class="deduction-filter-select" aria-label="Filter by recurring">
+                            <option value="">All</option>
+                            <option value="yes" th:selected="${filterRecurring == 'yes'}">Recurring</option>
+                            <option value="no" th:selected="${filterRecurring == 'no'}">One-time</option>
+                        </select>
+                        <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                    </div>
                 </form>
                 <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">
                     <thead>

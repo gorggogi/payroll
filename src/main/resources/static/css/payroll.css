@@ -33,14 +33,14 @@
 
 .payroll-filters { 
     margin-bottom: 1.5rem; 
-    display: flex; 
-    gap: 1rem; 
-    align-items: center; 
-    flex-wrap: wrap; 
+    display: flex;
+    gap: .75rem; 
+    align-items: center;
+    width: 100%;
 }
 
 .payroll-filters select { 
-    padding: 0.35rem 0.5rem; 
+    width: 100%;
 }
 
 .payslip-table .gross-row td { 
