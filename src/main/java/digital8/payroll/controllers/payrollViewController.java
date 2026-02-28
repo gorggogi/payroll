@@ -1,19 +1,24 @@
 package digital8.payroll.controllers;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.util.UriComponentsBuilder;
 
-import java.security.Principal;
 import java.time.Month;
 import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.dto.DeductionBreakdownItem;
+import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.PayrollItemsRepository;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.services.PayrollService;
@@ -31,13 +36,30 @@ public class payrollViewController {
     private PayrollItemsRepository payrollItemsRepository;
 
     @GetMapping("/{empId}")
-    public String payrollPage(
+    public Object payrollPage(
             @PathVariable Integer empId,
             @RequestParam(required = false) String month,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String period,
             Model model,
-            Principal principal) {
+            Authentication authentication) {
+        // Restrict employees to their own payroll only; admins can view any
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users user = (Users) authentication.getPrincipal();
+            boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
+            if (!isAdmin && (user.getEmployee() == null || !empId.equals(user.getEmployee().getEmployeeId()))) {
+                // Redirect to own payroll instead of showing error page
+                Integer ownId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
+                if (ownId != null) {
+                    UriComponentsBuilder b = UriComponentsBuilder.fromPath("/payroll/" + ownId);
+                    if (month != null && !month.isBlank()) b.queryParam("month", month);
+                    if (year != null) b.queryParam("year", year);
+                    if (period != null && !period.isBlank()) b.queryParam("period", period);
+                    return new RedirectView(b.build().toUriString(), false);
+                }
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this payroll.");
+            }
+        }
         model.addAttribute("emp_id", empId);
 
         employeeService.getEmployeeById(empId).ifPresent(emp ->

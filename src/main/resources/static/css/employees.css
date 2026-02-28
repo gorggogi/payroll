@@ -435,6 +435,31 @@ section{
 }
 .card-link-attendance:hover { text-decoration: underline; color: #138496; }
 
+.card-link-payroll {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    margin-left: 12px;
+    font-size: 13px;
+    color: #28a745;
+    text-decoration: none;
+}
+.card-link-payroll:hover { text-decoration: underline; color: #1e7e34; }
+
+.btn-view-payroll {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 14px;
+    background: #28a745;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.btn-view-payroll:hover { color: white; background: #1e7e34; }
 
 /* small screens adjustments */
 @media (max-width: 1024px) {

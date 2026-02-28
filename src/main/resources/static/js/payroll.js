@@ -22,7 +22,15 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
 
             fetch(url)
                 .then(function(resp){
-                    if (!resp.ok) throw new Error('No payroll data');
+                    if (!resp.ok) {
+                        if (resp.status === 403) {
+                            throw new Error('Access denied to this payroll.');
+                        }
+                        if (resp.status === 404) {
+                            throw new Error('No payroll data found for selected period.');
+                        }
+                        throw new Error('Server error (' + resp.status + ').');
+                    }
                     return resp.json();
                 })
                 .then(function(data){
