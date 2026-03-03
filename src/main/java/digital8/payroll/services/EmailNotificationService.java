@@ -29,14 +29,20 @@ public class EmailNotificationService {
 
         String htmlBody = templateEngine.process("html/email/setup-email", context);
 
-        String subject = "Welcome to Digital8 - Set up your account";
-        mailjetEmailClient.sendHtmlEmail(
+        String textBody = String.format(
+                "Welcome to Digital8!%n%nHello %s,%n%nYour employee account has been created. To securely access your dashboard, please set up your permanent password using this link:%n%n%s%n%nThis link expires in 24 hours.%n%n— Digital8 Payroll",
+                firstName, setupLink
+        );
+
+        String subject = "Set up your Digital8 Payroll account";
+        mailjetEmailClient.sendHtmlEmailWithText(
                 "digi8.payroll.system@gmail.com",
                 "Digital8 Payroll",
                 toEmail,
                 firstName,
                 subject,
-                htmlBody
+                htmlBody,
+                textBody
         );
         System.out.println("Async Email sent successfully to: " + toEmail);
     }

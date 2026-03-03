@@ -30,9 +30,6 @@ public class Users{
     @JsonIgnoreProperties ({"user"})
     private Employees employee;
 
-    // @Column (nullable = false, unique = false)
-    // private Integer employeeId;
-
     @Column (nullable = false, unique = false)
     private String passwordHash;
 
@@ -42,10 +39,6 @@ public class Users{
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name ="roleId", nullable = false)
     private Roles role;
-    
-
-    // @Column (nullable = false, unique = false)
-   //  private Integer roleId;
 
     @Column (nullable = false, unique = false)
     private Boolean isActive;

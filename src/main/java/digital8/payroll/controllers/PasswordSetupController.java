@@ -72,7 +72,6 @@ public class PasswordSetupController {
 
         passwordResetRepository.delete(resetToken);
 
-        // Invalidate session so "Go to login" shows the login page instead of redirecting to last role home
         if (request.getSession(false) != null) {
             request.getSession().invalidate();
         }

@@ -43,12 +43,10 @@ public class payrollViewController {
             @RequestParam(required = false) String period,
             Model model,
             Authentication authentication) {
-        // Restrict employees to their own payroll only; admins can view any
         if (authentication != null && authentication.getPrincipal() instanceof Users) {
             Users user = (Users) authentication.getPrincipal();
             boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole().getRoleName());
             if (!isAdmin && (user.getEmployee() == null || !empId.equals(user.getEmployee().getEmployeeId()))) {
-                // Redirect to own payroll instead of showing error page
                 Integer ownId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
                 if (ownId != null) {
                     UriComponentsBuilder b = UriComponentsBuilder.fromPath("/payroll/" + ownId);

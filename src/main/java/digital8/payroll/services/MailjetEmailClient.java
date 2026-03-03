@@ -31,19 +31,37 @@ public class MailjetEmailClient {
                               String toName,
                               String subject,
                               String htmlBody) {
+        sendHtmlEmailWithText(fromEmail, fromName, toEmail, toName, subject, htmlBody, null);
+    }
 
-        Map<String, Object> message = Map.of(
-                "From", Map.of(
-                        "Email", fromEmail,
-                        "Name", fromName != null ? fromName : fromEmail
-                ),
-                "To", List.of(Map.of(
-                        "Email", toEmail,
-                        "Name", toName != null ? toName : toEmail
-                )),
-                "Subject", subject,
-                "HTMLPart", htmlBody
+    /**
+     * Send email with both HTML and optional plain-text part. Including a text part improves deliverability.
+     */
+    public void sendHtmlEmailWithText(String fromEmail,
+                                     String fromName,
+                                     String toEmail,
+                                     String toName,
+                                     String subject,
+                                     String htmlBody,
+                                     String textPart) {
+
+        Map<String, Object> fromMap = Map.of(
+                "Email", fromEmail,
+                "Name", fromName != null ? fromName : fromEmail
         );
+        Map<String, Object> toMap = Map.of(
+                "Email", toEmail,
+                "Name", toName != null ? toName : toEmail
+        );
+
+        java.util.Map<String, Object> message = new java.util.LinkedHashMap<>();
+        message.put("From", fromMap);
+        message.put("To", List.of(toMap));
+        message.put("Subject", subject);
+        message.put("HTMLPart", htmlBody);
+        if (textPart != null && !textPart.isBlank()) {
+            message.put("TextPart", textPart);
+        }
 
         Map<String, Object> body = Map.of("Messages", List.of(message));
 

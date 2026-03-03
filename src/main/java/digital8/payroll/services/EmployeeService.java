@@ -191,7 +191,6 @@ public class EmployeeService {
            }
 
         }
-        // if (updated.getEmail() != null) existing.setEmail(updated.getEmail());
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
