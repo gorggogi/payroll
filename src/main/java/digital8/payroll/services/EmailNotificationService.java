@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 @Service
 public class EmailNotificationService {
 
-    @Value("${spring.mail.username}")
+    @Value("${app.base-url}")
     private String baseUrl;
 
     @Autowired
@@ -42,7 +42,7 @@ public class EmailNotificationService {
             helper.setSubject("Welcome to Digital8 - Set up your account");
             helper.setText(htmlBody, true); 
      
-            helper.setFrom("no-reply@digital8.com"); 
+            helper.setFrom("digi8.payroll.system@gmail.com");
 
             mailSender.send(message);
             System.out.println("Async Email sent successfully to: " + toEmail);
