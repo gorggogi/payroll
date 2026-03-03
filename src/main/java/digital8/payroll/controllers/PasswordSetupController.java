@@ -70,6 +70,6 @@ public class PasswordSetupController {
         passwordResetRepository.delete(resetToken);
 
         redirectAttributes.addFlashAttribute("message", "Account activated! You may now log in with your new password.");
-        return "redirect:/"; 
+        return "redirect:html/setup-success";
     }
 }

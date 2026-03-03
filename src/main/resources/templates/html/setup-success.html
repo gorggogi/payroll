@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Password set up</title>
+    <link rel="stylesheet" href="/css/global.css">
+</head>
+<body>
+<section class="centered-box">
+    <h1>You're all set!</h1>
+    <p>
+        Your password for
+        <strong th:text="${email}">user@example.com</strong>
+        has been set. You can now log into your account.
+    </p>
+
+    <a th:href="@{/}" class="btn-primary">Go to login</a>
+</section>
+</body>
+</html>
