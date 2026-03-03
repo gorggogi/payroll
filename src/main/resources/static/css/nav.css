@@ -260,8 +260,8 @@ nav.nav-collapsed .logout:hover::after {
 
     nav:not(.nav-expanded) .logout {
         justify-content: center;
-        background: none;
-        color: red;
+        background: red;
+        color: white;
     }
 
     nav:not(.nav-expanded) .logout i {
@@ -272,8 +272,8 @@ nav.nav-collapsed .logout:hover::after {
 /* Above 1180px: collapsed controlled by nav-collapsed class */
 @media (min-width: 1180px) {
     nav.nav-collapsed {
-        width: 5.5rem;
-        min-width: 5.5rem;
+        width: 5rem;
+        min-width: 5rem;
     }
 }
 
