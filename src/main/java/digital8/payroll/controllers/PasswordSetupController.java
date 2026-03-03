@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import digital8.payroll.entities.PasswordResetToken;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.PasswordResetRepository;
@@ -52,6 +54,7 @@ public class PasswordSetupController {
     public String processSetupPassword(@RequestParam("token") String token, 
                                        @RequestParam("password") String password,
                                        Model model,
+                                       HttpServletRequest request,
                                        RedirectAttributes redirectAttributes) {
         
         Optional<PasswordResetToken> tokenOpt = passwordResetRepository.findByToken(token);
@@ -69,7 +72,20 @@ public class PasswordSetupController {
 
         passwordResetRepository.delete(resetToken);
 
-        model.addAttribute("email", user.getEmail());
-        return "html/setup-success";  
+        // Invalidate session so "Go to login" shows the login page instead of redirecting to last role home
+        if (request.getSession(false) != null) {
+            request.getSession().invalidate();
+        }
+
+        redirectAttributes.addFlashAttribute("setupSuccessEmail", user.getEmail());
+        return "redirect:/setup-success";
+    }
+
+    @GetMapping("/setup-success")
+    public String setupSuccess(Model model) {
+        if (!model.containsAttribute("setupSuccessEmail")) {
+            return "redirect:/";
+        }
+        return "html/setup-success";
     }
 }
