@@ -7,7 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Table;
 
 @Entity
-@Table (name = "leaveType")
+@Table (name = "leavetype")
 public class LeaveTypes {
 
     @Id

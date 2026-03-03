@@ -14,7 +14,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Entity
-@Table (name="leaveRequests")
+@Table (name="leaverequests")
 public class LeaveRequests{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
