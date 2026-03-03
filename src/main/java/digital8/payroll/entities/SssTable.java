@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table (name="sssTable")
+@Table (name="ssstable")
 public class SssTable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
