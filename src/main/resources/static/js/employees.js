@@ -199,13 +199,30 @@ function displayEmployees(employees) {
 }
 
 function showEmployee(employeeId) {
+    // show loading overlay while we fetch details
+    let loadingOverlay = document.getElementById('employeeLoadingOverlay');
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'employeeLoadingOverlay';
+        loadingOverlay.className = 'employee-loading-overlay';
+        loadingOverlay.innerHTML = '<div class="spinner"></div><p>Loading employee...</p>';
+        document.body.appendChild(loadingOverlay);
+    }
+    loadingOverlay.style.display = 'flex';
+
     fetch(`/api/employees/${employeeId}`)
         .then(res => {
             if (!res.ok) throw new Error('Employee not found');
             return res.json();
         })
-        .then(emp => renderEmployeeDetail(emp))
-        .catch(err => alert('Error loading employee: ' + err.message));
+        .then(emp => {
+            loadingOverlay.style.display = 'none';
+            renderEmployeeDetail(emp);
+        })
+        .catch(err => {
+            loadingOverlay.style.display = 'none';
+            alert('Error loading employee: ' + err.message);
+        });
 }
 
 function renderEmployeeDetail(emp) {
@@ -355,6 +372,14 @@ function saveEmployee(employeeId) {
     const posId = formData.get('positionId');
     if (posId) payload.position = { positionId: Number(posId) };
 
+    const saveBtn = document.getElementById('saveEmployeeBtn');
+    const originalSaveText = saveBtn ? saveBtn.innerHTML : '';
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.classList.add('is-loading');
+        saveBtn.innerHTML = '<span class="spinner spinner--inline"></span> Saving...';
+    }
+
     fetch(`/api/employees/${employeeId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -391,7 +416,16 @@ function saveEmployee(employeeId) {
         }
         filterAndDisplayEmployees();
     })
-    .catch(err => alert('Error saving employee: ' + err.message));
+    .catch(err => {
+        alert('Error saving employee: ' + err.message);
+    })
+    .finally(() => {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('is-loading');
+            saveBtn.innerHTML = originalSaveText;
+        }
+    });
 }
 
 function toggleAdvancedFilters() {

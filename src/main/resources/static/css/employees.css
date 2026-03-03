@@ -465,6 +465,49 @@ section{
 }
 .btn-view-payroll:hover { color: white; background: #1e7e34; }
 
+/* ============================================ */
+/* Loading overlay & button spinner             */
+/* ============================================ */
+
+.employee-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    flex-direction: column;
+    color: #fff;
+    font-size: 15px;
+    gap: 10px;
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    animation: spin 0.8s linear infinite;
+}
+
+.spinner--inline {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
+    margin-right: 6px;
+}
+
+.btn-save-emp.is-loading {
+    opacity: 0.8;
+    cursor: default;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 /* small screens adjustments */
 @media (max-width: 1024px) {
     #employeeContainer { grid-template-columns: repeat(2, 1fr); }
