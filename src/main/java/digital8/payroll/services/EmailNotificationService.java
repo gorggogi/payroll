@@ -1,10 +1,6 @@
 package digital8.payroll.services;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
@@ -18,37 +14,30 @@ public class EmailNotificationService {
     private String baseUrl;
 
     @Autowired
-    private JavaMailSender mailSender;
+    private TemplateEngine templateEngine;
 
     @Autowired
-    private TemplateEngine templateEngine;
+    private MailjetEmailClient mailjetEmailClient;
 
     @Async 
     public void sendSetupEmail(String toEmail, String firstName, String token) {
-        try {
-         
-            Context context = new Context();
-            context.setVariable("name", firstName);
-          
-            String setupLink = baseUrl + "/setup-password?token=" + token;
-            context.setVariable("setupLink", setupLink);
+        Context context = new Context();
+        context.setVariable("name", firstName);
 
-            String htmlBody = templateEngine.process("html/email/setup-email", context);
+        String setupLink = baseUrl + "/setup-password?token=" + token;
+        context.setVariable("setupLink", setupLink);
 
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setTo(toEmail);
-            helper.setSubject("Welcome to Digital8 - Set up your account");
-            helper.setText(htmlBody, true); 
-     
-            helper.setFrom("digi8.payroll.system@gmail.com");
+        String htmlBody = templateEngine.process("html/email/setup-email", context);
 
-            mailSender.send(message);
-            System.out.println("Async Email sent successfully to: " + toEmail);
-            
-        } catch (MessagingException e) {
-            System.err.println("Failed to send setup email. Error: " + e.getMessage());
-        }
+        String subject = "Welcome to Digital8 - Set up your account";
+        mailjetEmailClient.sendHtmlEmail(
+                "digi8.payroll.system@gmail.com",
+                "Digital8 Payroll",
+                toEmail,
+                firstName,
+                subject,
+                htmlBody
+        );
+        System.out.println("Async Email sent successfully to: " + toEmail);
     }
 }
