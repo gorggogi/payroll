@@ -25,22 +25,24 @@
 
 .nav-toggle {
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    background: none;
+    color: var(--secondary-color);
+}
+
+.nav-toggle i {
+    text-align: right;
 }
 
 .nav-toggle:hover {
-    background-color: var(--primary-light);
     color: black;
 }
 
@@ -71,9 +73,9 @@ nav i {
 ul li {
     margin-bottom: 1rem;
     padding: 1rem;
-    color: white;
+    background: none;
+    color: var(--secondary-color);
     cursor: pointer;
-    background-color: var(--secondary-color);
     border-radius: 1rem;
     display: flex;
     align-items: center;
@@ -103,9 +105,8 @@ nav a {
 
 /* ========== COLLAPSED STATE ========== */
 nav.nav-collapsed {
-    width: 5.5rem;
-    min-width: 5.5rem;
-    padding: 1rem 0.75rem;
+    width: 5rem;
+    min-width: 5rem;
 }
 
 nav.nav-collapsed .nav-brand,
@@ -128,7 +129,19 @@ nav.nav-collapsed .nav-toggle {
 
 nav.nav-collapsed ul li {
     justify-content: center;
-    padding: 1rem 0.5rem;
+    background: none;
+    color: var(--secondary-color);
+}
+
+nav.nav-collapsed ul li:hover {
+    background-color: var(--primary-light);
+    color: black;
+}
+
+nav.nav-collapsed ul li.active {
+    margin-right: 0;
+    color: black;
+    background-color: var(--primary-light);
 }
 
 nav.nav-collapsed ul li i {
@@ -137,7 +150,8 @@ nav.nav-collapsed ul li i {
 
 nav.nav-collapsed .logout {
     justify-content: center;
-    padding: 1rem 0.5rem;
+    background: red;
+    color: white;
 }
 
 nav.nav-collapsed .logout i {
@@ -202,9 +216,8 @@ nav.nav-collapsed .logout:hover::after {
 /* ========== RESPONSIVE: Auto-collapse below 1180px ========== */
 @media (max-width: 1179px) {
     nav:not(.nav-expanded) {
-        width: 5.5rem;
-        min-width: 5.5rem;
-        padding: 1rem 0.75rem;
+        width: 5rem;
+        min-width: 5rem;
     }
 
     nav:not(.nav-expanded) .nav-brand,
@@ -227,16 +240,28 @@ nav.nav-collapsed .logout:hover::after {
 
     nav:not(.nav-expanded) ul li {
         justify-content: center;
-        padding: 1rem 0.5rem;
+        background: none;
     }
 
     nav:not(.nav-expanded) ul li i {
         margin-right: 0;
+        color: var(--secondary-color);
+    }
+
+    nav:not(.nav-expanded) ul li.active i {
+        margin-right: 0;
+        color: black !important;
+    }
+
+    nav:not(.nav-expanded) ul li i:hover {
+        margin-right: 0;
+        color: black;
     }
 
     nav:not(.nav-expanded) .logout {
         justify-content: center;
-        padding: 1rem 0.5rem;
+        background: none;
+        color: red;
     }
 
     nav:not(.nav-expanded) .logout i {
