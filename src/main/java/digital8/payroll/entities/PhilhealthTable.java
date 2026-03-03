@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
 @Entity
-@Table (name="philhealthTable")
+@Table (name="philhealthtable")
 public class PhilhealthTable{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
