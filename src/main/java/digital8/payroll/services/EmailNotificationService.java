@@ -9,9 +9,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailNotificationService {
+
+    @Value("${spring.mail.username}")
+    private String baseUrl;
 
     @Autowired
     private JavaMailSender mailSender;
@@ -26,7 +30,7 @@ public class EmailNotificationService {
             Context context = new Context();
             context.setVariable("name", firstName);
           
-            String setupLink = "http://localhost:8080/setup-password?token=" + token;
+            String setupLink = baseUrl + "/setup-password?token=" + token;
             context.setVariable("setupLink", setupLink);
 
             String htmlBody = templateEngine.process("/html/email/setup-email", context);
