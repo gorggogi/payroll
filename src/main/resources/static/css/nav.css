@@ -25,19 +25,24 @@
 
 .nav-toggle {
     flex-shrink: 0;
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
     padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--secondary-color);
     cursor: pointer;
     transition: background-color 0.2s;
+    background: none;
+    color: var(--secondary-color);
+}
+
+.nav-toggle i {
+    text-align: right;
 }
 
 .nav-toggle:hover {
-    background-color: var(--primary-light);
     color: black;
 }
 
@@ -68,9 +73,9 @@ nav i {
 ul li {
     margin-bottom: 1rem;
     padding: 1rem;
-    color: white;
+    background: none;
+    color: var(--secondary-color);
     cursor: pointer;
-    background-color: var(--secondary-color);
     border-radius: 1rem;
     display: flex;
     align-items: center;
@@ -128,24 +133,25 @@ nav.nav-collapsed ul li {
     color: var(--secondary-color);
 }
 
+nav.nav-collapsed ul li:hover {
+    background-color: var(--primary-light);
+    color: black;
+}
+
 nav.nav-collapsed ul li.active {
     margin-right: 0;
     color: black;
+    background-color: var(--primary-light);
 }
 
 nav.nav-collapsed ul li i {
     margin-right: 0;
 }
 
-nav.nav-collapsed ul li i:hover {
-    margin-right: 0;
-    color: black;
-}
-
 nav.nav-collapsed .logout {
     justify-content: center;
-    background: none;
-    color: red;
+    background: red;
+    color: white;
 }
 
 nav.nav-collapsed .logout i {
