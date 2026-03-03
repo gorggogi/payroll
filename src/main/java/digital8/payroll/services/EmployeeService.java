@@ -21,6 +21,9 @@ import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import digital8.payroll.dto.EmployeeListDto;
 
 @Service
 public class EmployeeService {
@@ -63,16 +66,11 @@ public class EmployeeService {
         direction = "asc";
     }
 
-    System.out.println("After defaults - sortBy: '" + sortBy + "'");
-    System.out.println("After defaults - direction: '" + direction + "'");
-
     Sort sort;
     if ("desc".equalsIgnoreCase(direction)) {
         sort = Sort.by(Sort.Direction.DESC, sortBy);
-        System.out.println("Created DESCENDING sort for: " + sortBy);
     } else {
         sort = Sort.by(Sort.Direction.ASC, sortBy);
-        System.out.println("Created ASCENDING sort for: " + sortBy);
     }
 
     Specification<Employees> spec = EmployeeSpecifications.filterBy(
@@ -87,18 +85,45 @@ public class EmployeeService {
     );
 
     List<Employees> results = employeeRepository.findAll(spec, sort);
-    System.out.println("Query returned " + results.size() + " results");
-
-    if (!results.isEmpty()) {
-        System.out.println("First 3 employees (to verify sort):");
-        for (int i = 0; i < Math.min(3, results.size()); i++) {
-            Employees emp = results.get(i);
-            System.out.println("  " + (i+1) + ". " + emp.getLastName() + ", " + emp.getFirstName());
-        }
-    }
-    System.out.println("============================================");
     
     return results;
+    }
+
+    /** Maps an entity to the lightweight DTO used for the employee list (smaller JSON, faster load). */
+    public static EmployeeListDto toListDto(Employees e) {
+        EmployeeListDto dto = new EmployeeListDto();
+        dto.setEmployeeId(e.getEmployeeId());
+        dto.setEmployeeNumber(e.getEmployeeNumber());
+        dto.setFirstName(e.getFirstName());
+        dto.setMiddleName(e.getMiddleName());
+        dto.setLastName(e.getLastName());
+        dto.setEmail(e.getEmail());
+        dto.setContactNumber(e.getContactNumber());
+        dto.setEmploymentStatus(e.getEmploymentStatus());
+        dto.setEmploymentType(e.getEmploymentType());
+        dto.setPayType(e.getPayType());
+        dto.setDateHired(e.getDateHired());
+        dto.setBasicSalary(e.getBasicSalary());
+        if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getDepartmentName());
+        if (e.getPosition() != null) dto.setPositionName(e.getPosition().getPositionName());
+        return dto;
+    }
+
+    /** Returns filtered/sorted employees as list DTOs (lighter payload for list page). */
+    public List<EmployeeListDto> filterEmployeesAsListDto(
+            String searchQuery,
+            Integer departmentId,
+            Integer positionId,
+            String employmentStatus,
+            String employmentType,
+            String payType,
+            BigDecimal minSalary,
+            BigDecimal maxSalary,
+            String sortBy,
+            String direction) {
+        List<Employees> list = filterEmployees(searchQuery, departmentId, positionId,
+                employmentStatus, employmentType, payType, minSalary, maxSalary, sortBy, direction);
+        return list.stream().map(EmployeeService::toListDto).collect(Collectors.toList());
     }
 
     public Optional<Employees> getEmployeeById(Integer id) {

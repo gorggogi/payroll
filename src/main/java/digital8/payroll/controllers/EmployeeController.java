@@ -1,5 +1,6 @@
 package digital8.payroll.controllers;
 
+import digital8.payroll.dto.EmployeeListDto;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,18 +19,17 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @GetMapping
-    public ResponseEntity<List<Employees>> getAllEmployees(
+    public ResponseEntity<List<EmployeeListDto>> getAllEmployees(
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String direction) {
 
-             List<Employees> employees = employeeService.filterEmployees(
-                    null, null, null, null, null, null, null, null, sortBy, direction
-                );
-                return ResponseEntity.ok(employees);
+        List<EmployeeListDto> employees = employeeService.filterEmployeesAsListDto(
+                null, null, null, null, null, null, null, null, sortBy, direction);
+        return ResponseEntity.ok(employees);
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<Employees>> filterEmployees(
+    public ResponseEntity<List<EmployeeListDto>> filterEmployees(
             @RequestParam(required = false) String searchQuery,
             @RequestParam(required = false) Integer departmentId,
             @RequestParam(required = false) Integer positionId,
@@ -41,7 +41,7 @@ public class EmployeeController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String direction) {
 
-        List<Employees> employees = employeeService.filterEmployees(
+        List<EmployeeListDto> employees = employeeService.filterEmployeesAsListDto(
             searchQuery,
             departmentId,
             positionId,

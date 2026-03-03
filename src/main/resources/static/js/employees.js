@@ -98,10 +98,10 @@ function filterAndDisplayEmployees(){
                 (emp.middleName && emp.middleName.toLowerCase().includes(searchQuery)) ||
                 (emp.employeeNumber && emp.employeeNumber.toString().toLowerCase().includes(searchQuery)) ||
                 (emp.email && emp.email.toLowerCase().includes(searchQuery)) ||
-                (emp.department && emp.department.departmentName && emp.department.departmentName.toLowerCase().includes(searchQuery)) ||
-                (emp.position && emp.position.positionName && emp.position.positionName.toLowerCase().includes(searchQuery)) ||
+                (emp.departmentName && emp.departmentName.toLowerCase().includes(searchQuery)) ||
+                (emp.positionName && emp.positionName.toLowerCase().includes(searchQuery)) ||
                 (emp.employmentStatus && emp.employmentStatus.toLowerCase().includes(searchQuery)) ||
-                (emp.employmentType && emp.employmentType.toLowerCase().includes(searchQuery)) 
+                (emp.employmentType && emp.employmentType.toLowerCase().includes(searchQuery))
             );
         });
        
@@ -165,8 +165,8 @@ function displayEmployees(employees) {
                     <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
                     <p><strong>Email:</strong> ${emp.email || 'N/A'}</p>
                     <p><strong>Contact:</strong> ${emp.contactNumber || 'N/A'}</p>
-                    <p><strong>Department:</strong> ${emp.department ? emp.department.departmentName : 'N/A'}</p>
-                    <p><strong>Position:</strong> ${emp.position ? emp.position.positionName : 'N/A'}</p>
+                    <p><strong>Department:</strong> ${emp.departmentName || 'N/A'}</p>
+                    <p><strong>Position:</strong> ${emp.positionName || 'N/A'}</p>
                     <p><strong>Type:</strong> ${emp.employmentType}</p>
                     <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
                     <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
