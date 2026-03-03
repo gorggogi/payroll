@@ -13,7 +13,6 @@ import digital8.payroll.entities.PasswordResetToken;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.PasswordResetRepository;
 import digital8.payroll.repositories.UsersRepository;
-
 import java.util.Optional;
 
 @Controller
@@ -52,6 +51,7 @@ public class PasswordSetupController {
     @PostMapping("/setup-password")
     public String processSetupPassword(@RequestParam("token") String token, 
                                        @RequestParam("password") String password,
+                                       Model model,
                                        RedirectAttributes redirectAttributes) {
         
         Optional<PasswordResetToken> tokenOpt = passwordResetRepository.findByToken(token);
@@ -69,7 +69,7 @@ public class PasswordSetupController {
 
         passwordResetRepository.delete(resetToken);
 
-        redirectAttributes.addFlashAttribute("message", "Account activated! You may now log in with your new password.");
-        return "redirect:html/setup-success";
+        model.addAttribute("email", user.getEmail());
+        return "html/setup-success";  
     }
 }
