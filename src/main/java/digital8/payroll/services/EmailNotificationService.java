@@ -33,7 +33,7 @@ public class EmailNotificationService {
             String setupLink = baseUrl + "/setup-password?token=" + token;
             context.setVariable("setupLink", setupLink);
 
-            String htmlBody = templateEngine.process("/html/email/setup-email", context);
+            String htmlBody = templateEngine.process("html/email/setup-email", context);
 
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
