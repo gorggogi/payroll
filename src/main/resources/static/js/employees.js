@@ -21,9 +21,29 @@ let searchQuery = '';
 let sortBy = 'lastName';
 let sortOrder = 'asc';
 
+let departmentsCache = [];
+let positionsCache = [];
+let lookupsLoadingPromise = null;
+
+function preloadLookups() {
+    if (lookupsLoadingPromise) {
+        return lookupsLoadingPromise;
+    }
+    lookupsLoadingPromise = Promise.all([
+        fetch('/api/departments').then(r => { if (!r.ok) throw new Error('Failed to load departments'); return r.json(); }),
+        fetch('/api/positions').then(r => { if (!r.ok) throw new Error('Failed to load positions'); return r.json(); })
+    ]).then(([departments, positions]) => {
+        departmentsCache = departments;
+        positionsCache = positions;
+        return [departmentsCache, positionsCache];
+    });
+    return lookupsLoadingPromise;
+}
+
 window.addEventListener('load', function(){
 
     loadEmployees();
+    preloadLookups();
 
     document.getElementById('searchInput').addEventListener('keydown', function(event){
         if (event.key === 'Enter'){
@@ -192,10 +212,7 @@ function renderEmployeeDetail(emp) {
     const existing = document.getElementById('employeeModal');
     if (existing) existing.remove();
 
-    Promise.all([
-        fetch('/api/departments').then(r => { if (!r.ok) throw new Error('Failed to load departments'); return r.json(); }),
-        fetch('/api/positions').then(r => { if (!r.ok) throw new Error('Failed to load positions'); return r.json(); })
-    ])
+    preloadLookups()
     .then(([departments, positions]) => {
         const modal = document.createElement('div');
         modal.id = 'employeeModal';
@@ -350,7 +367,29 @@ function saveEmployee(employeeId) {
     .then(saved => {
         alert('Employee saved');
         closeEmployeeModal();
-        loadEmployees();
+
+        const idx = allEmployees.findIndex(e => e.employeeId === saved.employeeId);
+        if (idx !== -1) {
+            const existing = allEmployees[idx];
+            allEmployees[idx] = {
+                ...existing,
+                employeeId: saved.employeeId,
+                firstName: saved.firstName,
+                middleName: saved.middleName,
+                lastName: saved.lastName,
+                email: saved.email,
+                contactNumber: saved.contactNumber,
+                address: saved.address,
+                employmentStatus: saved.employmentStatus,
+                employmentType: saved.employmentType,
+                payType: saved.payType,
+                basicSalary: saved.basicSalary,
+                dateHired: saved.dateHired,
+                departmentName: saved.department ? saved.department.departmentName : existing.departmentName,
+                positionName: saved.position ? saved.position.positionName : existing.positionName
+            };
+        }
+        filterAndDisplayEmployees();
     })
     .catch(err => alert('Error saving employee: ' + err.message));
 }
