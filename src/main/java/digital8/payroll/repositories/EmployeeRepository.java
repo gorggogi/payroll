@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employees, Integer>, JpaSpecificationExecutor<Employees> {
+public interface EmployeeRepository extends JpaRepository<Employees, Integer>, JpaSpecificationExecutor<Employees>, EmployeeRepositoryCustom {
 
     Optional<Employees> findFirstByOrderByEmployeeIdDesc();
     Employees findByEmployeeNumber(String employeeNumber);

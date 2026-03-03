@@ -84,7 +84,7 @@ public class EmployeeService {
         maxSalary
     );
 
-    List<Employees> results = employeeRepository.findAll(spec, sort);
+    List<Employees> results = employeeRepository.findAllWithFetch(spec, sort);
     
     return results;
     }
