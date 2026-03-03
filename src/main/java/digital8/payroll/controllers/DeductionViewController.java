@@ -10,6 +10,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -58,7 +59,7 @@ public class DeductionViewController {
 
         if (isAdmin) {
             assignments = employeeDeductionsRepository.findAll();
-            employees = employeeRepository.findAll();
+            employees = employeeRepository.findAllWithFetch(null, Sort.by(Sort.Direction.ASC, "lastName"));
             if (authentication != null && authentication.getPrincipal() instanceof Users) {
                 Employees adminEmp = ((Users) authentication.getPrincipal()).getEmployee();
                 if (adminEmp != null) model.addAttribute("emp_id", adminEmp.getEmployeeId());
