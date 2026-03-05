@@ -23,7 +23,15 @@
                 <a href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
                 <a href="/admin/deductions" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
                 <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
-                <a href="/admin/leave" title="Leave"><li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span></li></a>
+                <a href="/admin/leave" title="Leave">
+                <li>
+                    <i class="fa-regular fa-calendar-minus"></i>
+                    <span class="nav-label">Leave</span>
+                    <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </span>
+                </li>
+            </a>
                 <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
             <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>

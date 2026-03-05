@@ -11,6 +11,7 @@ import jakarta.persistence.Table;
 
 import jakarta.persistence.Transient;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 @Entity
@@ -47,6 +48,9 @@ public class LeaveRequests{
 
     @Column (nullable = false, unique = false)
     private LocalDate requestedDate;
+
+    @Column (nullable = true, unique = false)
+    private LocalDateTime respondedAt;
 
     @Transient
     public Integer getTotalDays() {
@@ -126,6 +130,14 @@ public class LeaveRequests{
 
     public void setRequestedDate(LocalDate requestedDate) {
         this.requestedDate = requestedDate;
+    }
+
+    public LocalDateTime getRespondedAt() {
+        return respondedAt;
+    }
+
+    public void setRespondedAt(LocalDateTime respondedAt) {
+        this.respondedAt = respondedAt;
     }
 
 }

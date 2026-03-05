@@ -52,6 +52,17 @@ public class Users{
     @Column (nullable = false, unique = false)
     private LocalDateTime updatedAt;
 
+    @Column (nullable = true, unique = false)
+    private LocalDateTime lastLeaveViewedAt;
+
+    public LocalDateTime getLastLeaveViewedAt() {
+        return lastLeaveViewedAt;
+    }
+
+    public void setLastLeaveViewedAt(LocalDateTime lastLeaveViewedAt) {
+        this.lastLeaveViewedAt = lastLeaveViewedAt;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
