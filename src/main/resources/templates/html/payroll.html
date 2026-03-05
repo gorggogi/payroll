@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="container">
-        <nav>
+        <nav class="no-print">
             <div class="nav-header">
                 <h1><span class="nav-brand">Payroll System</span></h1>
                 <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
@@ -38,7 +38,9 @@
         <section>
             <div class="head">
                 <h1>Payroll of <span th:text="${employeeName}">User</span></h1>
-                
+                <button type="button" class="btn-print no-print" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
             </div>
 
             <form th:action="@{/payroll/{id}(id=${emp_id})}" method="get" class="payroll-filters">

@@ -175,3 +175,9 @@ select {
     font-size: .85rem;
     height: 2.5rem;;
 }
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+}
