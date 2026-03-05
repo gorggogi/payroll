@@ -309,3 +309,11 @@ nav.nav-collapsed .logout:hover::after {
         margin-right: 1rem;
     }
 }
+
+/* Indicator next to nav link (e.g. Leave) when there is something to see */
+.nav-indicator {
+    margin-left: 6px;
+    color: #c00;
+    font-size: 1em;
+    vertical-align: middle;
+}

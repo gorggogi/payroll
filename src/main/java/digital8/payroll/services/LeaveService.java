@@ -15,6 +15,7 @@ import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.LeaveBalanceRepository;
 import digital8.payroll.repositories.LeaveRequestRepository;
 import digital8.payroll.repositories.LeaveTypesRepository;
+import java.time.LocalDateTime;
 
 @Service
 public class LeaveService {
@@ -90,6 +91,7 @@ public class LeaveService {
 
         request.setStatus("Approved");
         request.setApproved_by(adminId);
+        request.setRespondedAt(LocalDateTime.now());
 
         leaveRequestRepository.save(request);
 
@@ -121,7 +123,11 @@ public class LeaveService {
 
         request.setStatus("Rejected");
         request.setApproved_by(adminId);
+        request.setRespondedAt(LocalDateTime.now());
         leaveRequestRepository.save(request);
     }
-    
+
+    public long getNewRespondedCountForEmployee(Integer employeeId, LocalDateTime lastViewedAt){
+        return leaveRequestRepository.countNewRespondedForEmployee(employeeId, lastViewedAt);
+    }
 }

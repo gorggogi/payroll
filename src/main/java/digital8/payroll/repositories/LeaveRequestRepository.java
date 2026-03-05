@@ -1,5 +1,6 @@
 package digital8.payroll.repositories;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -38,4 +39,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequests, Int
             "OR LOWER(lt.leaveName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "ORDER BY lr.requestedDate DESC")
     List<LeaveRequests> searchByKeywordAndStatusOrderByRequestedDateDesc(@Param("search") String search, @Param("status") String status);
+    @Query("SELECT COUNT(lr) FROM LeaveRequests lr WHERE lr.employee.employeeId = :employeeId " +
+    
+        "AND lr.status IN ('Approved', 'Rejected') AND lr.respondedAt IS NOT NULL " +
+        
+        "AND (:since IS NULL OR lr.respondedAt > :since)")
+        
+        long countNewRespondedForEmployee(@Param("employeeId") Integer employeeId, @Param("since") java.time.LocalDateTime since);
+    
 }

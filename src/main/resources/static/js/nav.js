@@ -68,4 +68,42 @@
 
     applyState();
     updateToggleIcon();
+
+    // Leave nav indicator: refresh when tab is visible only (no polling in background)
+    (function () {
+        const indicator = document.getElementById('leave-nav-indicator');
+        if (!indicator) return;
+
+        function updateIndicator() {
+            fetch('/api/leave-indicator', { credentials: 'same-origin' })
+                .then(function (res) { return res.ok ? res.json() : null; })
+                .then(function (data) {
+                    if (data && typeof data.showIndicator === 'boolean') {
+                        indicator.style.display = data.showIndicator ? '' : 'none';
+                    }
+                })
+                .catch(function () {});
+        }
+
+        var pollTimer;
+        function startPolling() {
+            updateIndicator();
+            pollTimer = setInterval(updateIndicator, 45000);
+        }
+        function stopPolling() {
+            if (pollTimer) {
+                clearInterval(pollTimer);
+                pollTimer = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                startPolling();
+            }
+        });
+        if (!document.hidden) startPolling();
+    })();
 })();
