@@ -36,10 +36,12 @@
         </nav>
 
         <section>
+            <div class="head">
             <h1>Deductions</h1>
             <button type="button" class="btn-print no-print" onclick="window.print()">
                 <i class="fa-solid fa-print"></i> Print
             </button>
+            </div>
             <p th:if="${message}" class="alert-success" th:text="${message}"></p>
 
             <div class="deduction-section">
