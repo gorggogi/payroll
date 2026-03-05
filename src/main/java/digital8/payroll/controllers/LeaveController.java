@@ -1,6 +1,7 @@
 package digital8.payroll.controllers;
 
 import digital8.payroll.entities.Users;
+import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.services.LeaveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -10,12 +11,17 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Controller
 public class LeaveController {
 
     @Autowired
     private LeaveService leaveService;
+    @Autowired
+    private UsersRepository usersRepository;
 
     @GetMapping("/employee/leave")
     public String employeeLeavePage(Model model, Authentication authentication) {
@@ -29,6 +35,8 @@ public class LeaveController {
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
         model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        user.setLastLeaveViewedAt(LocalDateTime.now());
+        usersRepository.save(user);
 
         return "html/leaveEmployee";
     }

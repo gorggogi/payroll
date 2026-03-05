@@ -28,8 +28,14 @@
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
                 <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/leave" title="Leave"><li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/leave" title="Leave"><li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/leave" title="Leave">
+                <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>
+                <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li>
+            </a>
+            <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/leave" title="Leave">
+                <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>
+                <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li>
+            </a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
