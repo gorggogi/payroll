@@ -175,6 +175,16 @@ select {
     font-size: .85rem;
     height: 2.5rem;;
 }
+table, tr, td {
+  background-color: white !important;
+}
+th {
+  background-color: var(--primary-color) !important;
+  color: white;
+}
+tr td:hover{
+  background-color: var(--primary-light) !important;
+}
 @media print {
   .no-print {
     display: none !important;
