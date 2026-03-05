@@ -37,18 +37,32 @@ public class NavIndicatorController {
 
         Users user = (Users) authentication.getPrincipal();
 
-        // Leave: admin = pending count, employee = new responded count
-        boolean leave = false;
-        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
-            leave = leaveService.getPendingCount() > 0;
-        } else if (user.getEmployee() != null) {
-            long count = leaveService.getNewRespondedCountForEmployee(
-                user.getEmployee().getEmployeeId(),
-                user.getLastLeaveViewedAt()
-            );
-            leave = count > 0;
+        boolean isAdmin = authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        Integer employeeId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
+
+        boolean teamPending = false;
+        boolean selfResponded = false;
+
+        if (employeeId != null) {
+            selfResponded = leaveService.getNewRespondedCountForEmployee(
+                    employeeId,
+                    user.getLastLeaveViewedAt()
+            ) > 0;
         }
-        out.put("leave", leave);
+
+        if (isAdmin) {
+            teamPending = leaveService.getPendingCountExcludingEmployee(employeeId) > 0;
+        }
+
+        // For admins:
+        // - "leave" drives the main Leave nav item:
+        //      lights up when there are team pending requests OR this admin's own
+        //      requests have been approved/rejected.
+        // - "leaveSelf" drives the My Leave link (their own approvals/rejections)
+        // For employees:
+        // - "leave" is their own approvals/rejections
+        out.put("leave", isAdmin ? (teamPending || selfResponded) : selfResponded);
+        out.put("leaveSelf", selfResponded);
 
         // Deductions (example for future): out.put("deductions", deductionService.hasUnread(...));
 

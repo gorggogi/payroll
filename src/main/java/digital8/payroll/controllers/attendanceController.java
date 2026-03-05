@@ -54,6 +54,14 @@ public class attendanceController {
         model.addAttribute("years", years);
 
         boolean isAdmin = authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        // Logged-in user's own employee id (for nav links / "my payroll")
+        Integer selfEmpId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users currentUser = (Users) authentication.getPrincipal();
+            if (currentUser.getEmployee() != null) {
+                selfEmpId = currentUser.getEmployee().getEmployeeId();
+            }
+        }
         Integer targetEmpId = null;
         Employees targetEmp = null;
 
@@ -80,13 +88,17 @@ public class attendanceController {
                     .collect(Collectors.toList());
             model.addAttribute("attendances", filtered);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
-            model.addAttribute("emp_id", targetEmpId);
+            model.addAttribute("emp_id", targetEmpId); // currently viewed employee
             model.addAttribute("emp_payType", targetEmp.getPayType());
             BigDecimal total = filtered.stream()
                     .map(Attendance::getWork_hours)
                     .filter(h -> h != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursRendered", total);
+        }
+        // For nav: always use the logged-in user's own employee id when available
+        if (selfEmpId != null) {
+            model.addAttribute("self_emp_id", selfEmpId);
         }
         if (!model.containsAttribute("attendances")) {
             model.addAttribute("attendances", List.<Attendance>of());

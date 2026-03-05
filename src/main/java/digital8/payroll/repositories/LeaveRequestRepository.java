@@ -23,6 +23,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequests, Int
 
     Long countByStatus(String status);
 
+    List<LeaveRequests> findByStatusAndEmployee_EmployeeIdNotOrderByRequestedDateAsc(String status, Integer employeeId);
+
+    List<LeaveRequests> findByStatusAndEmployee_EmployeeIdNotOrderByRequestedDateDesc(String status, Integer employeeId);
+
+    Long countByStatusAndEmployee_EmployeeIdNot(String status, Integer employeeId);
+
     @Query("SELECT lr FROM LeaveRequests lr JOIN lr.employee e JOIN lr.leaveType lt " +
             "WHERE (LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +

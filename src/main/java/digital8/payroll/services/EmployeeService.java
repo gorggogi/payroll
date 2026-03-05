@@ -3,8 +3,12 @@ package digital8.payroll.services;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Roles;
 import digital8.payroll.entities.Users;
+import digital8.payroll.entities.LeaveBalance;
+import digital8.payroll.entities.LeaveTypes;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.RolesRepository;
+import digital8.payroll.repositories.LeaveBalanceRepository;
+import digital8.payroll.repositories.LeaveTypesRepository;
 import digital8.payroll.specifications.EmployeeSpecifications;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +49,12 @@ public class EmployeeService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private LeaveBalanceRepository leaveBalanceRepository;
+
+    @Autowired
+    private LeaveTypesRepository leaveTypesRepository;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -158,6 +168,16 @@ public class EmployeeService {
         user.setRole(employeeRole);
         user.setIsActive(true);
         usersRepository.save(user);
+
+        // Initialize leave balances for this employee for all leave types
+        List<LeaveTypes> leaveTypes = leaveTypesRepository.findAll();
+        for (LeaveTypes type : leaveTypes) {
+            LeaveBalance balance = new LeaveBalance();
+            balance.setEmployeeId(saved.getEmployeeId());
+            balance.setLeaveTypeId(type.getLeaveTypeId());
+            balance.setBalance(new BigDecimal("15"));
+            leaveBalanceRepository.save(balance);
+        }
 
         return Optional.of(saved);
     }
