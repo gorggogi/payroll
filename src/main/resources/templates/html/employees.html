@@ -27,7 +27,7 @@
                 <li>
                     <i class="fa-regular fa-calendar-minus"></i>
                     <span class="nav-label">Leave</span>
-                    <span id="leave-nav-indicator" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                    <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
                         <i class="fa-solid fa-circle-exclamation"></i>
                     </span>
                 </li>
