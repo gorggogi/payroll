@@ -85,18 +85,18 @@ a{
 }
 li:hover{
   background-color: var(--primary-light);
-  color: #474787;
+  color: white;
   transition: .3s;
 }
 li.active{
   background-color: var(--primary-light);
-  color: #474787;
+  color: #black;
 }
 .logout{
     padding: 1rem;
     font-size: var(--font-size-300);
     background-color: #E94560;
-    color: #fff;
+    color: white;
     border: none;
     border-radius: 1rem;
     cursor: pointer;
@@ -141,13 +141,13 @@ h2 {
 
 /* ==================== BUTTON AND INPUT STYLES ==================== */
 
-input {
+/* input {
     padding: .65rem .8rem;
     border: 1px solid var(--tertiary-color);
     border-radius: .5rem;
     font-size: var(--font-size-300);
     height: 2.5rem;
-}
+} */
 
 button {
     padding: .65rem .8rem;
@@ -166,7 +166,7 @@ button:hover {
     transition: .3s;
 }
 
-select {
+select, input {
     padding: .65rem .8rem;
     background-color: var(--primary-light);
     color: #474787;
