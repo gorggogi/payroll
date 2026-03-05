@@ -90,7 +90,7 @@ li:hover{
 }
 li.active{
   background-color: var(--primary-light);
-  color: #black;
+  color: black;
 }
 .logout{
     padding: 1rem;
@@ -105,6 +105,7 @@ li.active{
     align-items: center;
 
 }
+
 section {
   overflow-y: auto;
 }

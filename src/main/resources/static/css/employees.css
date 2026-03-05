@@ -457,7 +457,7 @@ section{
     gap: 6px;
     padding: 8px 14px;
     font-size: 14px;
-    background: #28a745;
+    background: var(--secondary-color);
     color: white;
     border-radius: 6px;
     text-decoration: none;
@@ -502,6 +502,19 @@ section{
 .btn-save-emp.is-loading {
     opacity: 0.8;
     cursor: default;
+}
+button, .btn-view-attendance{
+    background-color: var(--secondary-color) !important; 
+    color: white !important;
+}
+button:hover, .btn-view-attendance:hover{
+    background-color: var(--primary-light) !important;
+    color: black !important;
+}
+.card-link-attendance, .card-link-payroll{
+    color: var(--secondary-color) !important;
+    background-color: var(--primary-light) !important;
+    padding: 0.2rem .5rem;
 }
 
 
