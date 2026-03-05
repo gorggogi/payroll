@@ -13,8 +13,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
 @Controller
 public class LeaveController {
 
@@ -41,6 +39,23 @@ public class LeaveController {
         return "html/leaveEmployee";
     }
 
+    @GetMapping("/admin/my-leave")
+    public String adminSelfLeavePage(Model model, Authentication authentication) {
+        Users user = (Users) authentication.getPrincipal();
+        Integer employeeId = user.getEmployee().getEmployeeId();
+        String employeeName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
+
+        model.addAttribute("emp_id", user.getUserId());
+        model.addAttribute("employeeName", employeeName);
+        model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
+        model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
+        model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        user.setLastLeaveViewedAt(LocalDateTime.now());
+        usersRepository.save(user);
+
+        return "html/leaveAdminSelf";
+    }
+
     @PostMapping("/employee/leave/request")
     public String submitLeaveRequest(
             @RequestParam Integer leaveTypeId,
@@ -61,7 +76,10 @@ public class LeaveController {
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to submit leave request: " + e.getMessage());
         }
 
-        return "redirect:/employee/leave";
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        return isAdmin ? "redirect:/admin/my-leave" : "redirect:/employee/leave";
     }
 
     @GetMapping("/admin/leave")
@@ -70,13 +88,14 @@ public class LeaveController {
             @RequestParam(required = false) String search,
             Model model, Authentication authentication) {
         Users user = (Users) authentication.getPrincipal();
-        Integer adminId = user.getUserId();
-        model.addAttribute("emp_id", adminId);
+        Integer adminUserId = user.getUserId();
+        Integer adminEmployeeId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
+        model.addAttribute("emp_id", adminUserId);
         String fullName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
         model.addAttribute("employeeName", fullName);
-        model.addAttribute("pendingRequests", leaveService.getPendingLeaveRequests());
-        model.addAttribute("pendingCount", leaveService.getPendingCount());
-        model.addAttribute("allRequests", leaveService.getAllLeaveRequests(filter, search));
+        model.addAttribute("pendingRequests", leaveService.getPendingLeaveRequestsExcludingEmployee(adminEmployeeId));
+        model.addAttribute("pendingCount", leaveService.getPendingCountExcludingEmployee(adminEmployeeId));
+        model.addAttribute("allRequests", leaveService.getAllLeaveRequestsExcludingEmployee(adminEmployeeId, filter, search));
         model.addAttribute("filter", filter);
         model.addAttribute("search", search);
         return "html/leaveAdmin";
