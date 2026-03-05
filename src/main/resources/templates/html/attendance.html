@@ -27,7 +27,10 @@
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li class="active"><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <!-- Nav Payroll: always go to the logged-in user's own payroll when self_emp_id is available -->
+                <a th:href="@{/payroll/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#" title="Payroll">
+                    <li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li>
+                </a>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/leave" title="Leave">
                 <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>
                 <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li>
@@ -97,6 +100,7 @@
         </table>
 
         <p class="total-hours">Total Hours Rendered: <strong th:text="${totalHoursRendered != null ? #numbers.formatDecimal(totalHoursRendered, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</strong></p>
+        <!-- Contextual link: go to the payroll of the employee currently being viewed -->
         <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link no-print">View Payroll &rarr;</a>
     
     </section>
