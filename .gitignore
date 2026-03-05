@@ -32,4 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 ### Cursor plans ###
-.cursor/plans/
+.metadata/.cursor/plans/
