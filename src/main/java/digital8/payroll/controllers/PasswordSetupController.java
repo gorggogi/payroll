@@ -72,10 +72,6 @@ public class PasswordSetupController {
 
         passwordResetRepository.delete(resetToken);
 
-        if (request.getSession(false) != null) {
-            request.getSession().invalidate();
-        }
-
         redirectAttributes.addFlashAttribute("setupSuccessEmail", user.getEmail());
         return "redirect:/setup-success";
     }
