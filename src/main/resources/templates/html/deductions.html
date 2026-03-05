@@ -45,11 +45,11 @@
             <div class="deduction-section">
                 <div class="section-head">
                     <h2 class="no-print"><i class="fa-solid fa-user-minus"></i> <span sec:authorize="hasRole('ADMIN')">Employee deductions</span><span sec:authorize="hasRole('EMPLOYEE')">My deductions</span></h2>
-                    <button sec:authorize="hasRole('ADMIN')" type="button" class="btn-apply" onclick="openModal('modalAddDeduction')"><i class="fa-solid fa-plus"></i> Add deduction</button>
+                    <button sec:authorize="hasRole('ADMIN')" type="button" class="btn-apply no-print" onclick="openModal('modalAddDeduction')"><i class="fa-solid fa-plus"></i> Add deduction</button>
                 </div>
                 <!-- Search & filter (admin: by employee/deduction name + type + recurring; employee: by deduction name + type + recurring) -->
                 <form th:action="@{${deductionsFormAction}}" method="get" class="deduction-search-form">
-                    <div class="search-input"> 
+                    <div class="search-input no-print"> 
                         <input sec:authorize="hasRole('ADMIN')" type="search" name="search" th:value="${search}" placeholder="Search by employee or deduction name..." class="deduction-search-input" aria-label="Search deductions">
                     </div>
                     <div class="filter-search">
@@ -73,7 +73,7 @@
                             <option value="yes" th:selected="${filterRecurring == 'yes'}">Recurring</option>
                             <option value="no" th:selected="${filterRecurring == 'no'}">One-time</option>
                         </select>
-                        <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                        <button type="submit" class="btn-search no-print"><i class="fa-solid fa-search"></i> Search</button>
                     </div>
                 </form>
                 <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">

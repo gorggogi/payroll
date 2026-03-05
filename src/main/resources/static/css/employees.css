@@ -504,6 +504,7 @@ section{
     cursor: default;
 }
 
+
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
