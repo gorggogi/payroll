@@ -90,7 +90,6 @@ li:hover{
 }
 li.active{
   background-color: var(--primary-light);
-  color: black;
 }
 .logout{
     padding: 1rem;
