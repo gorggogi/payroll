@@ -146,7 +146,6 @@
 /* ==================== ALL REQUESTS SECTION ==================== */
 .leave-requests {
     margin-bottom: var(--padding-desktop);
-    background-color: #fff;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

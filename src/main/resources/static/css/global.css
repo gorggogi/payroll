@@ -177,10 +177,12 @@ select, input {
 }
 table, tr, td {
   background-color: white !important;
+  border: 1px solid white !important;
 }
 th {
-  background-color: var(--primary-color) !important;
+  background-color: var(--secondary-color) !important;
   color: white;
+  border: 1px solid white !important;
 }
 tr td:hover{
   background-color: var(--primary-light) !important;
