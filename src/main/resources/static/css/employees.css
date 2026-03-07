@@ -1,3 +1,25 @@
+/* Card action buttons inside employee cards */
+.card-btn-attendance, .card-btn-payroll {
+    background-color: var(--primary-light);
+    color: var(--secondary-color);
+    border: none;
+    border-radius: 6px;
+    margin: 0.2rem 0.2rem 0.2rem 0;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.card-btn-attendance:hover, .card-btn-payroll:hover {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+.employee-status.status-resigned {
+    background: #ffe5b4;
+    color: #ff8800;
+}
 .container {
     display: flex;
     width: 100%;
@@ -428,29 +450,6 @@ section{
     background: #5a6268; 
 }
 
-.card-link-attendance {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    font-size: 13px;
-    color: #17a2b8;
-    text-decoration: none;
-}
-.card-link-attendance:hover { text-decoration: underline; color: #138496; }
-
-.card-link-payroll {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    margin-left: 12px;
-    font-size: 13px;
-    color: #28a745;
-    text-decoration: none;
-}
-.card-link-payroll:hover { text-decoration: underline; color: #1e7e34; }
-
 .btn-view-payroll {
     display: inline-flex;
     align-items: center;
@@ -515,6 +514,26 @@ button:hover, .btn-view-attendance:hover{
     color: var(--secondary-color) !important;
     background-color: var(--primary-light) !important;
     padding: 0.2rem .5rem;
+}
+
+.employee-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.employee-card-actions button {
+    font-size: .8rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 90%;
+    gap: 6px;
 }
 
 
