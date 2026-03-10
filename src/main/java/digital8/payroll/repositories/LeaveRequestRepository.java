@@ -1,5 +1,6 @@
 package digital8.payroll.repositories;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,6 +23,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequests, Int
 
     Long countByStatus(String status);
 
+    List<LeaveRequests> findByStatusAndEmployee_EmployeeIdNotOrderByRequestedDateAsc(String status, Integer employeeId);
+
+    List<LeaveRequests> findByStatusAndEmployee_EmployeeIdNotOrderByRequestedDateDesc(String status, Integer employeeId);
+
+    Long countByStatusAndEmployee_EmployeeIdNot(String status, Integer employeeId);
+
     @Query("SELECT lr FROM LeaveRequests lr JOIN lr.employee e JOIN lr.leaveType lt " +
             "WHERE (LOWER(e.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(e.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
@@ -38,4 +45,12 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequests, Int
             "OR LOWER(lt.leaveName) LIKE LOWER(CONCAT('%', :search, '%'))) " +
             "ORDER BY lr.requestedDate DESC")
     List<LeaveRequests> searchByKeywordAndStatusOrderByRequestedDateDesc(@Param("search") String search, @Param("status") String status);
+    @Query("SELECT COUNT(lr) FROM LeaveRequests lr WHERE lr.employee.employeeId = :employeeId " +
+    
+        "AND lr.status IN ('Approved', 'Rejected') AND lr.respondedAt IS NOT NULL " +
+        
+        "AND (:since IS NULL OR lr.respondedAt > :since)")
+        
+        long countNewRespondedForEmployee(@Param("employeeId") Integer employeeId, @Param("since") java.time.LocalDateTime since);
+    
 }

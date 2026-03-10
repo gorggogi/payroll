@@ -11,10 +11,13 @@ import digital8.payroll.entities.LeaveBalance;
 import digital8.payroll.entities.LeaveBalanceId;
 import digital8.payroll.entities.LeaveRequests;
 import digital8.payroll.entities.LeaveTypes;
+import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.LeaveBalanceRepository;
 import digital8.payroll.repositories.LeaveRequestRepository;
 import digital8.payroll.repositories.LeaveTypesRepository;
+import digital8.payroll.repositories.UsersRepository;
+import java.time.LocalDateTime;
 
 @Service
 public class LeaveService {
@@ -27,6 +30,8 @@ public class LeaveService {
     private LeaveTypesRepository leaveTypesRepository;
     @Autowired
     private EmployeeRepository employeesRepository;
+    @Autowired
+    private UsersRepository usersRepository;
 
     public List<LeaveTypes> getAllLeaveTypes(){
         return leaveTypesRepository.findAll();
@@ -66,6 +71,20 @@ public class LeaveService {
         return leaveRequestRepository.countByStatus("Pending");
     }
 
+    public List<LeaveRequests> getPendingLeaveRequestsExcludingEmployee(Integer employeeId) {
+        if (employeeId == null) {
+            return getPendingLeaveRequests();
+        }
+        return leaveRequestRepository.findByStatusAndEmployee_EmployeeIdNotOrderByRequestedDateAsc("Pending", employeeId);
+    }
+
+    public long getPendingCountExcludingEmployee(Integer employeeId) {
+        if (employeeId == null) {
+            return getPendingCount();
+        }
+        return leaveRequestRepository.countByStatusAndEmployee_EmployeeIdNot("Pending", employeeId);
+    }
+
     public List<LeaveRequests> getAllLeaveRequests(String filter, String search) {
         boolean hasSearch = search != null && !search.isBlank();
         if (hasSearch) {
@@ -84,12 +103,32 @@ public class LeaveService {
         return leaveRequestRepository.findAllByOrderByRequestedDateDesc();
     }
 
+    public List<LeaveRequests> getAllLeaveRequestsExcludingEmployee(Integer employeeId, String filter, String search) {
+        List<LeaveRequests> base = getAllLeaveRequests(filter, search);
+        if (employeeId == null) {
+            return base;
+        }
+        return base.stream()
+                .filter(req -> req.getEmployee() == null ||
+                        !employeeId.equals(req.getEmployee().getEmployeeId()))
+                .toList();
+    }
+
     public void approveLeaveRequest(Integer requestId, Integer adminId){
         LeaveRequests request = leaveRequestRepository.findById(requestId)
         .orElseThrow(() -> new RuntimeException("Request not found"));
 
+        Users admin = usersRepository.findById(adminId)
+        .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        if (admin.getEmployee() != null &&
+            admin.getEmployee().getEmployeeId().equals(request.getEmployee().getEmployeeId())) {
+            throw new RuntimeException("You cannot approve your own leave request.");
+        }
+
         request.setStatus("Approved");
         request.setApproved_by(adminId);
+        request.setRespondedAt(LocalDateTime.now());
 
         leaveRequestRepository.save(request);
 
@@ -119,9 +158,21 @@ public class LeaveService {
         LeaveRequests request = leaveRequestRepository.findById(requestId)
         .orElseThrow(() -> new RuntimeException("Request not found"));
 
+        Users admin = usersRepository.findById(adminId)
+        .orElseThrow(() -> new RuntimeException("Admin not found"));
+
+        if (admin.getEmployee() != null &&
+            admin.getEmployee().getEmployeeId().equals(request.getEmployee().getEmployeeId())) {
+            throw new RuntimeException("You cannot reject your own leave request.");
+        }
+
         request.setStatus("Rejected");
         request.setApproved_by(adminId);
+        request.setRespondedAt(LocalDateTime.now());
         leaveRequestRepository.save(request);
     }
-    
+
+    public long getNewRespondedCountForEmployee(Integer employeeId, LocalDateTime lastViewedAt){
+        return leaveRequestRepository.countNewRespondedForEmployee(employeeId, lastViewedAt);
+    }
 }

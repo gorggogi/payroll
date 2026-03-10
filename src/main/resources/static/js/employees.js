@@ -175,11 +175,15 @@ function displayEmployees(employees) {
     const infoHTML = `<div class="search-info"><p><i class="fa-solid fa-users"></i><strong>${employees.length}</strong> employee${employees.length !== 1 ? 's' : ''} found</p></div>`;
     infoContainer.innerHTML = infoHTML;
 
-    const cardsHTML = employees.map(emp => `
+    const cardsHTML = employees.map(emp => {
+        let statusClass = '';
+        if ((emp.employmentStatus || '') === 'Terminated') statusClass = 'status-terminated';
+        else if ((emp.employmentStatus || '').toLowerCase() === 'resigned') statusClass = 'status-resigned';
+        return `
             <div class="employee-card" data-id="${emp.employeeId}" onclick="showEmployee(${emp.employeeId})">
                 <div class="employee-header">
                     <h3 class="employee-name">${emp.firstName} ${emp.middleName || ''} ${emp.lastName}</h3>
-                    <span class="employee-status ${(emp.employmentStatus || '') === 'Terminated' ? 'status-terminated' : ''}">${emp.employmentStatus}</span>
+                    <span class="employee-status ${statusClass}">${emp.employmentStatus}</span>
                 </div>
                 <div class="employee-details">
                     <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
@@ -190,12 +194,29 @@ function displayEmployees(employees) {
                     <p><strong>Type:</strong> ${emp.employmentType}</p>
                     <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
                     <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
-                    <a href="/admin/attendance?empId=${emp.employeeId}" class="card-link-attendance" onclick="event.stopPropagation()" title="View attendance"><i class="fa-solid fa-calendar-check"></i> View attendance</a>
-                    <a href="/payroll/${emp.employeeId}" class="card-link-payroll" onclick="event.stopPropagation()" title="View payroll"><i class="fa-solid fa-money-bill"></i> View payroll</a>
+                    <div class="employee-card-actions">
+                        <button class="card-btn-attendance" data-empid="${emp.employeeId}" onclick="event.stopPropagation()" title="View attendance"><i class="fa-solid fa-calendar-check"></i> View attendance</button>
+                        <button class="card-btn-payroll" data-empid="${emp.employeeId}" onclick="event.stopPropagation()" title="View payroll"><i class="fa-solid fa-money-bill"></i> View payroll</button>
+                    </div>
                 </div>
             </div>
-    `).join('');
+        `;
+    }).join('');
     container.innerHTML = cardsHTML;
+
+    // Add event listeners for new buttons
+    document.querySelectorAll('.card-btn-attendance').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const empId = this.getAttribute('data-empid');
+            window.location.href = `/admin/attendance?empId=${empId}`;
+        });
+    });
+    document.querySelectorAll('.card-btn-payroll').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            const empId = this.getAttribute('data-empid');
+            window.location.href = `/payroll/${empId}`;
+        });
+    });
 }
 
 function showEmployee(employeeId) {
