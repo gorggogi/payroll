@@ -10,10 +10,11 @@ div{
     flex-direction: column;
     width: 65%;
     height: 100vh;
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     justify-content: center;
     padding-left: 5%;
     padding-right: 15%;
+    color: white;
 }
 
 .left-section h1 {
