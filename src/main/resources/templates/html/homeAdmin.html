@@ -21,8 +21,14 @@
                 <a href="/admin/home" title="Home"><li class="active"><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a href="/admin/deductions" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <li class="nav-group expanded">
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
+                    <ul class="nav-sub">
+                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
+                        <a th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a th:href="@{/admin/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                    </ul>
+                </li>
                 <a href="/admin/leave" title="Leave">
                 <li>
                     <i class="fa-regular fa-calendar-minus"></i>
@@ -58,9 +64,9 @@
                     <a href="/admin/attendance" class="card-link">Go to Attendance &rarr;</a>
                 </div>
                 <div class="card">
-                    <h3><i class="fa-solid fa-minus-circle"></i> Deductions</h3>
-                    <p>Define deduction types and assign them to employees.</p>
-                    <a href="/admin/deductions" class="card-link">Go to Deductions &rarr;</a>
+                    <h3><i class="fa-solid fa-money-bill"></i> Payroll</h3>
+                    <p>View payroll, deductions, and adjustments.</p>
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">Go to Payroll &rarr;</a>
                 </div>
             </div>
             <div class="right">

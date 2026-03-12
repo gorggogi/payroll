@@ -28,8 +28,14 @@
                 <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a href="/admin/deductions" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <li class="nav-group expanded">
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
+                    <ul class="nav-sub">
+                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
+                        <a href="/admin/deductions" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a href="/admin/adjustments" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                    </ul>
+                </li>
                 <a href="/admin/leave" title="Leave">
                 <li class="active">
                     <i class="fa-regular fa-calendar-minus"></i>
