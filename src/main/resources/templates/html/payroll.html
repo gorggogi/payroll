@@ -24,9 +24,16 @@
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li class="active"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <li class="nav-group expanded">
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
+                    <ul class="nav-sub">
+                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li class="active"><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                    </ul>
+                </li>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}" title="Leave">
                 <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>
                 <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li>

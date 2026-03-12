@@ -74,6 +74,9 @@
         var indicators = document.querySelectorAll('[data-nav-indicator]');
         if (!indicators.length) return;
 
+        var lastLeaveTeam = null;
+        var lastLeaveSelf = null;
+
         function updateIndicators() {
             fetch('/api/nav-indicators', { credentials: 'same-origin' })
                 .then(function (res) { return res.ok ? res.json() : null; })
@@ -85,6 +88,24 @@
                             el.style.display = data[key] ? '' : 'none';
                         }
                     });
+
+                    // If we're on a leave page and the relevant indicator just turned on,
+                    // reload once so the pending list / history reflect the new state.
+                    var path = window.location.pathname || '';
+                    var leaveTeam = typeof data.leave === 'boolean' ? data.leave : null;
+                    var leaveSelf = typeof data.leaveSelf === 'boolean' ? data.leaveSelf : null;
+
+                    if (path === '/admin/leave' && leaveTeam !== null) {
+                        if (lastLeaveTeam === false && leaveTeam === true) {
+                            window.location.reload();
+                        }
+                        lastLeaveTeam = leaveTeam;
+                    } else if ((path === '/admin/my-leave' || path === '/employee/leave') && leaveSelf !== null) {
+                        if (lastLeaveSelf === false && leaveSelf === true) {
+                            window.location.reload();
+                        }
+                        lastLeaveSelf = leaveSelf;
+                    }
                 })
                 .catch(function () {});
         }

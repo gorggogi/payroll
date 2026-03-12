@@ -92,3 +92,29 @@
 .total-hours strong { 
     margin-left: 0.25rem; 
 }
+
+/* Payroll sub-tabs (Payroll | Deductions | Adjustments) */
+.payroll-subnav {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0;
+}
+.payroll-subnav a {
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    color: #555;
+    border-radius: 6px 6px 0 0;
+    font-weight: 500;
+}
+.payroll-subnav a:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+.payroll-subnav a.active {
+    background: var(--primary-light, #0066cc);
+    color: white;
+    border-bottom: 2px solid var(--primary-light, #0066cc);
+    margin-bottom: -1px;
+}

@@ -22,11 +22,17 @@
                 <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/deductions" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/deductions" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <li class="nav-group expanded">
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
+                    <ul class="nav-sub">
+                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li class="active"><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                    </ul>
+                </li>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}" title="Leave">
                 <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>
                 <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li>
@@ -114,6 +120,30 @@
                 <p sec:authorize="hasRole('ADMIN')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No employee deductions. Click "Add deduction" to assign one.</p>
                 <p sec:authorize="hasRole('EMPLOYEE')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No deductions assigned to you.</p>
             </div>
+
+            <div sec:authorize="hasRole('ADMIN')" class="deduction-section">
+                <div class="section-head">
+                    <h2 class="no-print"><i class="fa-solid fa-list"></i> Deduction types</h2>
+                    <button type="button" class="btn-apply no-print" onclick="openModal('modalAddType')"><i class="fa-solid fa-plus"></i> Add type</button>
+                </div>
+                <table class="attendanceTable deduction-table" th:if="${deductionTypes != null and !deductionTypes.isEmpty()}">
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Name</th><th>Type</th><th class="no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="attendanceBody">
+                        <tr th:each="d : ${deductionTypes}">
+                            <td th:text="${d.deductionName}"></td>
+                            <td th:text="${d.deductionType}"></td>
+                            <td class="no-print">
+                                <button type="button" class="btn-edit" th:data-id="${d.deductionId}" th:data-name="${d.deductionName}" th:data-type="${d.deductionType}" onclick="openEditType(this)"><i class="fa-solid fa-pen"></i> Edit</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p sec:authorize="hasRole('ADMIN')" th:if="${deductionTypes == null or deductionTypes.isEmpty()}" class="no-data">No deduction types. Click "Add type" to create one.</p>
+            </div>
         </section>
     </div>
 
@@ -139,6 +169,34 @@
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalAddType')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-plus"></i> Add type</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Edit deduction type -->
+    <div id="modalEditType" class="deduction-modal" style="display:none; z-index: 2000;">
+        <div class="deduction-modal-content">
+            <button type="button" class="modal-close" onclick="closeModal('modalEditType')">&times;</button>
+            <h3>Edit deduction type</h3>
+            <form action="/admin/deductions/types/update" method="post">
+                <input type="hidden" id="editTypeId" name="id" value="">
+                <div class="form-group">
+                    <label for="editDeductionName">Name *</label>
+                    <input type="text" id="editDeductionName" name="deductionName" required placeholder="e.g. SSS Loan">
+                </div>
+                <div class="form-group">
+                    <label for="editDeductionType">Type *</label>
+                    <select id="editDeductionType" name="deductionType">
+                        <option value="Loan">Loan</option>
+                        <option value="Advance">Advance</option>
+                        <option value="Union">Union</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-reset" onclick="closeModal('modalEditType')">Cancel</button>
+                    <button type="submit" class="btn-apply"><i class="fa-solid fa-save"></i> Save</button>
                 </div>
             </form>
         </div>
@@ -208,6 +266,12 @@
                 this.value = ''; 
             }
         });
+        function openEditType(btn) {
+            document.getElementById('editTypeId').value = btn.getAttribute('data-id');
+            document.getElementById('editDeductionName').value = btn.getAttribute('data-name') || '';
+            document.getElementById('editDeductionType').value = btn.getAttribute('data-type') || 'Other';
+            openModal('modalEditType');
+        }
     </script>
     <script src="/js/nav.js"></script>
 </body>

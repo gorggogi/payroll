@@ -22,7 +22,11 @@ public class NavIndicatorAdvice {
 
         if (!auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) return 0L;
 
-        return leaveService.getPendingCount();
+        if (!(auth.getPrincipal() instanceof Users)) return 0L;
+        Users user = (Users) auth.getPrincipal();
+        Integer adminEmployeeId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
+
+        return leaveService.getPendingCountExcludingEmployee(adminEmployeeId);
     }
 
     @ModelAttribute("respondedLeaveCount")

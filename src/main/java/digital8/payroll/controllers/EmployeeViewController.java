@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Positions;
@@ -43,11 +44,17 @@ public class EmployeeViewController {
     private UsersRepository usersRepository;
 
     @GetMapping("/add")
-    public String addEmployeeForm(Model model) {
+    public String addEmployeeForm(Model model, Authentication authentication) {
         List<Departments> departments = departmentsRepository.findAll();
         List<Positions> positions = positionsRepository.findAll();
         model.addAttribute("departments", departments);
         model.addAttribute("positions", positions);
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users u = (Users) authentication.getPrincipal();
+            if (u.getEmployee() != null) {
+                model.addAttribute("emp_id", u.getEmployee().getEmployeeId());
+            }
+        }
         return "html/addEmployee";
     }
 

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjustments</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" href="/css/payroll.css" />
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <nav class="no-print">
+            <div class="nav-header">
+                <h1><span class="nav-brand">Payroll System</span></h1>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
+            </div>
+            <ul>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+                <li class="nav-group expanded">
+                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
+                    <ul class="nav-sub">
+                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
+                        <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/adjustments}" title="Adjustments"><li class="active"><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                        <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/adjustments}" title="Adjustments"><li class="active"><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
+                    </ul>
+                </li>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}" title="Leave"><li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span><span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${pendingLeaveCount != null and pendingLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/leave}" title="Leave"><li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span><span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${respondedLeaveCount != null and respondedLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+            </ul>
+            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
+        </nav>
+        <section>
+            <div class="head">
+                <h1>Payroll adjustments</h1>
+                <button type="button" class="btn-print no-print" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
+            </div>
+            <p class="no-payroll">Payroll adjustments (e.g. one-time bonuses, corrections) can be managed here. This section is available for future use.</p>
+        </section>
+    </div>
+    <script src="/js/nav.js"></script>
+</body>
+</html>
