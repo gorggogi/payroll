@@ -33,7 +33,7 @@
                 </a>
                 <ul class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#">Payroll</a></li>
-                    <li><a th:href="@{/deductions/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#">Deductions</a></li>
+                    <li><a href="/admin/deductions">Deductions</a></li>
                     <li><a th:href="@{/adjustments/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#">Adjustments</a></li>
                 </ul>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/leave" title="Leave">
