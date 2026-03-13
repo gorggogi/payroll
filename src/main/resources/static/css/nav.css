@@ -345,7 +345,7 @@
     }
 }
 
-/* Above 1180px: collapsed controlled by nav-collapsed class */
+/* Above 1180px: collapsed controlled by nav-collapsed class d*/
 @media (min-width: 1180px) {
     .container > nav.nav-collapsed {
         width: 5rem;
