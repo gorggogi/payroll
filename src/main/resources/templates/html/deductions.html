@@ -30,6 +30,8 @@
                 </a>
                 <ul class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                    <li><a th:href="@{/deductions/{id}(id=${emp_id})}" href="#">Deductions</a></li>
+                    <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
                 </ul>
                 <a sec:authorize="hasRole('EMPLOYEE')" title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
@@ -38,6 +40,8 @@
                 </a>
                 <ul class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                    <li><a th:href="@{/deductions/{id}(id=${emp_id})}" href="#">Deductions</a></li>
+                    <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
                 </ul>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/leave}" title="Leave">
                 <li><i class="fa-regular fa-calendar-minus"></i><span class="nav-label">Leave</span>

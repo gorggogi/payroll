@@ -69,22 +69,73 @@
     applyState();
     updateToggleIcon();
 
-    // Dropdown toggle functionality for nav dropdowns
+    // Dropdown toggle functionality for nav dropdowns - hover and click
     (function () {
         var dropdowns = document.querySelectorAll('.nav-dropdown-toggle');
         if (!dropdowns.length) return;
 
+        // Check if we're on the payroll page
+        var isPayrollPage = window.location.pathname.includes('/payroll/');
+
         dropdowns.forEach(function (btn) {
+            var menu = btn.nextElementSibling;
+            if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
+
+            var hideMenuTimeout;
+
+            // Toggle on click
             btn.addEventListener('click', function (e) {
                 e.preventDefault();
-                // Close all other dropdowns
-                dropdowns.forEach(function (other) {
-                    if (other !== btn) {
-                        other.classList.remove('active');
+                clearTimeout(hideMenuTimeout);
+                menu.classList.toggle('show');
+                // On payroll page, don't toggle active class on button
+                if (!isPayrollPage) {
+                    btn.classList.toggle('active');
+                }
+            });
+
+            // Show menu on button hover
+            btn.addEventListener('mouseenter', function () {
+                clearTimeout(hideMenuTimeout);
+                menu.classList.add('show');
+                if (!isPayrollPage) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Hide menu on button leave
+            btn.addEventListener('mouseleave', function () {
+                // On payroll page, only hide on click, not on hover
+                if (isPayrollPage) {
+                    return;
+                }
+                hideMenuTimeout = setTimeout(function () {
+                    if (!menu.matches(':hover')) {
+                        menu.classList.remove('show');
+                        btn.classList.remove('active');
                     }
-                });
-                // Toggle current dropdown
-                this.classList.toggle('active');
+                }, 200);
+            });
+
+            // Keep menu visible when hovering over it
+            menu.addEventListener('mouseenter', function () {
+                clearTimeout(hideMenuTimeout);
+                menu.classList.add('show');
+                if (!isPayrollPage) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Hide menu when leaving it
+            menu.addEventListener('mouseleave', function () {
+                // On payroll page, only hide on click, not on hover
+                if (isPayrollPage) {
+                    return;
+                }
+                hideMenuTimeout = setTimeout(function () {
+                    menu.classList.remove('show');
+                    btn.classList.remove('active');
+                }, 200);
             });
         });
 
@@ -92,10 +143,7 @@
         var dropdownLinks = document.querySelectorAll('.nav-dropdown-menu a');
         dropdownLinks.forEach(function (link) {
             link.addEventListener('click', function () {
-                // Allow the link to navigate normally, then close the dropdown
-                dropdowns.forEach(function (btn) {
-                    btn.classList.remove('active');
-                });
+                // Allow the link to navigate normally
             });
         });
 
