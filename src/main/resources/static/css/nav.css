@@ -342,3 +342,143 @@ nav.nav-collapsed .nav-indicator i {
     font-size: 1em;
     vertical-align: middle;
 }
+
+/* ========== DROPDOWN STYLES ========== */
+.nav-dropdown-toggle {
+    width: 100%;
+    padding: 1rem;
+    background: none;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-align: left;
+    font-size: inherit;
+    font-family: inherit;
+    text-decoration: none;
+    position: relative;
+    transition: background-color 0.2s;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.nav-dropdown-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-dropdown-toggle.active {
+    background-color: var(--primary-light);
+}
+
+.nav-dropdown-toggle i {
+    flex-shrink: 0;
+    margin-right: 1rem;
+    width: 1.25rem;
+    text-align: center;
+}
+
+.nav-dropdown-toggle .nav-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.nav-dropdown-icon {
+    margin-left: auto;
+    margin-right: 0;
+    width: auto;
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+}
+
+.nav-dropdown-toggle.active .nav-dropdown-icon {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+    width: 85%;
+    display: none;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem auto;
+    border-radius: 1rem;
+}
+
+.nav-dropdown-toggle.active ~ .nav-dropdown-menu {
+    display: block;
+}
+
+.nav-dropdown-menu li {
+    margin-bottom: 0;
+    padding: 0;
+    background: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 1rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.nav-dropdown-menu li.active {
+    background-color: var(--primary-light);
+}
+
+.nav-dropdown-menu li:hover a {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.nav-dropdown-menu li a {
+    display: block;
+    width: 100%;
+    padding: .75rem;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-dropdown-menu li a.active {
+    color: var(--primary-light);
+    font-weight: bold;
+}
+
+/* Collapsed state dropdown */
+nav.nav-collapsed .nav-dropdown-toggle {
+    justify-content: center;
+}
+
+nav.nav-collapsed .nav-dropdown-toggle i:first-child {
+    margin-right: 0;
+}
+
+nav.nav-collapsed .nav-dropdown-menu {
+    display: none !important;
+}
+
+nav.nav-collapsed .nav-dropdown-icon {
+    display: none;
+}
+
+/* Responsive dropdown for small viewports */
+@media (max-width: 1179px) {
+    nav:not(.nav-expanded) .nav-dropdown-toggle {
+        justify-content: center;
+    }
+
+    nav:not(.nav-expanded) .nav-dropdown-toggle i:first-child {
+        margin-right: 0;
+    }
+
+    nav:not(.nav-expanded) .nav-dropdown-menu {
+        display: none !important;
+    }
+
+    nav:not(.nav-expanded) .nav-dropdown-icon {
+        display: none;
+    }
+
+    nav.nav-expanded .nav-dropdown-menu {
+        display: block;
+    }
+}

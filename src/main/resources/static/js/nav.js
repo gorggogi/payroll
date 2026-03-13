@@ -69,6 +69,56 @@
     applyState();
     updateToggleIcon();
 
+    // Dropdown toggle functionality for nav dropdowns
+    (function () {
+        var dropdowns = document.querySelectorAll('.nav-dropdown-toggle');
+        if (!dropdowns.length) return;
+
+        dropdowns.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Close all other dropdowns
+                dropdowns.forEach(function (other) {
+                    if (other !== btn) {
+                        other.classList.remove('active');
+                    }
+                });
+                // Toggle current dropdown
+                this.classList.toggle('active');
+            });
+        });
+
+        // Close dropdown when clicking on a link inside it
+        var dropdownLinks = document.querySelectorAll('.nav-dropdown-menu a');
+        dropdownLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                // Allow the link to navigate normally, then close the dropdown
+                dropdowns.forEach(function (btn) {
+                    btn.classList.remove('active');
+                });
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            var isClickInside = false;
+            dropdowns.forEach(function (btn) {
+                if (btn.contains(e.target)) {
+                    isClickInside = true;
+                }
+                var menu = btn.nextElementSibling;
+                if (menu && menu.classList.contains('nav-dropdown-menu') && menu.contains(e.target)) {
+                    isClickInside = true;
+                }
+            });
+            if (!isClickInside) {
+                dropdowns.forEach(function (btn) {
+                    btn.classList.remove('active');
+                });
+            }
+        });
+    })();
+
     // Nav indicators (leave, deductions, etc.): one API, poll when tab visible
     (function () {
         var indicators = document.querySelectorAll('[data-nav-indicator]');

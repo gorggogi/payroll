@@ -21,8 +21,14 @@
                 <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a href="/admin/employees" title="Employees"><li class="active"><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a href="/admin/deductions" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></li></a>
+                <a title="Payroll" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-money-bill"></i>
+                    <span class="nav-label">Payroll</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                </ul>
                 <a href="/admin/leave" title="Leave">
                 <li>
                     <i class="fa-regular fa-calendar-minus"></i>
