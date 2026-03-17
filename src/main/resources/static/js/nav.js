@@ -74,7 +74,8 @@
         var dropdowns = document.querySelectorAll('.nav-dropdown-toggle');
         if (!dropdowns.length) return;
 
-        // Check if we're on the payroll or deductions page
+        // Check if we're on specific pages
+        var currentPath = window.location.pathname || '';
         var isPayrollPage = window.location.pathname.includes('/payroll/');
         var isDeductionsPage = window.location.pathname.includes('/deductions');
 
@@ -148,6 +149,7 @@
             btn.addEventListener('mouseleave', function () {
                 if (isClickOpen) return; // Don't hover-close if click-opened
                 hideMenuTimeout = setTimeout(function () {
+                    if (btn.classList.contains('nav-dropdown-pinned')) return;
                     if (!menu.matches(':hover')) {
                         menu.classList.remove('show');
                         btn.classList.remove('active');
@@ -214,9 +216,13 @@
                 dropdowns.forEach(function (btn) {
                     var menu = btn.nextElementSibling;
                     if (menu && menu.classList.contains('nav-dropdown-menu')) {
-                        menu.classList.remove('show');
+                        if (!btn.classList.contains('nav-dropdown-pinned')) {
+                            menu.classList.remove('show');
+                        }
                     }
-                    btn.classList.remove('active');
+                    if (!btn.classList.contains('nav-dropdown-pinned')) {
+                        btn.classList.remove('active');
+                    }
                 });
             }
         });
