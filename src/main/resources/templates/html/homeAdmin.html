@@ -28,18 +28,16 @@
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
                 <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/attendance}" href="#">DTR</a></li>
+                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
                     <li><a href="/admin/leave" title="Leave">
-                            <i class="fa-regular fa-calendar-minus"></i>
-                            <span class="nav-label">Leave</span>
-                            <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                                <i class="fa-solid fa-circle-exclamation"></i>
-                            </span>
+                        <span class="nav-label">Leave</span>
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </span>
                     </a></li>
-                    <li><a href="/admin/attendance/ot-filing">OT filing</a></li>
-                    <li><a href="/admin/attendance/time-adjustments">In/Out adjustment</a></li>
-                    <li><a href="/admin/attendance/approvals">DTR/OT approval</a></li>
-                    <li><a href="/admin/attendance/shifts">Shifting</a></li>
+                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
                 </ul>
 
                 <!-- Payroll group -->

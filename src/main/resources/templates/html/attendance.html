@@ -23,8 +23,30 @@
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}" title="Attendance"><li class="active"><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li class="active"><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+               <a sec:authorize="hasRole('ADMIN')" title="Attendance" class="nav-dropdown-toggle active">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
+                    <li class="active"><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
+                    <li><a th:href="@{/admin/leave}">Leave</a></li>
+                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
+                </ul>
+                <a sec:authorize="hasRole('EMPLOYEE')" title="Attendance" class="nav-dropdown-toggle active">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
+                    <li class="active"><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
+                    <li><a th:href="@{/employee/leave}">Leave</a></li>
+                    <li><a th:href="@{/employee/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/employee/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/employee/attendance/shifts}">Shifting</a></li>
+                </ul>
                 <!-- Nav Payroll dropdown: always go to the logged-in user's own payroll when self_emp_id is available -->
                 <a title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
