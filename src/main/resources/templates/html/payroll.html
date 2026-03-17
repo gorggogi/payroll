@@ -24,7 +24,7 @@
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a href="#" title="Payroll" class="nav-dropdown-toggle active">
+                <a href="#" title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
                     <span class="nav-label">Payroll</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
