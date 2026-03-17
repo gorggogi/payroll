@@ -110,7 +110,7 @@ nav a {
 nav.nav-collapsed {
     width: 5rem;
     min-width: 5rem;
-    padding: .5rem;
+    padding: 1rem;
 }
 
 nav.nav-collapsed .nav-brand,
@@ -131,10 +131,11 @@ nav.nav-collapsed .nav-toggle {
     margin: 0 auto;
 }
 
-nav.nav-collapsed ul li {
+nav.nav-collapsed ul li{
     justify-content: center;
     background: none;
     color: white;
+    height: 2.5rem;
 }
 
 nav.nav-collapsed ul li:hover {
@@ -283,6 +284,7 @@ nav.nav-collapsed .nav-indicator i {
         justify-content: center;
         background: red;
         color: white;
+        height: 2.5rem;
     }
 
     nav:not(.nav-expanded) .logout i {
@@ -316,7 +318,7 @@ nav.nav-collapsed .nav-indicator i {
     nav.nav-expanded {
         width: 20%;
         min-width: 20rem;
-        padding: .5rem;
+        padding: 2rem 2rem;
     }
     nav.nav-expanded .nav-header {
         justify-content: space-between;
@@ -417,6 +419,7 @@ nav.nav-collapsed .nav-indicator i {
 
 .nav-dropdown-menu.show {
     display: flex !important;
+    width: 80%;
 }
 
 .nav-dropdown-menu li {
@@ -456,6 +459,7 @@ nav.nav-collapsed .nav-indicator i {
 nav.nav-collapsed .nav-dropdown-toggle {
     justify-content: center;
     position: relative;
+    height: 2.5rem;
 }
 
 nav.nav-collapsed .nav-dropdown-toggle i:first-child {
@@ -479,6 +483,7 @@ nav.nav-collapsed .nav-dropdown-menu {
 nav.nav-collapsed .nav-dropdown-menu.show {
     display: flex;
     position: fixed;
+    width: 10rem;
 }
 
 nav.nav-collapsed .nav-dropdown-menu li {
@@ -502,8 +507,8 @@ nav.nav-collapsed .nav-dropdown-icon {
         position: relative;
     }
 
-    nav:not(.nav-expanded) .nav-dropdown-toggle i:first-child {
-        margin-right: 0;
+    nav:not(.nav-expanded) .nav-dropdown-toggle i {
+        margin-right: 0 !important;
     }
 
     nav:not(.nav-expanded) .nav-dropdown-menu {
@@ -523,6 +528,7 @@ nav.nav-collapsed .nav-dropdown-icon {
     nav:not(.nav-expanded) .nav-dropdown-menu.show {
         display: flex !important;
         position: fixed;
+        width: 10rem;
     }
 
     nav:not(.nav-expanded) .nav-dropdown-icon {
@@ -530,6 +536,11 @@ nav.nav-collapsed .nav-dropdown-icon {
     }
 
     nav.nav-expanded .nav-dropdown-menu {
-        display: block;
+        display: flex;
+    }
+
+    nav.nav-expanded .nav-dropdown-menu.show {
+        display: flex !important;
+        width: 10rem;
     }
 }
