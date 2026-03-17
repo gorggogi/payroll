@@ -26,14 +26,16 @@
             <ul>
                 <a href="/employee/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a href="/employee/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <li class="nav-group expanded">
-                    <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="nav-group-label" title="Payroll"><i class="fa-solid fa-money-bill"></i><span class="nav-label">Payroll</span></a>
-                    <ul class="nav-sub">
-                        <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" title="Payroll"><li><i class="fa-solid fa-file-invoice"></i><span class="nav-label">Payroll</span></li></a>
-                        <a th:href="@{/employee/deductions}" title="Deductions"><li><i class="fa-solid fa-minus-circle"></i><span class="nav-label">Deductions</span></li></a>
-                        <a th:href="@{/employee/adjustments}" title="Adjustments"><li><i class="fa-solid fa-sliders"></i><span class="nav-label">Adjustments</span></li></a>
-                    </ul>
-                </li>
+                <a title="Payroll" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-money-bill"></i>
+                    <span class="nav-label">Payroll</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                    <li><a href="/admin/deductions">Deductions</a></li>
+                    <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
+                </ul>
                 <a href="/employee/leave" title="Leave">
                 <li class="active">
                     <i class="fa-solid fa-calendar"></i>
@@ -176,3 +178,4 @@
     <script src="/js/leave.js"></script>
 </body>
 </html>
+

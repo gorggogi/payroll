@@ -69,6 +69,127 @@
     applyState();
     updateToggleIcon();
 
+    // Dropdown toggle functionality for nav dropdowns - hover and click
+    (function () {
+        var dropdowns = document.querySelectorAll('.nav-dropdown-toggle');
+        if (!dropdowns.length) return;
+
+        // Check if we're on the payroll or deductions page
+        var isPayrollPage = window.location.pathname.includes('/payroll/');
+        var isDeductionsPage = window.location.pathname.includes('/deductions');
+
+        dropdowns.forEach(function (btn) {
+            var menu = btn.nextElementSibling;
+            if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
+
+            // On deductions page, expand menu and set active on button
+            if (isDeductionsPage) {
+                menu.classList.add('show');
+                btn.classList.add('active');
+                // Set deductions menu item as active
+                var deductionsItem = menu.querySelector('li:nth-child(2)');
+                if (deductionsItem) {
+                    deductionsItem.classList.add('active');
+                }
+            }
+
+            var hideMenuTimeout;
+
+            function positionMenu() {
+                var nav = document.querySelector('nav');
+                var isCollapsed = nav.classList.contains('nav-collapsed');
+                if (isCollapsed) {
+                    var rect = btn.getBoundingClientRect();
+                    // Position menu to the right of button, aligned with button top
+                    menu.style.left = (rect.right + 2) + 'px';
+                    menu.style.top = rect.top + 'px';
+                }
+            }
+
+            // Show menu on button hover
+            btn.addEventListener('mouseenter', function () {
+                clearTimeout(hideMenuTimeout);
+                menu.classList.add('show');
+                positionMenu();
+                if (!isPayrollPage && !isDeductionsPage) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Hide menu on button leave with delay
+            btn.addEventListener('mouseleave', function () {
+                hideMenuTimeout = setTimeout(function () {
+                    if (!menu.matches(':hover')) {
+                        menu.classList.remove('show');
+                        btn.classList.remove('active');
+                    }
+                }, 200);
+            });
+
+            // Keep menu visible when hovering over it
+            menu.addEventListener('mouseenter', function () {
+                clearTimeout(hideMenuTimeout);
+                menu.classList.add('show');
+            });
+
+            // Hide menu when leaving it
+            menu.addEventListener('mouseleave', function () {
+                hideMenuTimeout = setTimeout(function () {
+                    menu.classList.remove('show');
+                    btn.classList.remove('active');
+                }, 200);
+            });
+        });
+
+        // Close dropdown when clicking on a link inside it
+        var dropdownLinks = document.querySelectorAll('.nav-dropdown-menu a');
+        dropdownLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                // Allow the link to navigate normally
+            });
+        });
+
+        // Reposition menus on window resize
+        window.addEventListener('resize', function () {
+            dropdowns.forEach(function (btn) {
+                var menu = btn.nextElementSibling;
+                if (menu && menu.classList.contains('nav-dropdown-menu') && menu.classList.contains('show')) {
+                    var nav = document.querySelector('nav');
+                    var isCollapsed = nav.classList.contains('nav-collapsed');
+                    if (isCollapsed) {
+                        var rect = btn.getBoundingClientRect();
+                        menu.style.top = rect.top + 'px';
+                        menu.style.left = (rect.right + 10) + 'px';
+                    }
+                }
+            });
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            var isClickInside = false;
+            dropdowns.forEach(function (btn) {
+                if (btn.contains(e.target)) {
+                    isClickInside = true;
+                }
+                var menu = btn.nextElementSibling;
+                if (menu && menu.classList.contains('nav-dropdown-menu') && menu.contains(e.target)) {
+                    isClickInside = true;
+                }
+            });
+            if (!isClickInside) {
+                // Close all dropdowns
+                dropdowns.forEach(function (btn) {
+                    var menu = btn.nextElementSibling;
+                    if (menu && menu.classList.contains('nav-dropdown-menu')) {
+                        menu.classList.remove('show');
+                    }
+                    btn.classList.remove('active');
+                });
+            }
+        });
+    })();
+
     // Nav indicators (leave, deductions, etc.): one API, poll when tab visible
     (function () {
         var indicators = document.querySelectorAll('[data-nav-indicator]');
