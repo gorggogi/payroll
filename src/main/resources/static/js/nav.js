@@ -74,7 +74,8 @@
         var dropdowns = document.querySelectorAll('.nav-dropdown-toggle');
         if (!dropdowns.length) return;
 
-        // Check if we're on the payroll or deductions page
+        // Check if we're on specific pages
+        var currentPath = window.location.pathname || '';
         var isPayrollPage = window.location.pathname.includes('/payroll/');
         var isDeductionsPage = window.location.pathname.includes('/deductions');
 
@@ -82,7 +83,25 @@
             var menu = btn.nextElementSibling;
             if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
 
-            // On deductions page, expand menu and set active on button
+            // If any link in this dropdown matches the current path, pin it open
+            try {
+                var links = menu.querySelectorAll('a[href]');
+                links.forEach(function (link) {
+                    try {
+                        var url = new URL(link.getAttribute('href'), window.location.origin);
+                        if (url.pathname === currentPath) {
+                            menu.classList.add('show');
+                            btn.classList.add('active', 'nav-dropdown-pinned');
+                            var li = link.closest('li');
+                            if (li) {
+                                li.classList.add('active');
+                            }
+                        }
+                    } catch (e) {}
+                });
+            } catch (e) {}
+
+            // On deductions page, expand menu and set active on button (legacy behaviour)
             if (isDeductionsPage) {
                 menu.classList.add('show');
                 btn.classList.add('active');
@@ -119,6 +138,7 @@
             // Hide menu on button leave with delay
             btn.addEventListener('mouseleave', function () {
                 hideMenuTimeout = setTimeout(function () {
+                    if (btn.classList.contains('nav-dropdown-pinned')) return;
                     if (!menu.matches(':hover')) {
                         menu.classList.remove('show');
                         btn.classList.remove('active');
@@ -182,9 +202,13 @@
                 dropdowns.forEach(function (btn) {
                     var menu = btn.nextElementSibling;
                     if (menu && menu.classList.contains('nav-dropdown-menu')) {
-                        menu.classList.remove('show');
+                        if (!btn.classList.contains('nav-dropdown-pinned')) {
+                            menu.classList.remove('show');
+                        }
                     }
-                    btn.classList.remove('active');
+                    if (!btn.classList.contains('nav-dropdown-pinned')) {
+                        btn.classList.remove('active');
+                    }
                 });
             }
         });

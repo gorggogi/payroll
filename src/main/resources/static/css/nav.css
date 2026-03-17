@@ -92,7 +92,7 @@ nav a {
 }
 
 .logout {
-    padding: 1rem;
+    padding: .5rem 1rem;
     font-size: var(--font-size-300);
     background-color: red;
     color: white;
@@ -111,7 +111,7 @@ nav a {
 nav.nav-collapsed {
     width: 5rem;
     min-width: 5rem;
-    padding: 1rem;
+    padding: .5rem;
 }
 
 nav.nav-collapsed .nav-brand,
@@ -311,21 +311,20 @@ nav.nav-collapsed .nav-indicator i {
     nav.nav-expanded {
         width: 20%;
         min-width: 20rem;
-        padding: 2rem;
+        padding: .5rem;
     }
     nav.nav-expanded .nav-header {
         justify-content: space-between;
     }
     nav.nav-expanded ul li {
         justify-content: flex-start;
-        padding: 1rem;
     }
     nav.nav-expanded ul li i {
         margin-right: 1rem;
     }
     nav.nav-expanded .logout {
         justify-content: flex-start;
-        padding: 1rem;
+        padding: .5rem 1rem;
     }
     nav.nav-expanded .logout i {
         margin-right: 1rem;
@@ -363,7 +362,7 @@ nav.nav-collapsed .nav-indicator i {
     position: relative;
     transition: background-color 0.2s;
     border-radius: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: .5rem;
     box-sizing: border-box;
 }
 
@@ -408,7 +407,7 @@ nav.nav-collapsed .nav-indicator i {
     margin: 0 0 0.5rem auto;
     border-left: 2px solid rgba(255, 255, 255, 0.3);
     padding-left: 1rem;
-    gap: 1rem;
+    gap: .5rem;
 }
 
 .nav-dropdown-menu.show {
@@ -438,7 +437,7 @@ nav.nav-collapsed .nav-indicator i {
 .nav-dropdown-menu li a {
     display: block;
     width: 100%;
-    padding: .75rem;
+    padding: .5rem .75rem;
     color: white;
     text-decoration: none;
 }
@@ -469,7 +468,7 @@ nav.nav-collapsed .nav-dropdown-menu {
     width: auto;
     flex-direction: column;
     margin: 0;
-    padding: 1rem;
+    padding: .5rem;
 }
 
 nav.nav-collapsed .nav-dropdown-menu.show {
@@ -513,7 +512,6 @@ nav.nav-collapsed .nav-dropdown-icon {
         width: 10rem;
         flex-direction: column;
         margin: 0;
-        padding: .5rem;
         gap: .25rem;
     }
 
