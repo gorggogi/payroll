@@ -98,6 +98,7 @@
 
             var nav = document.querySelector('nav');
             var isSmallScreenCollapsed = window.innerWidth < 1180 && !nav.classList.contains('nav-expanded');
+            var isNavCollapsed = nav.classList.contains('nav-collapsed');
 
             // Always mark toggle as active on payroll related pages (only if payroll dropdown)
             if (isPayrollDropdown && isPayrollRelatedPage) {
@@ -140,15 +141,25 @@
                 
                 // Mark the appropriate attendance menu item as active based on current page
                 if (isLeavePage) {
-                    var leaveItem = menu.querySelector('li:nth-child(2)');
-                    if (leaveItem) {
-                        leaveItem.classList.add('active');
+                    // Find Leave link by checking href attribute
+                    var leaveLink = menu.querySelector('a[href*="/leave"]');
+                    if (leaveLink) {
+                        var li = leaveLink.closest('li');
+                        if (li) {
+                            li.classList.add('active');
+                        }
                     }
                 } else {
-                    // Mark Daily Time Record as active on other attendance pages
-                    var dtrItem = menu.querySelector('li:nth-child(1)');
-                    if (dtrItem) {
-                        dtrItem.classList.add('active');
+                    // Find Daily Time Record link - first attendance link
+                    var allLinks = Array.from(menu.querySelectorAll('a'));
+                    var dtrLink = allLinks.find(function(link) {
+                        return link.href.includes('/attendance') && !link.href.includes('/overtime') && !link.href.includes('time-adjustments') && !link.href.includes('/shifts');
+                    });
+                    if (dtrLink) {
+                        var li = dtrLink.closest('li');
+                        if (li) {
+                            li.classList.add('active');
+                        }
                     }
                 }
             }
@@ -159,14 +170,20 @@
                 btn.classList.remove('click-open');
                 isClickOpen = false;
             }
-            // On payroll related pages, expand payroll menu (but not on small collapsed nav)
-            else if (isPayrollDropdown && isPayrollRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed) {
+            // On collapsed nav (large screens), remove the default show class
+            else if (isNavCollapsed && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                btn.classList.remove('click-open');
+                isClickOpen = false;
+            }
+            // On payroll related pages, expand payroll menu (but not on collapsed nav)
+            else if (isPayrollDropdown && isPayrollRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed && !isNavCollapsed) {
                 menu.classList.add('show');
                 btn.classList.add('click-open');
                 isClickOpen = true; // Treat default open as click-opened
             }
-            // On attendance related pages, expand attendance menu (but not on small collapsed nav)
-            else if (isAttendanceDropdown && isAttendanceRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed) {
+            // On attendance related pages, expand attendance menu (but not on collapsed nav)
+            else if (isAttendanceDropdown && isAttendanceRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed && !isNavCollapsed) {
                 menu.classList.add('show');
                 btn.classList.add('click-open');
                 isClickOpen = true; // Treat default open as click-opened
