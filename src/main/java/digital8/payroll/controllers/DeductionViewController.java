@@ -155,6 +155,22 @@ public class DeductionViewController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/types/update")
+    public String updateType(
+            @RequestParam Integer id,
+            @RequestParam String deductionName,
+            @RequestParam String deductionType,
+            RedirectAttributes ra) {
+        deductionsRepository.findById(id).ifPresent(d -> {
+            d.setDeductionName(deductionName);
+            d.setDeductionType(deductionType != null ? deductionType : "Other");
+            deductionsRepository.save(d);
+        });
+        ra.addFlashAttribute("message", "Deduction type updated.");
+        return "redirect:/admin/deductions";
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/assign")
     public String assignDeduction(
             @RequestParam Integer employeeId,

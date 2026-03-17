@@ -86,8 +86,8 @@ public class payrollViewController {
             monthEnum = Month.from(java.time.LocalDate.now());
         }
         YearMonth ym = YearMonth.of(selectedYear, monthEnum);
-        List<DeductionBreakdownItem> otherBreakdown = payrollService.getOtherDeductionsBreakdown(empId, ym.atDay(1), ym.atEndOfMonth());
-        model.addAttribute("otherDeductionsBreakdown", otherBreakdown != null ? otherBreakdown : List.of());
+        List<DeductionBreakdownItem> deductionsBreakdown = payrollService.getDeductionsBreakdown(empId, ym.atDay(1), ym.atEndOfMonth());
+        model.addAttribute("otherDeductionsBreakdown", deductionsBreakdown != null ? deductionsBreakdown : List.of());
 
         return "html/payroll";
     }

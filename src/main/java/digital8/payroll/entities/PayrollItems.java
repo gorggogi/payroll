@@ -58,6 +58,50 @@ public class PayrollItems{
     @Column (nullable = false, unique = false)
     private BigDecimal netPay;
 
+    // --- New fields for redesigned payroll computation ---
+
+    @Column (nullable = true)
+    private BigDecimal dailyRate;
+
+    @Column (nullable = true)
+    private BigDecimal hourlyRate;
+
+    @Column (nullable = true)
+    private BigDecimal perMinuteRate;
+
+    @Column (nullable = true)
+    private BigDecimal totalWorkedHours;
+
+    @Column (nullable = true)
+    private BigDecimal totalOtHours;
+
+    @Column (nullable = true)
+    private Integer lateUndertimeMinutes;
+
+    @Column (nullable = true)
+    private BigDecimal lateUndertimeDeduction;
+
+    @Column (nullable = true)
+    private BigDecimal cashAdvance;
+
+    @Column (nullable = true)
+    private BigDecimal adjustmentEarnings;
+
+    @Column (nullable = true)
+    private BigDecimal adjustmentDeductions;
+
+    @Column (nullable = true)
+    private BigDecimal totalEarnings;
+
+    @Column (nullable = true)
+    private BigDecimal serviceFee;
+
+    @Column (nullable = true)
+    private BigDecimal semiMonthlyContributions;
+
+    @Column (nullable = true)
+    private String employmentType;
+
     public Integer getPayrollItemId() {
         return payrollItemId;
     }
@@ -177,5 +221,49 @@ public class PayrollItems{
     public void setNetPay(BigDecimal netPay) {
         this.netPay = netPay;
     }
+
+    // --- Getters/Setters for new fields ---
+
+    public BigDecimal getDailyRate() { return dailyRate; }
+    public void setDailyRate(BigDecimal dailyRate) { this.dailyRate = dailyRate; }
+
+    public BigDecimal getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(BigDecimal hourlyRate) { this.hourlyRate = hourlyRate; }
+
+    public BigDecimal getPerMinuteRate() { return perMinuteRate; }
+    public void setPerMinuteRate(BigDecimal perMinuteRate) { this.perMinuteRate = perMinuteRate; }
+
+    public BigDecimal getTotalWorkedHours() { return totalWorkedHours; }
+    public void setTotalWorkedHours(BigDecimal totalWorkedHours) { this.totalWorkedHours = totalWorkedHours; }
+
+    public BigDecimal getTotalOtHours() { return totalOtHours; }
+    public void setTotalOtHours(BigDecimal totalOtHours) { this.totalOtHours = totalOtHours; }
+
+    public Integer getLateUndertimeMinutes() { return lateUndertimeMinutes; }
+    public void setLateUndertimeMinutes(Integer lateUndertimeMinutes) { this.lateUndertimeMinutes = lateUndertimeMinutes; }
+
+    public BigDecimal getLateUndertimeDeduction() { return lateUndertimeDeduction; }
+    public void setLateUndertimeDeduction(BigDecimal lateUndertimeDeduction) { this.lateUndertimeDeduction = lateUndertimeDeduction; }
+
+    public BigDecimal getCashAdvance() { return cashAdvance; }
+    public void setCashAdvance(BigDecimal cashAdvance) { this.cashAdvance = cashAdvance; }
+
+    public BigDecimal getAdjustmentEarnings() { return adjustmentEarnings; }
+    public void setAdjustmentEarnings(BigDecimal adjustmentEarnings) { this.adjustmentEarnings = adjustmentEarnings; }
+
+    public BigDecimal getAdjustmentDeductions() { return adjustmentDeductions; }
+    public void setAdjustmentDeductions(BigDecimal adjustmentDeductions) { this.adjustmentDeductions = adjustmentDeductions; }
+
+    public BigDecimal getTotalEarnings() { return totalEarnings; }
+    public void setTotalEarnings(BigDecimal totalEarnings) { this.totalEarnings = totalEarnings; }
+
+    public BigDecimal getServiceFee() { return serviceFee; }
+    public void setServiceFee(BigDecimal serviceFee) { this.serviceFee = serviceFee; }
+
+    public BigDecimal getSemiMonthlyContributions() { return semiMonthlyContributions; }
+    public void setSemiMonthlyContributions(BigDecimal semiMonthlyContributions) { this.semiMonthlyContributions = semiMonthlyContributions; }
+
+    public String getEmploymentType() { return employmentType; }
+    public void setEmploymentType(String employmentType) { this.employmentType = employmentType; }
 
 }

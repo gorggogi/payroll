@@ -325,3 +325,40 @@ section h1 {
 .deduction-table-help {
     margin-top: 0.75rem;
 }
+
+/* Payroll sub-tabs */
+.payroll-subnav {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0;
+}
+.payroll-subnav a {
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    color: #555;
+    border-radius: 6px 6px 0 0;
+    font-weight: 500;
+}
+.payroll-subnav a:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+.payroll-subnav a.active {
+    background: var(--primary-light, #0066cc);
+    color: white;
+    border-bottom: 2px solid var(--primary-light, #0066cc);
+    margin-bottom: -1px;
+}
+
+.btn-edit {
+    padding: 0.35rem 0.5rem;
+    background: #0d6efd;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+.btn-edit:hover { background: #0b5ed7; }

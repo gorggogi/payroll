@@ -39,11 +39,51 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
                         container.innerHTML = '<p>No payroll records found for selected period.</p>';
                         return;
                     }
-                    var html = '<table class="attendanceTable"><tr><th>Payroll Item</th><th>Basic</th><th>Gross</th><th>Total Deductions</th><th>Net Pay</th></tr>';
+                    var html = '';
                     data.forEach(function(item){
-                        html += `<tr><td>${item.payrollItemId || ''}</td><td>${item.basicPay || ''}</td><td>${item.grossPay || ''}</td><td>${item.totalDeductions || ''}</td><td>${item.netPay || ''}</td></tr>`;
+                        function fmt(val) {
+                            return (val !== null && val !== undefined) ? Number(val).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00';
+                        }
+                        
+                        html += '<table class="attendanceTable payslip-table" style="margin-bottom: 2rem;">';
+                        html += '<caption>Payslip (Item ID: ' + (item.payrollItemId || '') + ')</caption>';
+                        html += '<thead><tr class="attendanceHeader"><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr></thead>';
+                        html += '<tbody class="attendanceBody">';
+                        
+                        html += '<tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>';
+                        html += `<tr><td>Daily Rate</td><td>${fmt(item.dailyRate)}</td></tr>`;
+                        html += `<tr><td>Hourly Rate</td><td>${fmt(item.hourlyRate)}</td></tr>`;
+                        
+                        html += '<tr><td colspan="2" class="table-section-header"><strong>Earnings</strong></td></tr>';
+                        html += `<tr><td>Basic Pay <span class="rate-note">${item.totalWorkedHours != null ? '(' + item.totalWorkedHours + ' hrs)' : ''}</span></td><td>${fmt(item.basicPay)}</td></tr>`;
+                        html += `<tr><td>Overtime Pay <span class="rate-note">${item.totalOtHours != null ? '(' + item.totalOtHours + ' hrs)' : ''}</span></td><td>${fmt(item.overtimePay)}</td></tr>`;
+                        html += `<tr><td>Holiday Pay</td><td>${fmt(item.holidayPay)}</td></tr>`;
+                        html += `<tr><td>Allowances</td><td>${fmt(item.allowances)}</td></tr>`;
+                        html += `<tr><td>Adjustment (Earnings)</td><td>${fmt(item.adjustmentEarnings)}</td></tr>`;
+                        html += `<tr class="gross-row"><td><strong>Total Earnings / Gross Pay</strong></td><td>${fmt(item.totalEarnings != null ? item.totalEarnings : item.grossPay)}</td></tr>`;
+
+                        html += '<tr><td colspan="2" class="table-section-header"><strong>Other Deductions & Adjustments</strong></td></tr>';
+                        html += `<tr><td>Late/Undertime Deduction <span class="rate-note">${item.lateUndertimeMinutes != null ? '(' + item.lateUndertimeMinutes + ' mins)' : ''}</span></td><td>${fmt(item.lateUndertimeDeduction)}</td></tr>`;
+                        html += `<tr><td>Employee Deductions</td><td>${fmt(item.adjustmentDeductions)}</td></tr>`;
+                        html += `<tr class="deduct-row"><td><strong>Total Non-Statutory Deductions</strong></td><td>${fmt(item.otherDeductions)}</td></tr>`;
+                        html += `<tr class="service-fee-row"><td><strong>Service Fee</strong></td><td>${fmt(item.serviceFee)}</td></tr>`;
+
+                        html += '<tr><td colspan="2" class="table-section-header"><strong>Statutory Contributions</strong></td></tr>';
+                        html += `<tr><td>SSS</td><td>${fmt(item.sss)}</td></tr>`;
+                        html += `<tr><td>Philhealth</td><td>${fmt(item.philhealth)}</td></tr>`;
+                        html += `<tr><td>Pag-ibig</td><td>${fmt(item.pagibig)}</td></tr>`;
+                        html += `<tr><td>Withholding Tax</td><td>${fmt(item.tax)}</td></tr>`;
+                        
+                        if (item.semiMonthlyContributions != null) {
+                            html += `<tr class="deduct-row"><td><strong>Total Semi-monthly Contributions</strong></td><td>${fmt(item.semiMonthlyContributions)}</td></tr>`;
+                        } else {
+                            html += `<tr class="deduct-row"><td><strong>Total Deductions</strong></td><td>${fmt(item.totalDeductions)}</td></tr>`;
+                        }
+                        
+                        html += `<tr class="net-row"><td><strong>Net Pay</strong></td><td>${fmt(item.netPay)}</td></tr>`;
+                        
+                        html += '</tbody></table>';
                     });
-                    html += '</table>';
                     container.innerHTML = html;
                 })
                 .catch(function(err){

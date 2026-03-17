@@ -24,7 +24,7 @@
                 <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
                 <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/attendance}" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
-                <a href="#" title="Payroll" class="nav-dropdown-toggle active">
+                <a href="#" title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
                     <span class="nav-label">Payroll</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
@@ -91,18 +91,32 @@
                         <tr class="attendanceHeader"><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr>
                     </thead>
                     <tbody class="attendanceBody" th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
-                        <tr><td>Basic Pay</td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr><td>Overtime Pay</td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>
+                        <tr><td>Daily Rate</td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Hourly Rate</td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        
+                        <tr><td colspan="2" class="table-section-header"><strong>Earnings</strong></td></tr>
+                        <tr><td>Basic Pay <span class="rate-note" th:text="${item.totalWorkedHours != null ? '(' + item.totalWorkedHours + ' hrs)' : ''}"></span></td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Overtime Pay <span class="rate-note" th:text="${item.totalOtHours != null ? '(' + item.totalOtHours + ' hrs)' : ''}"></span></td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Holiday Pay</td><td th:text="${item.holidayPay != null ? #numbers.formatDecimal(item.holidayPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Allowances</td><td th:text="${item.allowances != null ? #numbers.formatDecimal(item.allowances, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr class="gross-row"><td><strong>Gross Pay</strong></td><td th:text="${item.grossPay != null ? #numbers.formatDecimal(item.grossPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Adjustment (Earnings)</td><td th:text="${item.adjustmentEarnings != null ? #numbers.formatDecimal(item.adjustmentEarnings, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="gross-row"><td><strong>Total Earnings / Gross Pay</strong></td><td th:text="${item.totalEarnings != null ? #numbers.formatDecimal(item.totalEarnings, 1, 'POINT', 2, 'COMMA') : (item.grossPay != null ? #numbers.formatDecimal(item.grossPay, 1, 'POINT', 2, 'COMMA') : '0.00')}">0.00</td></tr>
+                        
+                        <tr><td colspan="2" class="table-section-header"><strong>Other Deductions & Adjustments</strong></td></tr>
+                        <tr><td>Late/Undertime Deduction <span class="rate-note" th:text="${item.lateUndertimeMinutes != null ? '(' + item.lateUndertimeMinutes + ' mins)' : ''}"></span></td><td th:text="${item.lateUndertimeDeduction != null ? #numbers.formatDecimal(item.lateUndertimeDeduction, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr th:each="bd : ${otherDeductionsBreakdown}" th:if="${otherDeductionsBreakdown != null and !otherDeductionsBreakdown.isEmpty()}"><td><span th:text="${bd.deductionName}">—</span></td><td th:text="${bd.amount != null ? #numbers.formatDecimal(bd.amount, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="deduct-row"><td><strong>Total Non-Statutory Deductions</strong></td><td th:text="${item.otherDeductions != null ? #numbers.formatDecimal(item.otherDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="service-fee-row"><td><strong>Service Fee</strong></td><td th:text="${item.serviceFee != null ? #numbers.formatDecimal(item.serviceFee, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+
+                        <tr><td colspan="2" class="table-section-header"><strong>Statutory Contributions</strong></td></tr>
                         <tr><td>SSS</td><td th:text="${item.sss != null ? #numbers.formatDecimal(item.sss, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Philhealth</td><td th:text="${item.philhealth != null ? #numbers.formatDecimal(item.philhealth, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                         <tr><td>Pag-ibig</td><td th:text="${item.pagibig != null ? #numbers.formatDecimal(item.pagibig, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr><td>Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr th:each="bd : ${otherDeductionsBreakdown}" th:if="${otherDeductionsBreakdown != null and !otherDeductionsBreakdown.isEmpty()}"><td class="other-breakdown"><span th:text="${bd.deductionName}">—</span></td><td th:text="${bd.amount != null ? #numbers.formatDecimal(bd.amount, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr><td>Other Deductions</td><td th:text="${item.otherDeductions != null ? #numbers.formatDecimal(item.otherDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
-                        <tr class="deduct-row"><td><strong>Total Deductions</strong></td><td th:text="${item.totalDeductions != null ? #numbers.formatDecimal(item.totalDeductions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="deduct-row"><td><strong>Total Semi-monthly Contributions</strong></td><td th:text="${item.semiMonthlyContributions != null ? #numbers.formatDecimal(item.semiMonthlyContributions, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
+                        <tr class="deduct-row" th:if="${item.totalDeductions != null && item.semiMonthlyContributions == null}"><td><strong>Total Deductions</strong></td><td th:text="${#numbers.formatDecimal(item.totalDeductions, 1, 'POINT', 2, 'COMMA')}">0.00</td></tr>
+                        
                         <tr class="net-row"><td><strong>Net Pay</strong></td><td th:text="${item.netPay != null ? #numbers.formatDecimal(item.netPay, 1, 'POINT', 2, 'COMMA') : '0.00'}">0.00</td></tr>
                     </tbody>
                 </table>
@@ -113,3 +127,4 @@
     <script src="/js/nav.js"></script>
 </body>
 </html>
+
