@@ -68,8 +68,8 @@ nav i {
 }
 
 ul li {
-    margin-bottom: 1rem;
-    padding: 1rem;
+    margin-bottom: .5rem;
+    padding: .5rem 1rem;
     background: none;
     color: white;
     cursor: pointer;
@@ -88,6 +88,7 @@ ul li {
 
 nav a {
     display: block;
+
 }
 
 .logout {
@@ -346,7 +347,7 @@ nav.nav-collapsed .nav-indicator i {
 /* ========== DROPDOWN STYLES ========== */
 .nav-dropdown-toggle {
     width: 100%;
-    padding: 1rem;
+    padding: .5rem 1rem;
     background: none;
     color: white;
     border: none;
