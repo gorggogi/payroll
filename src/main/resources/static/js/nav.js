@@ -82,14 +82,20 @@
             var menu = btn.nextElementSibling;
             if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
 
-            // On deductions page, expand menu and set active on button
-            if (isDeductionsPage) {
+            // Track if menu was opened by click (true) or just hover (false)
+            var isClickOpen = menu.classList.contains('show');
+
+            // On payroll or deductions page, expand menu and set active on button by default
+            if ((isPayrollPage || isDeductionsPage) && !menu.classList.contains('show')) {
                 menu.classList.add('show');
-                btn.classList.add('active');
-                // Set deductions menu item as active
-                var deductionsItem = menu.querySelector('li:nth-child(2)');
-                if (deductionsItem) {
-                    deductionsItem.classList.add('active');
+                btn.classList.add('active', 'click-open');
+                isClickOpen = true; // Treat default open as click-opened
+                // Set deductions menu item as active if on deductions page
+                if (isDeductionsPage) {
+                    var deductionsItem = menu.querySelector('li:nth-child(2)');
+                    if (deductionsItem) {
+                        deductionsItem.classList.add('active');
+                    }
                 }
             }
 
@@ -106,18 +112,41 @@
                 }
             }
 
-            // Show menu on button hover
-            btn.addEventListener('mouseenter', function () {
-                clearTimeout(hideMenuTimeout);
-                menu.classList.add('show');
-                positionMenu();
-                if (!isPayrollPage && !isDeductionsPage) {
-                    btn.classList.add('active');
+            // Show/hide menu on button click (toggle) - click persists state across hovers
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                var isOpen = menu.classList.contains('show');
+                
+                if (isOpen && isClickOpen) {
+                    // Menu is open and click-opened, so toggle it closed
+                    menu.classList.remove('show');
+                    btn.classList.remove('active', 'click-open');
+                    isClickOpen = false;
+                } else if (isOpen && !isClickOpen) {
+                    // Menu is open but only hover-opened, so convert to click-opened (keep open)
+                    btn.classList.add('click-open');
+                    isClickOpen = true;
+                } else {
+                    // Menu is closed, so open it and set as click-opened
+                    menu.classList.add('show');
+                    btn.classList.add('active', 'click-open');
+                    isClickOpen = true;
+                    positionMenu();
                 }
             });
 
-            // Hide menu on button leave with delay
+            // Show menu on button hover (only if not click-opened)
+            btn.addEventListener('mouseenter', function () {
+                if (isClickOpen) return; // Don't hover-open if click-opened
+                clearTimeout(hideMenuTimeout);
+                menu.classList.add('show');
+                positionMenu();
+                btn.classList.add('active');
+            });
+
+            // Hide menu on button leave with delay (only if not click-opened)
             btn.addEventListener('mouseleave', function () {
+                if (isClickOpen) return; // Don't hover-close if click-opened
                 hideMenuTimeout = setTimeout(function () {
                     if (!menu.matches(':hover')) {
                         menu.classList.remove('show');
@@ -126,14 +155,17 @@
                 }, 200);
             });
 
-            // Keep menu visible when hovering over it
+            // Keep menu visible when hovering over it (only if not click-opened)
             menu.addEventListener('mouseenter', function () {
+                if (isClickOpen) return; // Don't hover-interact if click-opened
                 clearTimeout(hideMenuTimeout);
                 menu.classList.add('show');
+                btn.classList.add('active');
             });
 
-            // Hide menu when leaving it
+            // Hide menu when leaving it (only if not click-opened)
             menu.addEventListener('mouseleave', function () {
+                if (isClickOpen) return; // Don't hover-close if click-opened
                 hideMenuTimeout = setTimeout(function () {
                     menu.classList.remove('show');
                     btn.classList.remove('active');

@@ -34,7 +34,6 @@
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s;
-    background: var(--primary-light);
     color: white;
 }
 
@@ -296,6 +295,12 @@ nav.nav-collapsed .nav-indicator i {
         width: 5rem;
         min-width: 5rem;
     }
+
+    nav.nav-collapsed i, nav.nav-dropdown-toggle.active.nav-dropdown-toggle.click-open a i {
+        margin-right: 0 !important;
+        color: white;
+        text-align: center;
+    }
 }
 
 /* Below 1180px: allow full nav when user expands */
@@ -394,7 +399,7 @@ nav.nav-collapsed .nav-indicator i {
     transition: transform 0.2s;
 }
 
-.nav-dropdown-toggle:hover .nav-dropdown-icon {
+.nav-dropdown-toggle.click-open .nav-dropdown-icon {
     transform: rotate(180deg);
 }
 
