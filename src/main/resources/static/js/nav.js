@@ -79,11 +79,19 @@
         var isPayrollPage = window.location.pathname.includes('/payroll/');
         var isDeductionsPage = window.location.pathname.includes('/deductions');
         var isAdjustmentsPage = window.location.pathname.includes('/adjustments');
+        var isAttendancePage = window.location.pathname.includes('/attendance');
+        var isLeavePage = window.location.pathname.includes('/leave');
         var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
+        var isAttendanceRelatedPage = isAttendancePage || isLeavePage;
 
         dropdowns.forEach(function (btn) {
             var menu = btn.nextElementSibling;
             if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
+
+            // Determine which dropdown this is based on button title
+            var btnTitle = btn.getAttribute('title') || '';
+            var isPayrollDropdown = btnTitle === 'Payroll';
+            var isAttendanceDropdown = btnTitle === 'Attendance';
 
             // Track if menu was opened by click (true) or just hover (false)
             var isClickOpen = menu.classList.contains('show');
@@ -91,8 +99,8 @@
             var nav = document.querySelector('nav');
             var isSmallScreenCollapsed = window.innerWidth < 1180 && !nav.classList.contains('nav-expanded');
 
-            // Always mark toggle as active on payroll related pages
-            if (isPayrollRelatedPage) {
+            // Always mark toggle as active on payroll related pages (only if payroll dropdown)
+            if (isPayrollDropdown && isPayrollRelatedPage) {
                 btn.classList.add('active');
                 
                 // Remove active class from all menu items first
@@ -120,14 +128,45 @@
                 }
             }
 
+            // Always mark toggle as active on attendance related pages (only if attendance dropdown)
+            if (isAttendanceDropdown && isAttendanceRelatedPage) {
+                btn.classList.add('active');
+                
+                // Remove active class from all menu items first
+                var allAttendanceItems = menu.querySelectorAll('li');
+                allAttendanceItems.forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                
+                // Mark the appropriate attendance menu item as active based on current page
+                if (isLeavePage) {
+                    var leaveItem = menu.querySelector('li:nth-child(2)');
+                    if (leaveItem) {
+                        leaveItem.classList.add('active');
+                    }
+                } else {
+                    // Mark Daily Time Record as active on other attendance pages
+                    var dtrItem = menu.querySelector('li:nth-child(1)');
+                    if (dtrItem) {
+                        dtrItem.classList.add('active');
+                    }
+                }
+            }
+
             // On small collapsed screens, remove the default show class
             if (isSmallScreenCollapsed && menu.classList.contains('show')) {
                 menu.classList.remove('show');
                 btn.classList.remove('click-open');
                 isClickOpen = false;
             }
-            // On payroll or deductions page, expand menu (but not on small collapsed nav)
-            else if (isPayrollRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed) {
+            // On payroll related pages, expand payroll menu (but not on small collapsed nav)
+            else if (isPayrollDropdown && isPayrollRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed) {
+                menu.classList.add('show');
+                btn.classList.add('click-open');
+                isClickOpen = true; // Treat default open as click-opened
+            }
+            // On attendance related pages, expand attendance menu (but not on small collapsed nav)
+            else if (isAttendanceDropdown && isAttendanceRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed) {
                 menu.classList.add('show');
                 btn.classList.add('click-open');
                 isClickOpen = true; // Treat default open as click-opened
