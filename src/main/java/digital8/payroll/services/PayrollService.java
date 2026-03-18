@@ -15,6 +15,7 @@ import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Attendance;
 import digital8.payroll.entities.SssTable;
+import digital8.payroll.entities.TaxTable;
 import digital8.payroll.entities.EmployeeDeductions;
 
 import java.math.BigDecimal;
@@ -75,6 +76,42 @@ public class PayrollService {
     @Autowired
     private DeductionsRepository deductionsRepository;
 
+    private static final class PayPeriod {
+        final LocalDate start;
+        final LocalDate end;
+        final boolean semiMonthly; // true → divide statutory by 2
+    
+        PayPeriod(LocalDate start, LocalDate end, boolean semiMonthly) {
+            this.start = start;
+            this.end = end;
+            this.semiMonthly = semiMonthly;
+        }
+    }
+    
+    private PayPeriod resolvePayPeriod(String period, YearMonth ym) {
+        String p = period == null ? "" : period.trim().toLowerCase();
+        if ("semi_1".equals(p) || "semi-monthly-1".equals(p)) {
+            return new PayPeriod(ym.atDay(1), ym.atDay(15), true);
+        }
+        if ("semi_2".equals(p) || "semi-monthly-2".equals(p)) {
+            return new PayPeriod(ym.atDay(16), ym.atEndOfMonth(), true);
+        }
+        if ("biweekly".equals(p)) {
+            // TODO: define start/end; placeholder = whole month
+            return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
+        }
+        // monthly, empty, or unknown → full calendar month, full statutory (no ÷2)
+        return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
+    }
+
+    /**
+     * Pay cutoff bounds for UI (deduction breakdown, etc.).
+     */
+    public LocalDate[] getPayrollPeriodBounds(int year, Month month, String period) {
+        PayPeriod pp = resolvePayPeriod(period, YearMonth.of(year, month));
+        return new LocalDate[] { pp.start, pp.end };
+    }
+
     public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
         return computePayroll(empId, period, monthName, null);
     }
@@ -114,6 +151,12 @@ public class PayrollService {
             month = LocalDate.now().getMonth();
         }
 
+        YearMonth ym = YearMonth.of(year, month);
+        PayPeriod pp = resolvePayPeriod(period, ym);
+        LocalDate periodStart = pp.start;
+        LocalDate periodEnd = pp.end;
+        boolean semiMonthly = pp.semiMonthly;
+
         // --- 3. Aggregate attendance data for the period ---
         List<Attendance> records = attendanceRepository.findByEmployeeIdOrderByDateDesc(empId);
         BigDecimal totalWorkedHours = BigDecimal.ZERO;
@@ -121,8 +164,9 @@ public class PayrollService {
         int totalLateUndertimeMinutes = 0;
 
         for (Attendance a : records) {
-            if (a.getAttendance_date() == null) continue;
-            if (a.getAttendance_date().getMonth() != month || a.getAttendance_date().getYear() != year) continue;
+            LocalDate d = a.getAttendance_date();
+            if (d == null) continue;
+            if (d.isBefore(periodStart) || d.isAfter(periodEnd)) continue;
 
             if (a.getWork_hours() != null) totalWorkedHours = totalWorkedHours.add(a.getWork_hours());
             if (a.getOvertime_hours() != null) totalOtHours = totalOtHours.add(a.getOvertime_hours());
@@ -139,7 +183,7 @@ public class PayrollService {
         BigDecimal overtimePay = hourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
 
         // Adjustment Earnings (from EmployeeDeductions marked as earnings-type)
-        YearMonth ym = YearMonth.of(year, month);
+       
         BigDecimal adjustmentEarnings = BigDecimal.ZERO; // placeholder for future earnings adjustments
 
         // Total Earnings = Basic Pay + Overtime + Adjustment Earnings
@@ -153,8 +197,8 @@ public class PayrollService {
                 .multiply(new BigDecimal(totalLateUndertimeMinutes))
                 .setScale(SCALE, ROUND);
 
-        // All employee deductions from EmployeeDeductions table
-        BigDecimal adjustmentDeductions = computeEmployeeDeductions(empId, ym.atDay(1), ym.atEndOfMonth());
+        // Employee deductions active for this pay cutoff (same window as attendance)
+        BigDecimal adjustmentDeductions = computeEmployeeDeductions(empId, periodStart, periodEnd);
 
         // Total Deductions (non-statutory) = Employee Deductions + Late/Undertime
         BigDecimal totalNonStatutoryDeductions = adjustmentDeductions
@@ -165,43 +209,50 @@ public class PayrollService {
         BigDecimal serviceFee = totalEarnings.subtract(totalNonStatutoryDeductions).setScale(SCALE, ROUND);
 
         // --- 6. Compute Statutory Deductions ---
-        // Determine premium base (salary splitting for below 30k)
-        BigDecimal premiumBase = monthlyRate.compareTo(SALARY_THRESHOLD) < 0 ? PREMIUM_BASE_CAP : monthlyRate;
+        // Determine premium base for contributions.
+        // HR rule:
+        // - salary below 30k: treat as 20k basic + allowance (non-taxable), so premiums are computed on basic only (<=20k)
+        // - salary 30k and above: premiums computed on full salary
+        BigDecimal premiumBase = monthlyRate.compareTo(SALARY_THRESHOLD) < 0
+                ? monthlyRate.min(PREMIUM_BASE_CAP)
+                : monthlyRate;
 
         BigDecimal sss;
         BigDecimal philhealth;
         BigDecimal pagibig;
         BigDecimal tax;
 
-        if (isJobOrder) {
-            // Job Order: no SSS, PhilHealth, Pag-IBIG
-            sss = BigDecimal.ZERO;
-            philhealth = BigDecimal.ZERO;
-            pagibig = BigDecimal.ZERO;
-            // Job Order tax = 5% EWT on total earnings
-            tax = totalEarnings.multiply(JOB_ORDER_EWT_RATE).setScale(SCALE, ROUND);
+        // HR policy: ALL employees are subject to government contributions (SSS/PhilHealth/HDMF),
+        // regardless of employment type.
+        sss = computeSss(premiumBase, year);
+        philhealth = computePhilhealth(premiumBase);
+        pagibig = computePagibig(premiumBase);
+
+        // HR policy: withholding tax follows the bracket tables (not 5% EWT), even for Job Order.
+        // Semi-monthly payslip: WHT is based on HR's "J31" which is (monthly salary / 2).
+        // Monthly payslip: WHT = MONTHLY brackets on period gross, or salary if no hours.
+        if (semiMonthly) {
+            BigDecimal semiMonthlyBase = monthlyRate.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+            tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY");
         } else {
-            // Regular: compute all statutory deductions
-            sss = computeSss(premiumBase, year);
-            philhealth = computePhilhealth(premiumBase);
-            pagibig = computePagibig(premiumBase);
-            // Simplified withholding tax: Monthly Rate × 10% - 2,395.90
-            tax = computeWithholdingTax(monthlyRate);
+            BigDecimal whtBase = totalEarnings.compareTo(BigDecimal.ZERO) > 0 ? totalEarnings : monthlyRate;
+            tax = computeWithholdingTaxFromTable(whtBase, year, "MONTHLY");
         }
 
-        // Semi-monthly contributions = (SSS + PhilHealth + HDMF + Tax) / 2
         BigDecimal statutoryTotal = sss.add(philhealth).add(pagibig).add(tax);
-        BigDecimal semiMonthlyContributions = statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+        // Semi-monthly payslip: deduct half of (monthly SSS/PhilHealth/HDMF + semi-period WHT), per HR sheet
+        BigDecimal statutoryDeductedThisSlip = semiMonthly
+                ? statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND)
+                : statutoryTotal;
 
         // --- 7. Net Pay ---
-        // Net Pay = Service Fee - Semi-monthly Contributions
-        BigDecimal netPay = serviceFee.subtract(semiMonthlyContributions).setScale(SCALE, ROUND);
+        BigDecimal netPay = serviceFee.subtract(statutoryDeductedThisSlip).setScale(SCALE, ROUND);
 
         // --- 8. For backward compatibility, compute existing fields ---
         BigDecimal holidayPay = BigDecimal.ZERO; // placeholder
         BigDecimal allowances = BigDecimal.ZERO; // placeholder
         BigDecimal grossPay = totalEarnings; // totalEarnings is the new grossPay
-        BigDecimal totalDeductions = totalNonStatutoryDeductions.add(semiMonthlyContributions).setScale(SCALE, ROUND);
+        BigDecimal totalDeductions = totalNonStatutoryDeductions.add(statutoryDeductedThisSlip).setScale(SCALE, ROUND);
 
         // --- 9. Build PayrollItem ---
         PayrollItems item = new PayrollItems();
@@ -240,7 +291,7 @@ public class PayrollService {
         item.setPhilhealth(philhealth);
         item.setPagibig(pagibig);
         item.setTax(tax);
-        item.setSemiMonthlyContributions(semiMonthlyContributions);
+        item.setSemiMonthlyContributions(statutoryDeductedThisSlip);
 
         // Totals
         item.setTotalDeductions(totalDeductions);
@@ -285,15 +336,55 @@ public class PayrollService {
         return premiumBase.multiply(PAGIBIG_RATE).setScale(SCALE, ROUND);
     }
 
+    private BigDecimal withholdingTaxFromBracketRows(BigDecimal taxablePay, List<TaxTable> rows) {
+        if (rows == null || rows.isEmpty()) return BigDecimal.ZERO;
+        TaxTable bracket = null;
+        for (TaxTable r : rows) {
+            if (r.getCompensationFrom() == null || r.getTaxRate() == null || r.getAdditionalTax() == null) continue;
+            if (taxablePay.compareTo(r.getCompensationFrom()) >= 0) {
+                if (bracket == null || r.getCompensationFrom().compareTo(bracket.getCompensationFrom()) > 0) {
+                    bracket = r;
+                }
+            }
+        }
+        if (bracket == null) return BigDecimal.ZERO;
+        BigDecimal excess = taxablePay.subtract(bracket.getCompensationFrom());
+        return bracket.getAdditionalTax()
+                .add(bracket.getTaxRate().multiply(excess))
+                .setScale(SCALE, ROUND)
+                .max(BigDecimal.ZERO);
+    }
+
     /**
-     * Withholding Tax (simplified formula): Monthly Rate × 10% - 2,395.90
-     * Returns 0 if result is negative (salary below tax threshold).
+     * Withholding tax: SEMI_MONTHLY brackets on cutoff gross, or MONTHLY on period/salary base.
      */
-    private BigDecimal computeWithholdingTax(BigDecimal monthlyRate) {
-        BigDecimal tax = monthlyRate.multiply(TAX_RATE_SIMPLIFIED)
-                .subtract(TAX_CONSTANT)
-                .setScale(SCALE, ROUND);
-        return tax.max(BigDecimal.ZERO);
+    private BigDecimal computeWithholdingTaxFromTable(BigDecimal taxablePay, int year, String payFrequency) {
+        if (taxablePay == null || taxablePay.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.ZERO;
+        }
+        List<TaxTable> rows = taxTableRepository.findByEffectiveYearAndPayFrequencyOrderByCompensationFromAsc(year, payFrequency);
+        if (rows == null || rows.isEmpty()) {
+            rows = taxTableRepository.findByEffectiveYearAndPayFrequencyOrderByCompensationFromAsc(year - 1, payFrequency);
+        }
+        if ((rows == null || rows.isEmpty()) && "SEMI_MONTHLY".equals(payFrequency)) {
+            List<TaxTable> m = taxTableRepository.findByEffectiveYearAndPayFrequencyOrderByCompensationFromAsc(year, "MONTHLY");
+            if (m == null || m.isEmpty()) {
+                m = taxTableRepository.findByEffectiveYearAndPayFrequencyOrderByCompensationFromAsc(year - 1, "MONTHLY");
+            }
+            if (m != null && !m.isEmpty()) {
+                BigDecimal impliedMonthly = taxablePay.multiply(SEMI_MONTHLY_DIVISOR);
+                return withholdingTaxFromBracketRows(impliedMonthly, m)
+                        .divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+            }
+            return BigDecimal.ZERO;
+        }
+        if (rows == null || rows.isEmpty()) {
+            BigDecimal tax = taxablePay.multiply(TAX_RATE_SIMPLIFIED)
+                    .subtract(TAX_CONSTANT)
+                    .setScale(SCALE, ROUND);
+            return tax.max(BigDecimal.ZERO);
+        }
+        return withholdingTaxFromBracketRows(taxablePay, rows);
     }
 
     /**

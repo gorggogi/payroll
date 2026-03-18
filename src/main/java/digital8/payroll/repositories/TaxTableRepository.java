@@ -8,4 +8,6 @@ import java.util.List;
 @Repository
 public interface TaxTableRepository extends JpaRepository<TaxTable, Integer> {
     List<TaxTable> findByEffectiveYearOrderByCompensationFromAsc(Integer effectiveYear);
+
+    List<TaxTable> findByEffectiveYearAndPayFrequencyOrderByCompensationFromAsc(Integer effectiveYear, String payFrequency);
 }

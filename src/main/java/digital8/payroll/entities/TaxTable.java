@@ -31,6 +31,18 @@ public class TaxTable{
     @Column (nullable = false, unique = false)
     private Integer effectiveYear;
 
+    /** e.g. MONTHLY, SEMI_MONTHLY — nullable for legacy rows */
+    @Column(name = "pay_frequency", nullable = true, length = 32)
+    private String payFrequency;
+
+    public String getPayFrequency() {
+        return payFrequency;
+    }
+
+    public void setPayFrequency(String payFrequency) {
+        this.payFrequency = payFrequency;
+    }
+
     public Integer getTaxId() {
         return taxId;
     }

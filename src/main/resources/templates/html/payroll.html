@@ -107,9 +107,10 @@
                 </select>
                 <label for="period">Period:</label>
                 <select name="period" id="period" onchange="this.form.submit()">
-                    <option value="" th:selected="${selectedPeriod == null || selectedPeriod == ''}">Monthly</option>
-                    <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
                     <option value="monthly" th:selected="${selectedPeriod == 'monthly'}">Monthly</option>
+                    <option value="semi_1" th:selected="${selectedPeriod == 'semi_1'}">Semi-monthly (1–15)</option>
+                    <option value="semi_2" th:selected="${selectedPeriod == 'semi_2'}">Semi-monthly (16–end)</option>
+                    <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
                 </select>
             </form>
 

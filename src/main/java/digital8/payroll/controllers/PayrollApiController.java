@@ -31,6 +31,7 @@ public class PayrollApiController {
             @PathVariable Integer empId,
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String month,
+            @RequestParam(required = false) Integer year,
             Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof Users) {
             Users user = (Users) authentication.getPrincipal();
@@ -40,7 +41,7 @@ public class PayrollApiController {
             }
         }
 
-        List<PayrollItems> computed = payrollService.computePayroll(empId, period, month);
+        List<PayrollItems> computed = payrollService.computePayroll(empId, period, month, year);
         if (computed != null && !computed.isEmpty()) {
             return ResponseEntity.ok(computed);
         }
