@@ -21,7 +21,27 @@
             <ul>
                 <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
                 <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-                <a href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+
+                <!-- Attendance group -->
+                <a title="Attendance" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
+                    <li><a href="/admin/leave" title="Leave">
+                        <span class="nav-label">Leave</span>
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </span>
+                    </a></li>
+                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
+                </ul>
+
+                <!-- Payroll group -->
                 <a title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
                     <span class="nav-label">Payroll</span>
@@ -30,17 +50,9 @@
                 <ul class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
                     <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
+                    <li><a href="/admin/adjustments">Adjustments</a></li>
                 </ul>
-                <a href="/admin/leave" title="Leave">
-                <li>
-                    <i class="fa-regular fa-calendar-minus"></i>
-                    <span class="nav-label">Leave</span>
-                    <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                    </span>
-                </li>
-            </a>
+
                 <a href="/admin/settings" title="Settings"><li class="active"><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
             <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
