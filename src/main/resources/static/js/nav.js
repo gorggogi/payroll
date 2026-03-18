@@ -78,26 +78,115 @@
         var currentPath = window.location.pathname || '';
         var isPayrollPage = window.location.pathname.includes('/payroll/');
         var isDeductionsPage = window.location.pathname.includes('/deductions');
+        var isAdjustmentsPage = window.location.pathname.includes('/adjustments');
+        var isAttendancePage = window.location.pathname.includes('/attendance');
+        var isLeavePage = window.location.pathname.includes('/leave');
+        var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
+        var isAttendanceRelatedPage = isAttendancePage || isLeavePage;
 
         dropdowns.forEach(function (btn) {
             var menu = btn.nextElementSibling;
             if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
 
+            // Determine which dropdown this is based on button title
+            var btnTitle = btn.getAttribute('title') || '';
+            var isPayrollDropdown = btnTitle === 'Payroll';
+            var isAttendanceDropdown = btnTitle === 'Attendance';
+
             // Track if menu was opened by click (true) or just hover (false)
             var isClickOpen = menu.classList.contains('show');
 
-            // On payroll or deductions page, expand menu and set active on button by default
-            if ((isPayrollPage || isDeductionsPage) && !menu.classList.contains('show')) {
-                menu.classList.add('show');
-                btn.classList.add('active', 'click-open');
-                isClickOpen = true; // Treat default open as click-opened
-                // Set deductions menu item as active if on deductions page
-                if (isDeductionsPage) {
+            var nav = document.querySelector('nav');
+            var isSmallScreenCollapsed = window.innerWidth < 1180 && !nav.classList.contains('nav-expanded');
+            var isNavCollapsed = nav.classList.contains('nav-collapsed');
+
+            // Always mark toggle as active on payroll related pages (only if payroll dropdown)
+            if (isPayrollDropdown && isPayrollRelatedPage) {
+                btn.classList.add('active');
+                
+                // Remove active class from all menu items first
+                var allItems = menu.querySelectorAll('li');
+                allItems.forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                
+                // Mark the appropriate menu item as active based on current page
+                if (isPayrollPage) {
+                    var payrollItem = menu.querySelector('li:nth-child(1)');
+                    if (payrollItem) {
+                        payrollItem.classList.add('active');
+                    }
+                } else if (isDeductionsPage) {
                     var deductionsItem = menu.querySelector('li:nth-child(2)');
                     if (deductionsItem) {
                         deductionsItem.classList.add('active');
                     }
+                } else if (isAdjustmentsPage) {
+                    var adjustmentsItem = menu.querySelector('li:nth-child(3)');
+                    if (adjustmentsItem) {
+                        adjustmentsItem.classList.add('active');
+                    }
                 }
+            }
+
+            // Always mark toggle as active on attendance related pages (only if attendance dropdown)
+            if (isAttendanceDropdown && isAttendanceRelatedPage) {
+                btn.classList.add('active');
+                
+                // Remove active class from all menu items first
+                var allAttendanceItems = menu.querySelectorAll('li');
+                allAttendanceItems.forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                
+                // Mark the appropriate attendance menu item as active based on current page
+                if (isLeavePage) {
+                    // Find Leave link by checking href attribute
+                    var leaveLink = menu.querySelector('a[href*="/leave"]');
+                    if (leaveLink) {
+                        var li = leaveLink.closest('li');
+                        if (li) {
+                            li.classList.add('active');
+                        }
+                    }
+                } else {
+                    // Find Daily Time Record link - first attendance link
+                    var allLinks = Array.from(menu.querySelectorAll('a'));
+                    var dtrLink = allLinks.find(function(link) {
+                        return link.href.includes('/attendance') && !link.href.includes('/overtime') && !link.href.includes('time-adjustments') && !link.href.includes('/shifts');
+                    });
+                    if (dtrLink) {
+                        var li = dtrLink.closest('li');
+                        if (li) {
+                            li.classList.add('active');
+                        }
+                    }
+                }
+            }
+
+            // On small collapsed screens, remove the default show class
+            if (isSmallScreenCollapsed && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                btn.classList.remove('click-open');
+                isClickOpen = false;
+            }
+            // On collapsed nav (large screens), remove the default show class
+            else if (isNavCollapsed && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                btn.classList.remove('click-open');
+                isClickOpen = false;
+            }
+            // On payroll related pages, expand payroll menu (but not on collapsed nav)
+            else if (isPayrollDropdown && isPayrollRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed && !isNavCollapsed) {
+                menu.classList.add('show');
+                btn.classList.add('click-open');
+                isClickOpen = true; // Treat default open as click-opened
+            }
+            // On attendance related pages, expand attendance menu (but not on collapsed nav)
+            else if (isAttendanceDropdown && isAttendanceRelatedPage && !menu.classList.contains('show') && !isSmallScreenCollapsed && !isNavCollapsed) {
+                menu.classList.add('show');
+                btn.classList.add('click-open');
+                isClickOpen = true; // Treat default open as click-opened
             }
 
             var hideMenuTimeout;
@@ -105,7 +194,10 @@
             function positionMenu() {
                 var nav = document.querySelector('nav');
                 var isCollapsed = nav.classList.contains('nav-collapsed');
-                if (isCollapsed) {
+                var isSmallScreen = window.innerWidth < 1180;
+                var isNavExpanded = nav.classList.contains('nav-expanded');
+                
+                if (isCollapsed || (isSmallScreen && !isNavExpanded)) {
                     var rect = btn.getBoundingClientRect();
                     // Position menu to the right of button, aligned with button top
                     menu.style.left = (rect.right + 2) + 'px';
@@ -190,7 +282,10 @@
                 if (menu && menu.classList.contains('nav-dropdown-menu') && menu.classList.contains('show')) {
                     var nav = document.querySelector('nav');
                     var isCollapsed = nav.classList.contains('nav-collapsed');
-                    if (isCollapsed) {
+                    var isSmallScreen = window.innerWidth < 1180;
+                    var isNavExpanded = nav.classList.contains('nav-expanded');
+                    
+                    if (isCollapsed || (isSmallScreen && !isNavExpanded)) {
                         var rect = btn.getBoundingClientRect();
                         menu.style.top = rect.top + 'px';
                         menu.style.left = (rect.right + 10) + 'px';
