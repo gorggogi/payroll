@@ -268,6 +268,16 @@ function renderEmployeeDetail(emp) {
             </option>
         `).join('');
 
+        const factorOptions = [
+            { value: '20', label: '20 — monthly ÷ 20 (common)' },
+            { value: '21.75', label: '21.75 — DOLE-style (52×5÷12)' },
+            { value: '22', label: '22 — alternate policy' },
+            { value: '24', label: '24 — 6-day week variant' }
+        ].map (o=>`<option value="${o.value}" ${emp.factorRate === o.value ? 'selected' : ''}>
+            ${o.label}
+            </option>
+            `).join('');
+
             modal.innerHTML = `
             <div class="employee-modal-content">
                 <button class="close-btn" id="closeEmployeeModal">×</button>
@@ -298,6 +308,7 @@ function renderEmployeeDetail(emp) {
                         <option value="hourly" ${(emp.payType || '').toLowerCase() === 'hourly' ? 'selected' : ''}>Hourly</option>
                     </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
+                    <label>Pay factor: <select name="factorRate">${factorOptions}</select></label>
                     <label>Department: <select name="departmentId">
                         <option value="">-- Select Department --</option>
                         ${deptOptions}
@@ -386,7 +397,8 @@ function saveEmployee(employeeId) {
         sssNumber: formData.get('sssNumber'),
         philhealthNumber: formData.get('philhealthNumber'),
         pagibigNumber: formData.get('pagibigNumber'),
-        bank_Account: formData.get('bank_Account')
+        bank_Account: formData.get('bank_Account'),
+        factorRate: formData.get('factorRate') ? Number(formData.get('factorRate')) : null,
     };
 
     const deptId = formData.get('departmentId');

@@ -11,7 +11,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-
+import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import digital8.payroll.entities.Employees;
@@ -25,6 +25,7 @@ import digital8.payroll.services.EmailNotificationService;
 import digital8.payroll.repositories.DepartmentsRepository;
 import digital8.payroll.repositories.PositionsRepository;
 import digital8.payroll.repositories.UsersRepository;
+import digital8.payroll.services.PayrollService;
 
 @Controller
 @RequestMapping("/admin/employees")
@@ -42,6 +43,8 @@ public class EmployeeViewController {
     private EmailNotificationService emailNotificationService;
     @Autowired
     private UsersRepository usersRepository;
+    @Autowired
+    private PayrollService payrollService;
 
     @GetMapping("/add")
     public String addEmployeeForm(Model model, Authentication authentication) {
@@ -74,6 +77,7 @@ public class EmployeeViewController {
             @RequestParam String employmentType,
             @RequestParam String payType,
             @RequestParam java.math.BigDecimal basicSalary,
+            @RequestParam(required = false)java.math.BigDecimal factorRate,
             @RequestParam String bank_Account,
             @RequestParam String tin,
             @RequestParam String sssNumber,
@@ -93,6 +97,11 @@ public class EmployeeViewController {
         emp.setEmploymentType(employmentType);
         emp.setPayType(payType);
         emp.setBasicSalary(basicSalary);
+        if (factorRate != null && factorRate.compareTo(BigDecimal.ZERO) > 0) {
+            emp.setFactorRate(factorRate);
+        } else {
+            emp.setFactorRate(new java.math.BigDecimal("20"));
+        }
         emp.setBank_Account(bank_Account);
         emp.setTin(tin);
         emp.setSssNumber(sssNumber);

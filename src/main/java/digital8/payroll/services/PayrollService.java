@@ -33,7 +33,7 @@ public class PayrollService {
     private static final RoundingMode ROUND = RoundingMode.HALF_UP;
 
     // Rate derivation constants
-    private static final BigDecimal WORKING_DAYS_PER_MONTH = new BigDecimal("20");
+    private static final BigDecimal DEFAULT_PAY_FACTOR = new BigDecimal("20");
     private static final BigDecimal HOURS_PER_DAY = new BigDecimal("8");
     private static final BigDecimal MINUTES_PER_HOUR = new BigDecimal("60");
 
@@ -89,8 +89,12 @@ public class PayrollService {
         boolean isJobOrder = "Job Order".equalsIgnoreCase(empType) || "JobOrder".equalsIgnoreCase(empType);
 
         // --- 1. Rate Derivation ---
-        // Daily Rate = Monthly Rate / 20
-        BigDecimal dailyRate = monthlyRate.divide(WORKING_DAYS_PER_MONTH, 6, ROUND);
+        // Daily Rate = Monthly Rate / Factor
+        BigDecimal factor = emp.getFactorRate();
+        if (factor == null || factor.compareTo(BigDecimal.ZERO) <= 0) {
+            factor = DEFAULT_PAY_FACTOR;
+        }
+        BigDecimal dailyRate = monthlyRate.divide(factor, 6, ROUND);
         // Hourly Rate = Daily Rate / 8
         BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
         // Per Minute Rate = Hourly Rate / 60

@@ -113,6 +113,9 @@ public class Employees{
     @OneToOne(mappedBy = "employee", fetch = FetchType.EAGER)
     @JsonIgnoreProperties ({"employee"})
     private Users user;
+
+    @Column (nullable = false, unique = false)
+    private BigDecimal factorRate;
     
 
     public Users getUser() {
@@ -189,6 +192,14 @@ public class Employees{
 
     public String getBank_Account() {
         return bank_Account;
+    }
+
+    public BigDecimal getFactorRate() {
+        return factorRate;
+    }
+
+    public void setFactorRate(BigDecimal factorRate) {
+        this.factorRate = factorRate;
     }
 
     public void setBank_Account(String bank_Account) {

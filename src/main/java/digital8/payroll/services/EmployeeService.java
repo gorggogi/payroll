@@ -156,6 +156,10 @@ public class EmployeeService {
         if (emp.getPosition() != null && emp.getPosition().getPositionId() != null) {
             positionsRepository.findById(emp.getPosition().getPositionId()).ifPresent(emp::setPosition);
         }
+
+        if (emp.getFactorRate() == null || emp.getFactorRate().compareTo(BigDecimal.ZERO) <= 0) {
+            emp.setFactorRate(new java.math.BigDecimal("20"));
+        }
         Employees saved = employeeRepository.save(emp);
 
         String defaultPassword = saved.getLastName().replace(" ", "") + "123";
@@ -219,6 +223,9 @@ public class EmployeeService {
         if (updated.getEmploymentType() != null) existing.setEmploymentType(updated.getEmploymentType());
         if (updated.getPayType() != null) existing.setPayType(updated.getPayType());
         if (updated.getBasicSalary() != null) existing.setBasicSalary(updated.getBasicSalary());
+        if (updated.getFactorRate() != null && updated.getFactorRate().compareTo(BigDecimal.ZERO) > 0) {
+            existing.setFactorRate(updated.getFactorRate());
+        }
         if (updated.getTin() != null) existing.setTin(updated.getTin());
         if (updated.getSssNumber() != null) existing.setSssNumber(updated.getSssNumber());
         if (updated.getPhilhealthNumber() != null) existing.setPhilhealthNumber(updated.getPhilhealthNumber());
