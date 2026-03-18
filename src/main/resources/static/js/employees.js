@@ -3,7 +3,7 @@ function myFunction(dropdownId) {
 }
 
 
-window.onclick = function(event) {
+window.onclick = function (event) {
     if (!event.target.matches('.dropbtn')) {
         var dropdowns = document.getElementsByClassName("dropdown-content");
         var i;
@@ -40,13 +40,13 @@ function preloadLookups() {
     return lookupsLoadingPromise;
 }
 
-window.addEventListener('load', function(){
+window.addEventListener('load', function () {
 
     loadEmployees();
     preloadLookups();
 
-    document.getElementById('searchInput').addEventListener('keydown', function(event){
-        if (event.key === 'Enter'){
+    document.getElementById('searchInput').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
             event.preventDefault();
             searchQuery = this.value.trim().toLowerCase();
             filterAndDisplayEmployees();
@@ -54,25 +54,25 @@ window.addEventListener('load', function(){
 
     })
 
-    document.getElementById('searchButton').addEventListener('click', function(){
+    document.getElementById('searchButton').addEventListener('click', function () {
 
         searchQuery = document.getElementById('serachInput').value.trim().toLowerCase();
         filterAndDisplayEmployees();
 
     })
 
-    document.getElementById('addEmployee').addEventListener('click', function(){
+    document.getElementById('addEmployee').addEventListener('click', function () {
         window.location.href = '/admin/employees/add';
     })
 
 })
 
-document.getElementById('searchButton').addEventListener('click', function(){
+document.getElementById('searchButton').addEventListener('click', function () {
     searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
     filterAndDisplayEmployees();
 })
 
-function loadEmployees(){
+function loadEmployees() {
 
     const url = '/api/employees';
 
@@ -80,33 +80,33 @@ function loadEmployees(){
 
     fetch(url)
 
-    .then(response =>{
-        if (!response.ok){
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-        return response.json();
-    })
+            return response.json();
+        })
 
-    .then(employees =>{
+        .then(employees => {
 
-        console.log('Received employees:', employees);
-        allEmployees = employees;
-        filterAndDisplayEmployees();
-    
-    })
+            console.log('Received employees:', employees);
+            allEmployees = employees;
+            filterAndDisplayEmployees();
 
-    .catch(error => {
-        console.error('Error loading employees:', error);
-        document.getElementById('employeeContainer').innerHTML = 
-            `<p style="color: red;">Error loading employees: ${error.message}</p>`;
+        })
 
-    });
+        .catch(error => {
+            console.error('Error loading employees:', error);
+            document.getElementById('employeeContainer').innerHTML =
+                `<p style="color: red;">Error loading employees: ${error.message}</p>`;
+
+        });
 
 
 }
 
-function filterAndDisplayEmployees(){
+function filterAndDisplayEmployees() {
 
     let filtered = allEmployees;
 
@@ -124,7 +124,7 @@ function filterAndDisplayEmployees(){
                 (emp.employmentType && emp.employmentType.toLowerCase().includes(searchQuery))
             );
         });
-       
+
     }
 
     displayEmployees(filtered);
@@ -133,7 +133,7 @@ function filterAndDisplayEmployees(){
 function sortEmployees(employees) {
     return employees.sort((a, b) => {
         let valueA, valueB;
-        
+
         if (sortBy === 'firstName') {
             valueA = a.firstName?.toLowerCase() || '';
             valueB = b.firstName?.toLowerCase() || '';
@@ -141,7 +141,7 @@ function sortEmployees(employees) {
             valueA = a.lastName?.toLowerCase() || '';
             valueB = b.lastName?.toLowerCase() || '';
         }
-        
+
         if (valueA < valueB) {
             return sortOrder === 'asc' ? -1 : 1;
         }
@@ -154,7 +154,7 @@ function sortEmployees(employees) {
 
 function setSortBy(field) {
     sortBy = field;
-   
+
 }
 
 function setSortOrder(order) {
@@ -206,13 +206,13 @@ function displayEmployees(employees) {
 
     // Add event listeners for new buttons
     document.querySelectorAll('.card-btn-attendance').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             const empId = this.getAttribute('data-empid');
             window.location.href = `/admin/attendance?empId=${empId}`;
         });
     });
     document.querySelectorAll('.card-btn-payroll').forEach(btn => {
-        btn.addEventListener('click', function(e) {
+        btn.addEventListener('click', function (e) {
             const empId = this.getAttribute('data-empid');
             window.location.href = `/payroll/${empId}`;
         });
@@ -251,24 +251,24 @@ function renderEmployeeDetail(emp) {
     if (existing) existing.remove();
 
     preloadLookups()
-    .then(([departments, positions]) => {
-        const modal = document.createElement('div');
-        modal.id = 'employeeModal';
-        modal.className = 'employee-modal';
+        .then(([departments, positions]) => {
+            const modal = document.createElement('div');
+            modal.id = 'employeeModal';
+            modal.className = 'employee-modal';
 
-        const deptOptions = departments.map(d => `
+            const deptOptions = departments.map(d => `
             <option value="${d.departmentId}" ${emp.department && emp.department.departmentId === d.departmentId ? 'selected' : ''}>
                 ${d.departmentName}
             </option>
         `).join('');
 
-        const posOptions = positions.map(p => `
+            const posOptions = positions.map(p => `
             <option value="${p.positionId}" ${emp.position && emp.position.positionId === p.positionId ? 'selected' : ''}>
                 ${p.positionName}
             </option>
         `).join('');
 
-        modal.innerHTML = `
+            modal.innerHTML = `
             <div class="employee-modal-content">
                 <button class="close-btn" id="closeEmployeeModal">×</button>
                 <h2>Edit Employee: ${emp.firstName} ${emp.lastName}</h2>
@@ -287,6 +287,7 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Employment Type: <select name="employmentType">
                         <option value="Regular" ${(emp.employmentType || '') === 'Regular' ? 'selected' : ''}>Regular</option>
+                        <option value="Job Order" ${(emp.employmentType || '') === 'Job Order' ? 'selected' : ''}>Job Order</option>
                         <option value="Probationary" ${(emp.employmentType || '') === 'Probationary' ? 'selected' : ''}>Probationary</option>
                         <option value="Contractual" ${(emp.employmentType || '') === 'Contractual' ? 'selected' : ''}>Contractual</option>
                     </select></label>
@@ -320,15 +321,15 @@ function renderEmployeeDetail(emp) {
             </div>
         `;
 
-        document.body.appendChild(modal);
+            document.body.appendChild(modal);
 
-        document.getElementById('closeEmployeeModal').addEventListener('click', closeEmployeeModal);
-        document.getElementById('saveEmployeeBtn').addEventListener('click', function() { saveEmployee(emp.employeeId); });
-        document.getElementById('resetPasswordBtn').addEventListener('click', function() { resetEmployeePassword(emp.employeeId, emp.firstName + ' ' + emp.lastName); });
-    })
-    .catch(err => {
-        alert('Error loading data for form: ' + err.message);
-    });
+            document.getElementById('closeEmployeeModal').addEventListener('click', closeEmployeeModal);
+            document.getElementById('saveEmployeeBtn').addEventListener('click', function () { saveEmployee(emp.employeeId); });
+            document.getElementById('resetPasswordBtn').addEventListener('click', function () { resetEmployeePassword(emp.employeeId, emp.firstName + ' ' + emp.lastName); });
+        })
+        .catch(err => {
+            alert('Error loading data for form: ' + err.message);
+        });
 }
 
 function closeEmployeeModal() {
@@ -353,17 +354,17 @@ function resetEmployeePassword(employeeId, employeeName) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword: newPassword })
     })
-    .then(function(res) {
-        if (res.ok) return res.json();
-        if (res.status === 404) throw new Error('User account not found for this employee.');
-        return res.json().then(function(data) { throw new Error(data.error || 'Failed to reset password'); });
-    })
-    .then(function() {
-        alert('Password reset successfully.');
-    })
-    .catch(function(err) {
-        alert(err.message || 'Error resetting password');
-    });
+        .then(function (res) {
+            if (res.ok) return res.json();
+            if (res.status === 404) throw new Error('User account not found for this employee.');
+            return res.json().then(function (data) { throw new Error(data.error || 'Failed to reset password'); });
+        })
+        .then(function () {
+            alert('Password reset successfully.');
+        })
+        .catch(function (err) {
+            alert(err.message || 'Error resetting password');
+        });
 }
 
 function saveEmployee(employeeId) {
@@ -406,139 +407,139 @@ function saveEmployee(employeeId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(res => {
-        if (!res.ok) throw new Error('Failed to save');
-        return res.json();
-    })
-    .then(saved => {
-        alert('Employee saved');
-        closeEmployeeModal();
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to save');
+            return res.json();
+        })
+        .then(saved => {
+            alert('Employee saved');
+            closeEmployeeModal();
 
-        const idx = allEmployees.findIndex(e => e.employeeId === saved.employeeId);
-        if (idx !== -1) {
-            const existing = allEmployees[idx];
-            allEmployees[idx] = {
-                ...existing,
-                employeeId: saved.employeeId,
-                firstName: saved.firstName,
-                middleName: saved.middleName,
-                lastName: saved.lastName,
-                email: saved.email,
-                contactNumber: saved.contactNumber,
-                address: saved.address,
-                employmentStatus: saved.employmentStatus,
-                employmentType: saved.employmentType,
-                payType: saved.payType,
-                basicSalary: saved.basicSalary,
-                dateHired: saved.dateHired,
-                departmentName: saved.department ? saved.department.departmentName : existing.departmentName,
-                positionName: saved.position ? saved.position.positionName : existing.positionName
-            };
-        }
-        filterAndDisplayEmployees();
-    })
-    .catch(err => {
-        alert('Error saving employee: ' + err.message);
-    })
-    .finally(() => {
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('is-loading');
-            saveBtn.innerHTML = originalSaveText;
-        }
-    });
+            const idx = allEmployees.findIndex(e => e.employeeId === saved.employeeId);
+            if (idx !== -1) {
+                const existing = allEmployees[idx];
+                allEmployees[idx] = {
+                    ...existing,
+                    employeeId: saved.employeeId,
+                    firstName: saved.firstName,
+                    middleName: saved.middleName,
+                    lastName: saved.lastName,
+                    email: saved.email,
+                    contactNumber: saved.contactNumber,
+                    address: saved.address,
+                    employmentStatus: saved.employmentStatus,
+                    employmentType: saved.employmentType,
+                    payType: saved.payType,
+                    basicSalary: saved.basicSalary,
+                    dateHired: saved.dateHired,
+                    departmentName: saved.department ? saved.department.departmentName : existing.departmentName,
+                    positionName: saved.position ? saved.position.positionName : existing.positionName
+                };
+            }
+            filterAndDisplayEmployees();
+        })
+        .catch(err => {
+            alert('Error saving employee: ' + err.message);
+        })
+        .finally(() => {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('is-loading');
+                saveBtn.innerHTML = originalSaveText;
+            }
+        });
 }
 
 function toggleAdvancedFilters() {
     const panel = document.getElementById('advancedFilterSection');
-    
+
     if (panel.style.display === 'none' || panel.style.display === '') {
         panel.style.display = 'flex';
     } else {
         panel.style.display = 'none';
     }
 }
-        
-document.addEventListener('click', function(event) {
+
+document.addEventListener('click', function (event) {
     const panel = document.getElementById('advancedFilterSection');
     const content = document.querySelector('.advanced-filter-section-content');
-    
+
     if (panel && panel.style.display === 'flex' && event.target === panel) {
         panel.style.display = 'none';
     }
 });
 
-function applyAdvancedFilters(){
-    
-       
-        const searchQuery = document.getElementById('searchInput').value.trim();
-        
+function applyAdvancedFilters() {
 
-        const sortBy = document.getElementById('sortBy').value;
-        const sortOrder = document.getElementById('sortOrder').value;
-        
 
-        const departmentId = document.getElementById('filterDepartment').value;
-        const positionId = document.getElementById('filterPosition').value;
-        const employmentStatus = document.getElementById('filterStatus').value;
-        const employmentType = document.getElementById('filterType').value;
-        const payType = document.getElementById('filterPayType').value;
-        const minSalary = document.getElementById('filterMinSalary').value;
-        const maxSalary = document.getElementById('filterMaxSalary').value;
-        
-   
-        const params = new URLSearchParams();
-        if (searchQuery) params.append('searchQuery', searchQuery);
-        params.append('sortBy', sortBy);
-        params.append('direction', sortOrder);
-        
- 
-        if (departmentId) params.append('departmentId', departmentId);
-        if (positionId) params.append('positionId', positionId);
-        if (employmentStatus) params.append('employmentStatus', employmentStatus);
-        if (employmentType) params.append('employmentType', employmentType);
-        if (payType) params.append('payType', payType);
-        if (minSalary) params.append('minSalary', minSalary);
-        if (maxSalary) params.append('maxSalary', maxSalary);
-        
-   
-        fetch(`/api/employees/filter?${params.toString()}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(employees => {
-                console.log('Filter applied:', params.toString());
-                allEmployees = employees;
-                displayEmployees(employees);
-            })
-            .catch(error => {
-                console.error('Error applying filters:', error);
-                alert(`Error applying filters: ${error.message}`);
-            });
-    }
-    
-    function resetFilters(){
- 
-        document.getElementById('sortBy').value = 'lastName';
-        document.getElementById('sortOrder').value = 'asc';
-        document.getElementById('filterDepartment').value = '';
-        document.getElementById('filterPosition').value = '';
-        document.getElementById('filterStatus').value = '';
-        document.getElementById('filterType').value = '';
-        document.getElementById('filterPayType').value = '';
-        document.getElementById('filterMinSalary').value = '';
-        document.getElementById('filterMaxSalary').value = '';
-        
-     
-        document.getElementById('searchInput').value = '';
-        
-        loadEmployees();
-        
-        console.log('All filters reset');
-    }
+    const searchQuery = document.getElementById('searchInput').value.trim();
+
+
+    const sortBy = document.getElementById('sortBy').value;
+    const sortOrder = document.getElementById('sortOrder').value;
+
+
+    const departmentId = document.getElementById('filterDepartment').value;
+    const positionId = document.getElementById('filterPosition').value;
+    const employmentStatus = document.getElementById('filterStatus').value;
+    const employmentType = document.getElementById('filterType').value;
+    const payType = document.getElementById('filterPayType').value;
+    const minSalary = document.getElementById('filterMinSalary').value;
+    const maxSalary = document.getElementById('filterMaxSalary').value;
+
+
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('searchQuery', searchQuery);
+    params.append('sortBy', sortBy);
+    params.append('direction', sortOrder);
+
+
+    if (departmentId) params.append('departmentId', departmentId);
+    if (positionId) params.append('positionId', positionId);
+    if (employmentStatus) params.append('employmentStatus', employmentStatus);
+    if (employmentType) params.append('employmentType', employmentType);
+    if (payType) params.append('payType', payType);
+    if (minSalary) params.append('minSalary', minSalary);
+    if (maxSalary) params.append('maxSalary', maxSalary);
+
+
+    fetch(`/api/employees/filter?${params.toString()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(employees => {
+            console.log('Filter applied:', params.toString());
+            allEmployees = employees;
+            displayEmployees(employees);
+        })
+        .catch(error => {
+            console.error('Error applying filters:', error);
+            alert(`Error applying filters: ${error.message}`);
+        });
+}
+
+function resetFilters() {
+
+    document.getElementById('sortBy').value = 'lastName';
+    document.getElementById('sortOrder').value = 'asc';
+    document.getElementById('filterDepartment').value = '';
+    document.getElementById('filterPosition').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterPayType').value = '';
+    document.getElementById('filterMinSalary').value = '';
+    document.getElementById('filterMaxSalary').value = '';
+
+
+    document.getElementById('searchInput').value = '';
+
+    loadEmployees();
+
+    console.log('All filters reset');
+}
 
 
 

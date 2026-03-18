@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,17 +11,26 @@
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
     <title>Digital8 Payroll System</title>
 </head>
+
 <body>
     <div class="container">
         <nav>
             <div class="nav-header">
                 <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i
+                        class="fa-solid fa-chevron-left"></i></button>
             </div>
             <ul>
-                <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a href="/admin/employees" title="Employees"><li class="active"><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance" title="Attendance"><li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li></a>
+                <a href="/admin/home" title="Home">
+                    <li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li>
+                </a>
+                <a href="/admin/employees" title="Employees">
+                    <li class="active"><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span>
+                    </li>
+                </a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/attendance" title="Attendance">
+                    <li><i class="fa-solid fa-calendar"></i><span class="nav-label">Attendance</span></li>
+                </a>
                 <a title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
                     <span class="nav-label">Payroll</span>
@@ -32,172 +42,180 @@
                     <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
                 </ul>
                 <a href="/admin/leave" title="Leave">
-                <li>
-                    <i class="fa-regular fa-calendar-minus"></i>
-                    <span class="nav-label">Leave</span>
-                    <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                    </span>
-                </li>
-            </a>
-                <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+                    <li>
+                        <i class="fa-regular fa-calendar-minus"></i>
+                        <span class="nav-label">Leave</span>
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator"
+                            title="Pending leave requests" aria-label="Pending leave requests"
+                            th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </span>
+                    </li>
+                </a>
+                <a href="/admin/settings" title="Settings">
+                    <li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li>
+                </a>
             </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
+            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span
+                    class="nav-label">Logout</span></a>
         </nav>
-    
-    <section>
 
-        <div class="advanced-filter-section" id="advancedFilterSection" style="display: none;">
-            <div class="advanced-filter-section-content">
-                <button type="button" class="close-filters-btn" onclick="toggleAdvancedFilters()">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
-                <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
-                
-                <form id="advancedFilterForm">
-      
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="sortBy">
-                            <i class="fa-solid fa-sort"></i> Sort By
-                        </label>
-                        <select id="sortBy">
-                            <option value="lastName">Last Name</option>
-                            <option value="firstName">First Name</option>
-                            <option value="employeeNumber">Employee Number</option>
-                            <option value="basicSalary">Salary</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sortOrder">
-                            <i class="fa-solid fa-arrow-down-a-z"></i> Order
-                        </label>
-                        <select id="sortOrder">
-                            <option value="asc">Ascending</option>
-                            <option value="desc">Descending</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="filterDepartment">
-                            <i class="fa-solid fa-building"></i> Department
-                        </label>
-                        <select id="filterDepartment">
-                            <option value="">All Departments</option>
-                            <option value="1">HR</option>
-                            <option value="2">IT</option>
-                            <option value="3">Finance</option>
-                            <option value="4">Sales</option>
-                            <option value="5">Operations</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="filterPosition">
-                            <i class="fa-solid fa-briefcase"></i> Position
-                        </label>
-                        <select id="filterPosition">
-                            <option value="">All Positions</option>
-                            <option value="1">Manager</option>
-                            <option value="2">Software Engineer</option>
-                            <option value="3">Accountant</option>
-                            <option value="4">HR Specialist</option>
-                            <option value="5">Sales Representative</option>
-                            <option value="6">Operations Coordinator</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="filterStatus">
-                            <i class="fa-solid fa-circle-check"></i> Status
-                        </label>
-                        <select id="filterStatus">
-                            <option value="">All Statuses</option>
-                            <option value="Active">Active</option>
-                            <option value="Resigned">Resigned</option>
-                            <option value="Terminated">Terminated</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="filterType">
-                            <i class="fa-solid fa-user-tag"></i> Employment Type
-                        </label>
-                        <select id="filterType">
-                            <option value="">All Types</option>
-                            <option value="Regular">Regular</option>
-                            <option value="Probationary">Probationary</option>
-                            <option value="Contractual">Contractual</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="filterPayType">
-                            <i class="fa-solid fa-money-bill"></i> Pay Type
-                        </label>
-                        <select id="filterPayType">
-                            <option value="">All Pay Types</option>
-                            <option value="Monthly">Monthly</option>
-                            <option value="Daily">Daily</option>
-                            <option value="Hourly">Hourly</option>
-                            <option value="Biweekly">Biweekly</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="filterMinSalary">
-                            <i class="fa-solid fa-peso-sign"></i> Min Salary
-                        </label>
-                        <input type="number" id="filterMinSalary" placeholder="e.g., 30000" min="0" step="1000">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="filterMaxSalary">
-                            <i class="fa-solid fa-peso-sign"></i> Max Salary
-                        </label>
-                        <input type="number" id="filterMaxSalary" placeholder="e.g., 100000" min="0" step="1000">
-                    </div>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" onclick="applyAdvancedFilters()" class="btn-apply">
-                        <i class="fa-solid fa-check"></i> Apply Filters
-                    </button>
-                    <button type="button" onclick="resetFilters()" class="btn-reset">
-                        <i class="fa-solid fa-rotate-right"></i> Reset All
-                    </button>
-                </div>
-            </form>
-            </div>
-        </div>
+        <section>
 
-        <div class="employee-list">
-            <h1>Employee List</h1>
-            <p th:if="${message}" class="search-info" th:text="${message}"></p>
-            <div class="head">
-                <input type="search" id="searchInput" placeholder="Search employees..." />
-                <div class="buttons">
-                    <button id="addEmployee"><i class="fa-solid fa-plus"></i> Add Employee</button>
-                    <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
-                    <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
-                        <i class="fa-solid fa-sliders"></i> Filters
+            <div class="advanced-filter-section" id="advancedFilterSection" style="display: none;">
+                <div class="advanced-filter-section-content">
+                    <button type="button" class="close-filters-btn" onclick="toggleAdvancedFilters()">
+                        <i class="fa-solid fa-xmark"></i>
                     </button>
+                    <h3><i class="fa-solid fa-filter"></i> Filter & Sort Employees</h3>
+                    <p class="filter-hint">Select criteria to filter and sort employees. Leave blank to show all.</p>
+
+                    <form id="advancedFilterForm">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sortBy">
+                                    <i class="fa-solid fa-sort"></i> Sort By
+                                </label>
+                                <select id="sortBy">
+                                    <option value="lastName">Last Name</option>
+                                    <option value="firstName">First Name</option>
+                                    <option value="employeeNumber">Employee Number</option>
+                                    <option value="basicSalary">Salary</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="sortOrder">
+                                    <i class="fa-solid fa-arrow-down-a-z"></i> Order
+                                </label>
+                                <select id="sortOrder">
+                                    <option value="asc">Ascending</option>
+                                    <option value="desc">Descending</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filterDepartment">
+                                    <i class="fa-solid fa-building"></i> Department
+                                </label>
+                                <select id="filterDepartment">
+                                    <option value="">All Departments</option>
+                                    <option value="1">HR</option>
+                                    <option value="2">IT</option>
+                                    <option value="3">Finance</option>
+                                    <option value="4">Sales</option>
+                                    <option value="5">Operations</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="filterPosition">
+                                    <i class="fa-solid fa-briefcase"></i> Position
+                                </label>
+                                <select id="filterPosition">
+                                    <option value="">All Positions</option>
+                                    <option value="1">Manager</option>
+                                    <option value="2">Software Engineer</option>
+                                    <option value="3">Accountant</option>
+                                    <option value="4">HR Specialist</option>
+                                    <option value="5">Sales Representative</option>
+                                    <option value="6">Operations Coordinator</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="filterStatus">
+                                    <i class="fa-solid fa-circle-check"></i> Status
+                                </label>
+                                <select id="filterStatus">
+                                    <option value="">All Statuses</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Resigned">Resigned</option>
+                                    <option value="Terminated">Terminated</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="filterType">
+                                    <i class="fa-solid fa-user-tag"></i> Employment Type
+                                </label>
+                                <select id="filterType">
+                                    <option value="">All Types</option>
+                                    <option value="Regular">Regular</option>
+                                    <option value="Job Order">Job Order</option>
+                                    <option value="Probationary">Probationary</option>
+                                    <option value="Contractual">Contractual</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="filterPayType">
+                                    <i class="fa-solid fa-money-bill"></i> Pay Type
+                                </label>
+                                <select id="filterPayType">
+                                    <option value="">All Pay Types</option>
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Daily">Daily</option>
+                                    <option value="Hourly">Hourly</option>
+                                    <option value="Biweekly">Biweekly</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="filterMinSalary">
+                                    <i class="fa-solid fa-peso-sign"></i> Min Salary
+                                </label>
+                                <input type="number" id="filterMinSalary" placeholder="e.g., 30000" min="0" step="1000">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="filterMaxSalary">
+                                    <i class="fa-solid fa-peso-sign"></i> Max Salary
+                                </label>
+                                <input type="number" id="filterMaxSalary" placeholder="e.g., 100000" min="0"
+                                    step="1000">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" onclick="applyAdvancedFilters()" class="btn-apply">
+                                <i class="fa-solid fa-check"></i> Apply Filters
+                            </button>
+                            <button type="button" onclick="resetFilters()" class="btn-reset">
+                                <i class="fa-solid fa-rotate-right"></i> Reset All
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <div id="searchInfoContainer"></div>
-            <div id="employeeContainer">
-                Loading...
+
+            <div class="employee-list">
+                <h1>Employee List</h1>
+                <p th:if="${message}" class="search-info" th:text="${message}"></p>
+                <div class="head">
+                    <input type="search" id="searchInput" placeholder="Search employees..." />
+                    <div class="buttons">
+                        <button id="addEmployee"><i class="fa-solid fa-plus"></i> Add Employee</button>
+                        <button id="searchButton"><i class="fa-solid fa-magnifying-glass"></i>Search</button>
+                        <button onclick="toggleAdvancedFilters()" class="filter-toggle-btn" id="filterToggleBtn">
+                            <i class="fa-solid fa-sliders"></i> Filters
+                        </button>
+                    </div>
+                </div>
+                <div id="searchInfoContainer"></div>
+                <div id="employeeContainer">
+                    Loading...
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
     </div>
     <script src="/js/nav.js"></script>
     <script src="/js/employees.js"></script>
 </body>
+
 </html>
