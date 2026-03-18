@@ -79,31 +79,57 @@ All currency amounts are rounded to **2 decimals** (HALF_UP) at the points indic
 - **PhilHealth** = `(premiumBase * 0.05) / 2`  (2.5% employee share)
 - **Pag-IBIG** = `premiumBase * 0.02`
 
-#### G) Withholding tax (WHT) — HR “J31” rule
+#### G) Withholding tax (WHT) — SEMI_MONTHLY table for semi cutoffs
 
-For semi-monthly, HR defines:
-- **J31 = monthlyRate / 2**
-- **taxablePay = J31**
+For semi-monthly payslips, the system computes WHT using the **SEMI_MONTHLY** bracket table:
 
-Then use the tax table (semi-monthly frequency):
+- `J31 = monthlyRate / 2`
+- `taxablePay = J31`
+- WHT is computed using `taxtable` rows where `pay_frequency='SEMI_MONTHLY'`
 
-- Find bracket with highest `compensationFrom` where \(compensationFrom \le taxablePay\)
-- **WHT** = `additionalTax + taxRate * (taxablePay - compensationFrom)`
+WHT is computed from bracket rows like this:
 
-This matches Excel forms like:
+1) Select bracket rows for the chosen `effectiveYear` and `pay_frequency='SEMI_MONTHLY'` (falling back to `year - 1` if none are found).
+2) Pick the bracket whose `compensationFrom` is the highest value such that `compensationFrom <= taxablePay`.
+3) Compute `excess = taxablePay - compensationFrom`.
+4) Compute `WHT = additionalTax + taxRate * excess`.
+5) Round WHT to 2 decimals (HALF_UP) and floor at 0 (never negative).
 
-`937.5 + 0.2 * (J31 - 16667)`
+On the payslip:
+- SSS / PhilHealth / Pag-IBIG are deducted at half (because they are monthly amounts)
+- WHT is deducted as the computed `WHT_semi` value (not divided again)
 
 #### H) What’s actually deducted on the slip (semi-monthly)
 
 - **Statutory total (monthly bundle)** = `SSS + PhilHealth + Pag-IBIG + WHT`
-- **Total Semi-monthly Contributions (deducted)** = `statutoryTotal / 2`
+- **Total Semi-monthly Contributions (deducted)** = `(SSS + PhilHealth + Pag-IBIG) / 2 + WHT_semi`
 
 #### I) Net pay
 
 - **Net pay** = `serviceFee - totalSemiMonthlyContributions`
 
 ---
+
+### Formulas (monthly)
+
+Monthly uses the **same pipeline** as semi-monthly, but with these differences:
+
+- **Date range**: full month (1st → last day)
+- **WHT base**: `taxablePay = monthlyRate` (MONTHLY bracket table)
+- **Statutory deducted**: `statutoryDeductedThisSlip = statutoryTotal` (no `/ 2`)
+
+Specifically:
+
+1) Period bounds:
+- `period = monthly` → start = 1st of month, end = last day of month
+
+2) WHT:
+- `taxablePay = monthlyRate`
+- Use `taxtable` rows where `pay_frequency = 'MONTHLY'`
+- `WHT = additionalTax + taxRate * (taxablePay - compensationFrom)`
+
+3) Net pay:
+- `netPay = serviceFee - statutoryTotal`
 
 ## 1) Key concepts and terminology
 
@@ -428,8 +454,9 @@ The payslip shows individual monthly contribution components:
 
 Then the system computes the amount actually deducted on the semi-monthly payslip:
 
-- `statutoryTotal = SSS + PhilHealth + Pag-IBIG + WHT`
-- `statutoryDeductedThisSlip = statutoryTotal / 2`  (semi-monthly only)
+- `monthlyGovShares = SSS + PhilHealth + Pag-IBIG`
+- `WHT` is computed for the semi cutoff using the SEMI_MONTHLY bracket table
+- `statutoryDeductedThisSlip = monthlyGovShares / 2 + WHT`  (semi-monthly only)
 
 This matches the HR sample sheet column **“Total Semi-monthly Contributions”** which is effectively half of the monthly bundle (plus the WHT logic used for that slip).
 

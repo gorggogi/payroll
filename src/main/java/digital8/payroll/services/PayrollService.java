@@ -228,22 +228,28 @@ public class PayrollService {
         philhealth = computePhilhealth(premiumBase);
         pagibig = computePagibig(premiumBase);
 
-        // HR policy: withholding tax follows the bracket tables (not 5% EWT), even for Job Order.
-        // Semi-monthly payslip: WHT is based on HR's "J31" which is (monthly salary / 2).
-        // Monthly payslip: WHT = MONTHLY brackets on period gross, or salary if no hours.
+        // HR policy: withholding tax follows bracket tables (not 5% EWT), even for Job Order.
+        // Semi-monthly payslips use the SEMI_MONTHLY table on J31 (= monthly salary / 2).
+        // Monthly payslips use the MONTHLY table on monthly salary.
         if (semiMonthly) {
             BigDecimal semiMonthlyBase = monthlyRate.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
             tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY");
         } else {
-            BigDecimal whtBase = totalEarnings.compareTo(BigDecimal.ZERO) > 0 ? totalEarnings : monthlyRate;
-            tax = computeWithholdingTaxFromTable(whtBase, year, "MONTHLY");
+            tax = computeWithholdingTaxFromTable(monthlyRate, year, "MONTHLY");
         }
 
         BigDecimal statutoryTotal = sss.add(philhealth).add(pagibig).add(tax);
-        // Semi-monthly payslip: deduct half of (monthly SSS/PhilHealth/HDMF + semi-period WHT), per HR sheet
-        BigDecimal statutoryDeductedThisSlip = semiMonthly
-                ? statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND)
-                : statutoryTotal;
+        // Semi-monthly payslip deduction split:
+        // - SSS / PhilHealth / Pag-IBIG are monthly amounts → deducted at half.
+        // - WHT is already computed for the semi period (WHT_semi) → do NOT divide again.
+        BigDecimal statutoryDeductedThisSlip;
+        if (semiMonthly) {
+            BigDecimal monthlyGovShares = sss.add(philhealth).add(pagibig);
+            BigDecimal govSharesDeductedThisSlip = monthlyGovShares.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+            statutoryDeductedThisSlip = govSharesDeductedThisSlip.add(tax).setScale(SCALE, ROUND);
+        } else {
+            statutoryDeductedThisSlip = statutoryTotal;
+        }
 
         // --- 7. Net Pay ---
         BigDecimal netPay = serviceFee.subtract(statutoryDeductedThisSlip).setScale(SCALE, ROUND);
