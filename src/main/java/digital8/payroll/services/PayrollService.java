@@ -43,8 +43,7 @@ public class PayrollService {
 
     // Statutory deduction constants
     private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
-    private static final BigDecimal PHILHEALTH_RATE = new BigDecimal("0.05");
-    private static final BigDecimal PHILHEALTH_SPLIT = new BigDecimal("2");
+    private static final BigDecimal PHILHEALTH_RATE = new BigDecimal("0.025");
 
     // Salary splitting for below-30k employees
     private static final BigDecimal SALARY_THRESHOLD = new BigDecimal("30000");
@@ -274,8 +273,7 @@ public class PayrollService {
      * PhilHealth: flat formula (premiumBase × 5%) / 2
      */
     private BigDecimal computePhilhealth(BigDecimal premiumBase) {
-        return premiumBase.multiply(PHILHEALTH_RATE)
-                .divide(PHILHEALTH_SPLIT, SCALE, ROUND);
+        return premiumBase.multiply(PHILHEALTH_RATE).setScale(SCALE, ROUND);
     }
 
     /**
