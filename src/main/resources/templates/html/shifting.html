@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital8 Payroll System</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/settings.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" href="/css/attendance.css" />
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <style>
+        .shift-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .shift-modal-content {
+            background: #fff;
+            margin: 5vh auto;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            width: min(520px, 92%);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .shift-modal-content--wide {
+            width: min(920px, 96%);
+        }
+        .shift-modal-close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .shift-form label {
+            display: block;
+            margin-top: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .shift-form input,
+        .shift-form textarea {
+            width: 100%;
+            margin-top: 0.25rem;
+        }
+        .shift-form textarea {
+            resize: vertical;
+        }
+        .schedule-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+            margin: 0 0 1rem 0;
+        }
+        .schedule-toolbar form { margin: 0; display: inline; }
+        .employee-assign-search {
+            width: 100%;
+            max-width: 28rem;
+            margin-bottom: 0.75rem;
+        }
+        .employee-assign-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 0.25rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            background: #fafafa;
+        }
+        .employee-assign-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.65rem;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .employee-assign-chip:hover {
+            border-color: var(--primary-color, #706fd6);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .employee-assign-chip input { flex-shrink: 0; margin: 0; cursor: pointer; }
+        .employee-assign-chip span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .employee-assign-row.hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav>
+            <div class="nav-header">
+                <h1><span class="nav-brand">Payroll System</span></h1>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
+            </div>
+            <ul>
+                <a href="/admin/home" title="Home"><li ><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
+
+                <!-- Attendance group -->
+                <a title="Attendance" class="nav-dropdown-toggle active">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
+                    <li><a href="/admin/leave" title="Leave">
+                        <span class="nav-label">Leave</span>
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
+                            <i class="fa-solid fa-circle-exclamation"></i>
+                        </span>
+                    </a></li>
+                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
+                    <li class="active"><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
+                </ul>
+
+                <!-- Payroll group -->
+                <a title="Payroll" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-money-bill"></i>
+                    <span class="nav-label">Payroll</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                    <li><a href="/admin/deductions">Deductions</a></li>
+                    <li><a href="/admin/adjustments">Adjustments</a></li>
+                </ul>
+
+                
+                <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+            </ul>
+            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
+        </nav>
+    <section>
+        <div class="head">
+            <h1>Shifting</h1>
+        </div>
+
+        <div th:if="${successMessage}" class="alert-success">
+            <p th:text="${successMessage}"></p>
+        </div>
+        <div th:if="${errorMessage}" class="alert-error">
+            <p th:text="${errorMessage}"></p>
+        </div>
+
+        <h2 class="no-print" style="margin: 1.5rem 0 0.5rem 0;">Schedule classes (weekly pattern)</h2>
+        <p class="no-payroll no-print">Create a <b>schedule class</b> for the month, set Sun–Sat, then tick employees who use it. One schedule per employee per month.</p>
+
+        <form method="get" th:action="@{/admin/attendance/shifts}" class="attendance-filter no-print" style="margin-bottom: 1rem; flex-wrap: wrap;">
+            <div>
+                <label for="scheduleMonthPicker">Month</label>
+                <select name="scheduleMonth" id="scheduleMonthPicker" onchange="this.form.submit()">
+                    <option th:each="mo : ${#numbers.sequence(1, 12)}"
+                            th:value="${mo}"
+                            th:selected="${scheduleMonth == mo}"
+                            th:text="${#temporals.format(T(java.time.LocalDate).of(2000, mo, 1), 'MMMM')}">January</option>
+                </select>
+            </div>
+            <div>
+                <label for="scheduleYearPicker">Year</label>
+                <select name="scheduleYear" id="scheduleYearPicker" onchange="this.form.submit()">
+                    <option th:each="y : ${scheduleYears}"
+                            th:value="${y}"
+                            th:selected="${scheduleYear == y}"
+                            th:text="${y}">2026</option>
+                </select>
+            </div>
+            <div th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}">
+                <label for="templatePicker">Schedule class</label>
+                <select name="templateId" id="templatePicker" onchange="this.form.submit()">
+                    <option th:each="t : ${scheduleTemplates}"
+                            th:value="${t.templateId}"
+                            th:selected="${selectedTemplateId != null and selectedTemplateId == t.templateId}"
+                            th:text="${t.templateName}">Class A</option>
+                </select>
+            </div>
+        </form>
+
+        <table class="attendanceTable no-print" th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}" style="margin-bottom: 1rem;">
+            <caption>Classes this month (employee count)</caption>
+            <thead>
+                <tr class="attendanceHeader">
+                    <th>Name</th>
+                    <th>Employees</th>
+                </tr>
+            </thead>
+            <tbody class="attendanceBody">
+                <tr th:each="t : ${scheduleTemplates}">
+                    <td th:text="${t.templateName}">A</td>
+                    <td th:text="${assignmentCountByTemplateId != null ? assignmentCountByTemplateId.get(t.templateId) : 0}">0</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button type="button" class="btn-print no-print" style="margin-bottom: 1rem;" onclick="openNewTemplateModal()">
+            <i class="fa-solid fa-plus"></i> New schedule class
+        </button>
+
+        <div id="newTemplateModal" class="shift-modal no-print" aria-hidden="true">
+            <div class="shift-modal-content">
+                <span class="shift-modal-close" onclick="closeNewTemplateModal()" aria-label="Close">&times;</span>
+                <h2 style="margin: 0 0 1rem 0;">New schedule class</h2>
+                <form th:action="@{/admin/attendance/schedule-template/create}" method="post" class="shift-form">
+                    <input type="hidden" name="scheduleYear" th:value="${scheduleYear}" />
+                    <input type="hidden" name="scheduleMonth" th:value="${scheduleMonth}" />
+                    <label for="newTemplateName">Name</label>
+                    <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director — March" />
+                    <button type="submit" class="btn-print no-print" style="margin-top: 1rem;">
+                        <i class="fa-solid fa-plus"></i> Create
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <p th:if="${scheduleTemplates == null or #lists.size(scheduleTemplates) == 0}" class="no-payroll no-print">
+            No schedule class for this month yet — click <b>New schedule class</b>.
+        </p>
+
+        <div th:if="${selectedTemplateId != null}" class="schedule-toolbar no-print">
+            <button type="button" class="btn-print" onclick="openEditScheduleModal()">
+                <i class="fa-solid fa-calendar-week"></i> Edit Sun–Sat
+            </button>
+            <button type="button" class="btn-print" onclick="openAssignEmployeesModal()">
+                <i class="fa-solid fa-user-group"></i> Assign employees
+            </button>
+            <form th:action="@{/admin/attendance/schedule-template/delete/{id}(id=${selectedTemplateId})}"
+                  method="post"
+                  onsubmit="return confirm('Delete this schedule class and all employee links for it?');">
+                <button type="submit" class="btn-print" style="background-color:#E94560;">
+                    <i class="fa-solid fa-trash"></i> Delete class
+                </button>
+            </form>
+        </div>
+
+        <!-- Edit weekly pattern (modal) -->
+        <div id="editScheduleModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
+            <div class="shift-modal-content shift-modal-content--wide">
+                <span class="shift-modal-close" onclick="closeEditScheduleModal()" aria-label="Close">&times;</span>
+                <h2 style="margin: 0 0 0.5rem 0;">Edit schedule class</h2>
+                <p class="no-payroll" style="margin-bottom: 1rem;" th:text="${selectedTemplateName}">Name</p>
+                <p class="no-payroll" style="margin-bottom: 1rem;"
+                   th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear} · Sun–Sat|"></p>
+
+                <form th:action="@{/admin/attendance/schedule-template/save-days}" method="post" id="editScheduleForm">
+                    <input type="hidden" name="templateId" th:value="${selectedTemplateId}" />
+                    <table class="attendanceTable">
+                        <thead>
+                            <tr class="attendanceHeader">
+                                <th>Day</th>
+                                <th>REST</th>
+                                <th>Time in</th>
+                                <th>Time out</th>
+                            </tr>
+                        </thead>
+                        <tbody class="attendanceBody">
+                            <tr th:each="row : ${weeklyScheduleRows}">
+                                <td th:text="${row.dayLabel}">MON</td>
+                                <td>
+                                    <input type="checkbox"
+                                           th:name="${'d' + row.dayOfWeek + '_rest'}"
+                                           value="true"
+                                           th:checked="${row.restDay}"
+                                           th:attr="data-weekly-rest='true',data-dow=${row.dayOfWeek}"
+                                           onchange="onWeeklyRestChange(this)" />
+                                </td>
+                                <td>
+                                    <input type="time"
+                                           th:name="${'d' + row.dayOfWeek + '_in'}"
+                                           th:id="${'weekly_in_' + row.dayOfWeek}"
+                                           th:value="${row.timeIn != null ? #temporals.format(row.timeIn, 'HH:mm') : ''}"
+                                           th:disabled="${row.restDay}" />
+                                </td>
+                                <td>
+                                    <input type="time"
+                                           th:name="${'d' + row.dayOfWeek + '_out'}"
+                                           th:id="${'weekly_out_' + row.dayOfWeek}"
+                                           th:value="${row.timeOut != null ? #temporals.format(row.timeOut, 'HH:mm') : ''}"
+                                           th:disabled="${row.restDay}" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
+                        <button type="submit" class="btn-print">
+                            <i class="fa-solid fa-floppy-disk"></i> Save
+                        </button>
+                        <button type="button" class="btn-print" onclick="closeEditScheduleModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Assign employees (modal) -->
+        <div id="assignEmployeesModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
+            <div class="shift-modal-content shift-modal-content--wide">
+                <span class="shift-modal-close" onclick="closeAssignEmployeesModal()" aria-label="Close">&times;</span>
+                <h2 style="margin: 0 0 0.5rem 0;">Assign employees</h2>
+                <p class="no-payroll" style="margin-bottom: 0.75rem;">
+                    Select who uses <b th:text="${selectedTemplateName}">this class</b> for
+                    <span th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear}|"></span>.
+                    One schedule class per employee per month.
+                </p>
+
+                <form th:action="@{/admin/attendance/schedule-template/assign}" method="post" id="assignEmployeesForm">
+                    <input type="hidden" name="assignTemplateId" th:value="${selectedTemplateId}" />
+                    <input type="search" class="employee-assign-search" id="employeeAssignFilter"
+                           placeholder="Search by name…" autocomplete="off" oninput="filterAssignEmployees(this.value)" />
+
+                    <div class="employee-assign-grid" th:if="${employees != null and #lists.size(employees) > 0}">
+                        <label class="employee-assign-chip employee-assign-row"
+                               th:each="e : ${employees}"
+                               th:attr="data-search=${#strings.toLowerCase(e.lastName + ' ' + e.firstName + ' ' + e.employeeNumber)}">
+                            <input type="checkbox" name="assignEmployeeIds" th:value="${e.employeeId}"
+                                   th:checked="${assignedEmployeeIds != null and #lists.contains(assignedEmployeeIds, e.employeeId)}" />
+                            <span th:text="${e.lastName + ', ' + e.firstName}">Name</span>
+                        </label>
+                    </div>
+                    <p th:if="${employees == null or #lists.size(employees) == 0}" class="alert-error">No employees — add employees first.</p>
+
+                    <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
+                        <button type="submit" class="btn-print" th:disabled="${employees == null or #lists.size(employees) == 0}">
+                            <i class="fa-solid fa-floppy-disk"></i> Save assignments
+                        </button>
+                        <button type="button" class="btn-print" onclick="closeAssignEmployeesModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+    </section>
+    </div>
+    <script src="/js/nav.js"></script>
+    <script>
+        function openEditScheduleModal() {
+            var m = document.getElementById('editScheduleModal');
+            if (!m) return;
+            m.style.display = 'block';
+            m.setAttribute('aria-hidden', 'false');
+            document.querySelectorAll('#editScheduleModal input[data-weekly-rest][data-dow]').forEach(applyWeeklyRestDisabled);
+        }
+
+        function closeEditScheduleModal() {
+            var m = document.getElementById('editScheduleModal');
+            if (!m) return;
+            m.style.display = 'none';
+            m.setAttribute('aria-hidden', 'true');
+        }
+
+        function openAssignEmployeesModal() {
+            var m = document.getElementById('assignEmployeesModal');
+            if (!m) return;
+            m.style.display = 'block';
+            m.setAttribute('aria-hidden', 'false');
+            var f = document.getElementById('employeeAssignFilter');
+            if (f) { f.value = ''; filterAssignEmployees(''); }
+        }
+
+        function closeAssignEmployeesModal() {
+            var m = document.getElementById('assignEmployeesModal');
+            if (!m) return;
+            m.style.display = 'none';
+            m.setAttribute('aria-hidden', 'true');
+        }
+
+        function filterAssignEmployees(q) {
+            var term = (q || '').trim().toLowerCase();
+            document.querySelectorAll('.employee-assign-row').forEach(function (row) {
+                var hay = row.getAttribute('data-search') || '';
+                if (!term || hay.indexOf(term) >= 0) {
+                    row.classList.remove('hidden');
+                } else {
+                    row.classList.add('hidden');
+                }
+            });
+        }
+
+        function openNewTemplateModal() {
+            var m = document.getElementById('newTemplateModal');
+            if (!m) return;
+            m.style.display = 'block';
+            m.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeNewTemplateModal() {
+            var m = document.getElementById('newTemplateModal');
+            if (!m) return;
+            m.style.display = 'none';
+            m.setAttribute('aria-hidden', 'true');
+        }
+
+        // close if user clicks overlay (not modal content)
+        document.addEventListener('click', function (e) {
+            var newTpl = document.getElementById('newTemplateModal');
+            if (newTpl && e.target === newTpl) closeNewTemplateModal();
+            var editSch = document.getElementById('editScheduleModal');
+            if (editSch && e.target === editSch) closeEditScheduleModal();
+            var assignM = document.getElementById('assignEmployeesModal');
+            if (assignM && e.target === assignM) closeAssignEmployeesModal();
+        });
+
+        function applyWeeklyRestDisabled(cb) {
+            if (!cb || !cb.getAttribute('data-dow')) return;
+            var dow = cb.getAttribute('data-dow');
+            var inn = document.getElementById('weekly_in_' + dow);
+            var out = document.getElementById('weekly_out_' + dow);
+            if (!inn || !out) return;
+            inn.disabled = cb.checked;
+            out.disabled = cb.checked;
+        }
+
+        function onWeeklyRestChange(cb) {
+            applyWeeklyRestDisabled(cb);
+            if (cb.checked) {
+                var dow = cb.getAttribute('data-dow');
+                var inn = document.getElementById('weekly_in_' + dow);
+                var out = document.getElementById('weekly_out_' + dow);
+                if (inn) inn.value = '';
+                if (out) out.value = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('input[data-weekly-rest][data-dow]').forEach(applyWeeklyRestDisabled);
+        });
+    </script>
+</body>
+</html>
