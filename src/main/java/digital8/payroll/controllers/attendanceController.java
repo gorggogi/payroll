@@ -5,6 +5,7 @@ import digital8.payroll.entities.Attendance;
 import digital8.payroll.entities.EmployeeScheduleAssignment;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Users;
+import digital8.payroll.entities.OvertimeRequest;
 import digital8.payroll.entities.WeeklyScheduleTemplate;
 import digital8.payroll.entities.WeeklyScheduleTemplateDay;
 import digital8.payroll.repositories.AttendanceRepository;
@@ -12,6 +13,7 @@ import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.EmployeeScheduleAssignmentRepository;
 import digital8.payroll.repositories.WeeklyScheduleTemplateDayRepository;
 import digital8.payroll.repositories.WeeklyScheduleTemplateRepository;
+import digital8.payroll.services.OvertimeRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,6 +29,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.LocalTime;
@@ -59,7 +62,9 @@ public class attendanceController {
     @Autowired
     private EmployeeScheduleAssignmentRepository employeeScheduleAssignmentRepository;
 
-    
+    @Autowired
+    private OvertimeRequestService overtimeRequestService;
+
     @GetMapping("/admin/attendance/shifts")
     public String shiftingPage(
             @RequestParam(required = false) Integer templateId,
@@ -351,6 +356,321 @@ public class attendanceController {
             }
         }
         return s;
+    }
+    @GetMapping({"/admin/attendance/overtime", "/employee/attendance/overtime"})
+    public String overtimePage(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer empId,
+            HttpServletRequest request,
+            Model model,
+            Authentication authentication) {
+
+        model.addAttribute("overtimeFilterAction", request.getRequestURI());
+        boolean isAdmin = authentication != null
+                && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("overtimeSaveAction", "/admin/attendance/overtime/save");
+        model.addAttribute("overtimeRequestAction", "/employee/attendance/overtime/request");
+
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        int selectedYear = year != null ? year : currentYear;
+        int selectedMonth = (month != null && month >= 1 && month <= 12) ? month : currentMonth;
+
+        model.addAttribute("selectedMonth", selectedMonth);
+        model.addAttribute("selectedYear", selectedYear);
+        String monthName = Month.of(selectedMonth).toString().charAt(0)
+                + Month.of(selectedMonth).toString().substring(1).toLowerCase();
+        model.addAttribute("captionMonthYear", monthName + " " + selectedYear);
+        List<Integer> years = new ArrayList<>();
+        for (int y = currentYear - 5; y <= currentYear + 2; y++) {
+            years.add(y);
+        }
+        model.addAttribute("years", years);
+
+        Integer selfEmpId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users currentUser = (Users) authentication.getPrincipal();
+            if (currentUser.getEmployee() != null) {
+                selfEmpId = currentUser.getEmployee().getEmployeeId();
+            }
+        }
+
+        Integer targetEmpId = null;
+        Employees targetEmp = null;
+
+        if (isAdmin && empId != null && request.getRequestURI().startsWith("/admin")) {
+            targetEmpId = empId;
+            targetEmp = employeeRepository.findById(empId).orElse(null);
+            model.addAttribute("viewingEmployeeId", empId);
+        }
+        if (targetEmp == null) {
+            Object principal = authentication != null ? authentication.getPrincipal() : null;
+            if (principal instanceof Users) {
+                Users user = (Users) principal;
+                targetEmp = user.getEmployee();
+                if (targetEmp != null) {
+                    targetEmpId = targetEmp.getEmployeeId();
+                }
+            }
+        }
+
+        if (isAdmin) {
+            model.addAttribute("allEmployees",
+                    employeeRepository.findAll(Sort.by(Sort.Direction.ASC, "lastName", "firstName")));
+        } else {
+            model.addAttribute("allEmployees", List.<Employees>of());
+        }
+
+        if (targetEmpId != null && targetEmp != null) {
+            List<Attendance> all = attendanceRepository.findByEmployeeIdOrderByDateDesc(targetEmpId);
+            List<Attendance> filtered = all.stream()
+                    .filter(a -> a.getAttendance_date() != null
+                            && a.getAttendance_date().getMonthValue() == selectedMonth
+                            && a.getAttendance_date().getYear() == selectedYear)
+                    .collect(Collectors.toList());
+            model.addAttribute("attendances", filtered);
+            model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
+            model.addAttribute("emp_id", targetEmpId);
+            BigDecimal totalOt = filtered.stream()
+                    .map(Attendance::getOvertime_hours)
+                    .filter(h -> h != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            model.addAttribute("totalOvertimeHours", totalOt);
+            BigDecimal totalHoursWithOt = filtered.stream()
+                    .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
+                            .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
+            model.addAttribute("overtimeRequestByDate",
+                    overtimeRequestService.latestRequestByWorkDateForMonth(targetEmpId, selectedYear, selectedMonth));
+        }
+
+        if (selfEmpId != null) {
+            model.addAttribute("self_emp_id", selfEmpId);
+        }
+        if (!model.containsAttribute("attendances")) {
+            model.addAttribute("attendances", List.<Attendance>of());
+        }
+        if (!model.containsAttribute("overtimeRequestByDate")) {
+            model.addAttribute("overtimeRequestByDate", Map.<LocalDate, OvertimeRequest>of());
+        }
+        if (!model.containsAttribute("totalOvertimeHours")) {
+            model.addAttribute("totalOvertimeHours", BigDecimal.ZERO);
+        }
+        if (!model.containsAttribute("totalHoursWithOvertime")) {
+            model.addAttribute("totalHoursWithOvertime", BigDecimal.ZERO);
+        }
+        if (!model.containsAttribute("emp_id") && selfEmpId != null) {
+            model.addAttribute("emp_id", selfEmpId);
+        }
+        if (!model.containsAttribute("employeeName")) {
+            model.addAttribute("employeeName", "");
+        }
+
+        if (!isAdmin && selfEmpId != null) {
+            List<OvertimeRequest> myRequests = overtimeRequestService.listForEmployeeInMonth(selfEmpId, selectedYear, selectedMonth);
+            model.addAttribute("myOvertimeRequests", myRequests);
+            model.addAttribute("approverNameByRequestId", overtimeRequestService.approverNameByRequestId(myRequests));
+        } else {
+            model.addAttribute("myOvertimeRequests", List.<OvertimeRequest>of());
+            model.addAttribute("approverNameByRequestId", Map.<Integer, String>of());
+        }
+
+        if (isAdmin && authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users u = (Users) authentication.getPrincipal();
+            Integer adminEmpId = u.getEmployee() != null ? u.getEmployee().getEmployeeId() : null;
+            model.addAttribute("pendingOvertimeRequests",
+                    overtimeRequestService.listPendingExcludingEmployeeInMonth(adminEmpId, selectedYear, selectedMonth));
+        } else {
+            model.addAttribute("pendingOvertimeRequests", List.<OvertimeRequest>of());
+        }
+
+        return "html/overtime";
+    }
+
+    @PostMapping("/employee/attendance/overtime/request")
+    public String submitOvertimeRequest(
+            @RequestParam LocalDate workDate,
+            @RequestParam String overtimeIn,
+            @RequestParam String overtimeOut,
+            @RequestParam String reason,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (!(authentication.getPrincipal() instanceof Users)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Not signed in.");
+            return "redirect:/index";
+        }
+        Users user = (Users) authentication.getPrincipal();
+        if (user.getEmployee() == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No employee profile linked.");
+            return "redirect:/employee/home";
+        }
+        if (workDate == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Work date is required.");
+            return redirectOvertime(false, LocalDate.now().getYear(), LocalDate.now().getMonthValue(), null);
+        }
+        LocalTime in = parseLocalTime(overtimeIn);
+        LocalTime out = parseLocalTime(overtimeOut);
+        if (in == null || out == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid overtime in or out time.");
+            int y = workDate != null ? workDate.getYear() : LocalDate.now().getYear();
+            int m = workDate != null ? workDate.getMonthValue() : LocalDate.now().getMonthValue();
+            return redirectOvertime(false, y, m, null);
+        }
+        try {
+            overtimeRequestService.submit(
+                    user.getEmployee().getEmployeeId(), workDate, in, out, reason);
+            redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        int y = workDate != null ? workDate.getYear() : LocalDate.now().getYear();
+        int m = workDate != null ? workDate.getMonthValue() : LocalDate.now().getMonthValue();
+        return redirectOvertime(false, y, m, null);
+    }
+
+    @PostMapping("/admin/attendance/overtime/approve/{id}")
+    public String approveOvertimeRequest(
+            @PathVariable("id") Integer id,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (!(authentication.getPrincipal() instanceof Users)) {
+            return "redirect:/index";
+        }
+        Users user = (Users) authentication.getPrincipal();
+        try {
+            overtimeRequestService.approve(id, user.getUserId());
+            redirectAttributes.addFlashAttribute("successMessage", "Overtime approved and applied to daily time record.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/attendance/overtime";
+    }
+
+    @PostMapping("/admin/attendance/overtime/reject/{id}")
+    public String rejectOvertimeRequest(
+            @PathVariable("id") Integer id,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (!(authentication.getPrincipal() instanceof Users)) {
+            return "redirect:/index";
+        }
+        Users user = (Users) authentication.getPrincipal();
+        try {
+            overtimeRequestService.reject(id, user.getUserId());
+            redirectAttributes.addFlashAttribute("successMessage", "Overtime request rejected.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/admin/attendance/overtime";
+    }
+
+    @PostMapping("/admin/attendance/overtime/save")
+    public String saveOvertime(
+            HttpServletRequest request,
+            @RequestParam Integer year,
+            @RequestParam Integer month,
+            @RequestParam(required = false) Integer empId,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (authentication == null
+                || !authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Not allowed.");
+            return "redirect:/admin/home";
+        }
+
+        if (month == null || month < 1 || month > 12 || year == null || year < 2000 || year > 2100) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid month or year.");
+            return redirectOvertime(true, year, month, empId);
+        }
+
+        Integer targetEmpId = null;
+        if (empId == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Select an employee.");
+            return redirectOvertime(true, year, month, null);
+        }
+        targetEmpId = empId;
+        if (!employeeRepository.existsById(targetEmpId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Employee not found.");
+            return redirectOvertime(true, year, month, null);
+        }
+
+        int updated = 0;
+        for (Map.Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+            String key = e.getKey();
+            if (!key.startsWith("ot_")) {
+                continue;
+            }
+            String idPart = key.substring(3);
+            int attendanceId;
+            try {
+                attendanceId = Integer.parseInt(idPart);
+            } catch (NumberFormatException ex) {
+                continue;
+            }
+            String raw = e.getValue() != null && e.getValue().length > 0 ? e.getValue()[0] : "";
+            Optional<Attendance> opt = attendanceRepository.findById(attendanceId);
+            if (opt.isEmpty()) {
+                continue;
+            }
+            Attendance a = opt.get();
+            if (!a.getEmployeeId().equals(targetEmpId)) {
+                continue;
+            }
+            if (a.getAttendance_date() == null
+                    || a.getAttendance_date().getMonthValue() != month
+                    || a.getAttendance_date().getYear() != year) {
+                continue;
+            }
+            a.setOvertime_hours(parseNonNegativeOvertimeHours(raw));
+            attendanceRepository.save(a);
+            updated++;
+        }
+
+        if (updated > 0) {
+            redirectAttributes.addFlashAttribute("successMessage", "Overtime hours saved (" + updated + " record(s)).");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "No overtime changes to save.");
+        }
+
+        return redirectOvertime(true, year, month, empId);
+    }
+
+    private String redirectOvertime(boolean admin, Integer year, Integer month, Integer empId) {
+        int y = year != null ? year : LocalDate.now().getYear();
+        int m = (month != null && month >= 1 && month <= 12) ? month : LocalDate.now().getMonthValue();
+        String base = admin ? "redirect:/admin/attendance/overtime?" : "redirect:/employee/attendance/overtime?";
+        StringBuilder sb = new StringBuilder(base);
+        sb.append("year=").append(y).append("&month=").append(m);
+        if (admin && empId != null) {
+            sb.append("&empId=").append(empId);
+        }
+        return sb.toString();
+    }
+
+    private BigDecimal parseNonNegativeOvertimeHours(String raw) {
+        if (raw == null) {
+            return BigDecimal.ZERO;
+        }
+        String v = raw.trim();
+        if (v.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            BigDecimal x = new BigDecimal(v).setScale(2, RoundingMode.HALF_UP);
+            if (x.signum() < 0) {
+                return BigDecimal.ZERO;
+            }
+            return x;
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
     }
 
     @GetMapping({"/employee/attendance", "/admin/attendance"})

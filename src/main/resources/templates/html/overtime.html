@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,8 +7,62 @@
     <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
     <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" href="/css/attendance.css" />
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <style>
+        .overtime-input { width: 5.5rem; max-width: 100%; }
+        .flash-msg { margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 6px; }
+        .flash-msg.success { background: #e8f5e9; border: 1px solid #a5d6a7; }
+        .flash-msg.error { background: #ffebee; border: 1px solid #ef9a9a; }
+        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .ot-panel { margin: 1.25rem 0; padding: 1rem 1.25rem; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
+        .ot-panel h2 { margin: 0 0 1rem; font-size: 1.1rem; }
+        .ot-form-grid { display: grid; gap: 0.75rem 1.25rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); align-items: end; }
+        .ot-form-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
+        .ot-form-grid input, .ot-form-grid textarea { padding: 0.4rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+        .ot-form-grid textarea { grid-column: 1 / -1; min-height: 4rem; resize: vertical; }
+        .btn-primary { cursor: pointer; border: none; padding: 0.5rem 1rem; border-radius: 6px; background: #1976d2; color: #fff; }
+        .btn-success { cursor: pointer; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; background: #2e7d32; color: #fff; font-size: 0.875rem; }
+        .btn-danger { cursor: pointer; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; background: #c62828; color: #fff; font-size: 0.875rem; }
+        .ot-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .reason-cell { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ot-modal {
+            display: none;
+            position: fixed;
+            z-index: 1200;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 2rem 1rem;
+        }
+        .ot-modal-content {
+            background: #fff;
+            max-width: 860px;
+            margin: 0 auto;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+            padding: 1rem 1.25rem 1.25rem;
+        }
+        .ot-modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .ot-modal-close {
+            border: none;
+            background: transparent;
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+            color: #444;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -18,18 +72,18 @@
                 <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
             </div>
             <ul>
-                <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
 
-                <!-- Attendance group -->
-                <a title="Attendance" class="nav-dropdown-toggle active">
+                <a sec:authorize="hasRole('ADMIN')" title="Attendance" class="nav-dropdown-toggle active">
                     <i class="fa-solid fa-calendar"></i>
                     <span class="nav-label">Attendance</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
-                <ul class="nav-dropdown-menu">
+                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
                     <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
-                    <li><a href="/admin/leave" title="Leave">
+                    <li><a th:href="@{/admin/leave}" title="Leave">
                         <span class="nav-label">Leave</span>
                         <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
                             <i class="fa-solid fa-circle-exclamation"></i>
@@ -40,30 +94,335 @@
                     <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
                 </ul>
 
-                <!-- Payroll group -->
+                <a sec:authorize="hasRole('EMPLOYEE')" title="Attendance" class="nav-dropdown-toggle active">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
+                    <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
+                    <li><a th:href="@{/employee/leave}" title="Leave">
+                        <span class="nav-label">Leave</span>
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'"><i class="fa-solid fa-circle-exclamation"></i></span>
+                    </a></li>
+                    <li class="active"><a th:href="@{/employee/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/employee/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/employee/attendance/shifts}">Shifting</a></li>
+                </ul>
+
                 <a title="Payroll" class="nav-dropdown-toggle">
                     <i class="fa-solid fa-money-bill"></i>
                     <span class="nav-label">Payroll</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
                 <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a href="/admin/adjustments">Adjustments</a></li>
+                    <li><a th:href="@{/payroll/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#">Payroll</a></li>
+                    <li sec:authorize="hasRole('ADMIN')"><a href="/admin/deductions">Deductions</a></li>
+                    <li sec:authorize="hasRole('ADMIN')"><a href="/admin/adjustments">Adjustments</a></li>
                 </ul>
 
-                <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+                <a sec:authorize="hasRole('ADMIN')" href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
+                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
             <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
         </nav>
 
         <section>
             <div class="head">
-                <h1>Overtime</h1>
+                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}">— <span th:text="${employeeName}">Name</span></span></h1>
             </div>
 
+            <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
+            <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
+
+            <div sec:authorize="hasRole('ADMIN')" class="ot-panel" th:if="${pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
+                <h2><i class="fa-solid fa-clock"></i> Pending overtime requests</h2>
+                <table class="attendanceTable">
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Employee</th>
+                            <th>Work date</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                            <th>Requested</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${pendingOvertimeRequests}">
+                            <td th:text="${r.employee.lastName + ', ' + r.employee.firstName}"></td>
+                            <td th:text="${r.workDate}"></td>
+                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.totalHours != null ? #numbers.formatDecimal(r.totalHours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${r.status}"></td>
+                            <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
+                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                            <td>
+                                <div class="ot-actions">
+                                    <form th:action="@{/admin/attendance/overtime/approve/{id}(id=${r.overtimeRequestId})}" method="post">
+                                        <button type="submit" class="btn-success">Approve</button>
+                                    </form>
+                                    <form th:action="@{/admin/attendance/overtime/reject/{id}(id=${r.overtimeRequestId})}" method="post">
+                                        <button type="submit" class="btn-danger">Reject</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel">
+                <h2><i class="fa-solid fa-file-pen"></i> File overtime</h2>
+                <p style="margin:0 0 0.75rem;font-size:0.9rem;color:#555;">Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
+                <button type="button" class="btn-primary" onclick="openOtFilingModal()">
+                    <i class="fa-solid fa-file-circle-plus"></i> File OT
+                </button>
+            </div>
+
+            <div id="otFilingModal" class="ot-modal" aria-hidden="true" sec:authorize="hasRole('EMPLOYEE')">
+                <div class="ot-modal-content">
+                    <div class="ot-modal-head">
+                        <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
+                        <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
+                    </div>
+                    <form method="post" th:action="${overtimeRequestAction}">
+                        <div class="ot-form-grid">
+                            <label>Work date (date OT applies to)
+                                <input type="date" name="workDate" required />
+                            </label>
+                            <label>Overtime in
+                                <input type="time" name="overtimeIn" required step="60" />
+                            </label>
+                            <label>Overtime out
+                                <input type="time" name="overtimeOut" required step="60" />
+                            </label>
+                            <label>Total hours (auto)
+                                <input type="number" id="computedTotalHours" step="0.01" min="0" readonly placeholder="Auto-calculated" />
+                            </label>
+                            <label>Reason
+                                <textarea name="reason" required maxlength="1000" placeholder="Project / task / manager request"></textarea>
+                            </label>
+                        </div>
+                        <p style="margin-top:1rem;">
+                            <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            <form method="get" th:action="${overtimeFilterAction}" id="overtimeFilterForm" class="attendance-filter">
+                <label for="empId" sec:authorize="hasRole('ADMIN')">Employee</label>
+                <select sec:authorize="hasRole('ADMIN')" name="empId" id="empId" onchange="this.form.submit()">
+                    <option value="" th:selected="${viewingEmployeeId == null}">— Select —</option>
+                    <option th:each="e : ${allEmployees}" th:value="${e.employeeId}"
+                            th:selected="${viewingEmployeeId != null and viewingEmployeeId == e.employeeId}"
+                            th:text="${e.lastName + ', ' + e.firstName}">Doe, Jane</option>
+                </select>
+                <label for="month">Month</label>
+                <select name="month" id="month" onchange="this.form.submit()">
+                    <option value="1" th:selected="${selectedMonth == 1}">January</option>
+                    <option value="2" th:selected="${selectedMonth == 2}">February</option>
+                    <option value="3" th:selected="${selectedMonth == 3}">March</option>
+                    <option value="4" th:selected="${selectedMonth == 4}">April</option>
+                    <option value="5" th:selected="${selectedMonth == 5}">May</option>
+                    <option value="6" th:selected="${selectedMonth == 6}">June</option>
+                    <option value="7" th:selected="${selectedMonth == 7}">July</option>
+                    <option value="8" th:selected="${selectedMonth == 8}">August</option>
+                    <option value="9" th:selected="${selectedMonth == 9}">September</option>
+                    <option value="10" th:selected="${selectedMonth == 10}">October</option>
+                    <option value="11" th:selected="${selectedMonth == 11}">November</option>
+                    <option value="12" th:selected="${selectedMonth == 12}">December</option>
+                </select>
+                <label for="year">Year</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
+                </select>
+            </form>
+            <p sec:authorize="hasRole('EMPLOYEE')" th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}" class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
+
+            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+                <h2>My overtime requests</h2>
+                <table class="attendanceTable">
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Work date</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours</th>
+                            <th>Status</th>
+                            <th>Approved by</th>
+                            <th>Reason</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${myOvertimeRequests}">
+                            <td th:text="${r.workDate}"></td>
+                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.totalHours != null ? #numbers.formatDecimal(r.totalHours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${r.status}"></td>
+                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '—'}"></td>
+                            <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
+                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            
+
+            <form method="post" th:action="${overtimeSaveAction}" th:if="${isAdmin and !attendances.isEmpty()}">
+                <input type="hidden" name="year" th:value="${selectedYear}" />
+                <input type="hidden" name="month" th:value="${selectedMonth}" />
+                <input type="hidden" name="empId" th:value="${emp_id}" th:if="${isAdmin and emp_id != null}" />
+
+                <table class="attendanceTable">
+                    <caption>Supervisor: edit overtime on DTR for <span th:text="${captionMonthYear}">Month Year</span></caption>
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Date</th>
+                            <th>Time in</th>
+                            <th>Time out</th>
+                            <th>Work hours</th>
+                            <th>Total hours w/ OT</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours (request)</th>
+                            <th>Status</th>
+                            <th>OT on DTR (hrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="attendanceBody">
+                        <tr th:each="a : ${attendances}" th:with="otReq=${overtimeRequestByDate.get(a.attendance_date)}">
+                            <td th:text="${a.attendance_date}"></td>
+                            <td th:text="${a.time_in}"></td>
+                            <td th:text="${a.time_out}"></td>
+                            <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : '—'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '—'}"></td>
+                            <td>
+                                <label th:for="|ot_${a.attendanceId}|" class="visually-hidden">Overtime on DTR</label>
+                                <input class="overtime-input" type="number" step="0.25" min="0"
+                                       th:id="|ot_${a.attendanceId}|"
+                                       th:name="|ot_${a.attendanceId}|"
+                                       th:value="${a.overtime_hours != null ? a.overtime_hours : 0}" />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p>
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save DTR overtime</button>
+                </p>
+            </form>
+
+            <div sec:authorize="hasRole('EMPLOYEE')" th:if="${!attendances.isEmpty()}">
+                <table class="attendanceTable">
+                    <caption>Your DTR overtime (this month)</caption>
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Date</th>
+                            <th>Time in</th>
+                            <th>Time out</th>
+                            <th>Work hours</th>
+                            <th>Total hours w/ OT</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours (request)</th>
+                            <th>Status</th>
+                            <th>OT on record (hrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="attendanceBody">
+                        <tr th:each="a : ${attendances}" th:with="otReq=${overtimeRequestByDate.get(a.attendance_date)}">
+                            <td th:text="${a.attendance_date}"></td>
+                            <td th:text="${a.time_in}"></td>
+                            <td th:text="${a.time_out}"></td>
+                            <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : '—'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '—'}"></td>
+                            <td th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'COMMA', 2, 'POINT') : '0.00'}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+            </div>
+
+            <p th:if="${attendances.isEmpty()}" class="total-hours" sec:authorize="hasRole('ADMIN')">No attendance rows for this month. Record daily time first, or pick another employee / period.</p>
+            <p th:if="${attendances.isEmpty()}" class="total-hours" sec:authorize="hasRole('EMPLOYEE')">No attendance rows for this month on your DTR yet.</p>
+
+            <a th:if="${emp_id != null}" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">View Payroll &rarr;</a>
         </section>
     </div>
     <script src="/js/nav.js"></script>
+    <script>
+        function openOtFilingModal() {
+            var modal = document.getElementById('otFilingModal');
+            if (!modal) return;
+            modal.style.display = 'block';
+            modal.setAttribute('aria-hidden', 'false');
+            computeFiledOvertimeHours();
+        }
+        function closeOtFilingModal() {
+            var modal = document.getElementById('otFilingModal');
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        function computeFiledOvertimeHours() {
+            var inEl = document.querySelector('input[name="overtimeIn"]');
+            var outEl = document.querySelector('input[name="overtimeOut"]');
+            var totalEl = document.getElementById('computedTotalHours');
+            if (!inEl || !outEl || !totalEl) return;
+            var i = inEl.value || "";
+            var o = outEl.value || "";
+            if (!i || !o || i.indexOf(':') < 0 || o.indexOf(':') < 0) {
+                totalEl.value = "";
+                return;
+            }
+            var ip = i.split(':');
+            var op = o.split(':');
+            if (ip.length < 2 || op.length < 2) {
+                totalEl.value = "";
+                return;
+            }
+            var inM = parseInt(ip[0], 10) * 60 + parseInt(ip[1], 10);
+            var outM = parseInt(op[0], 10) * 60 + parseInt(op[1], 10);
+            if (isNaN(inM) || isNaN(outM)) {
+                totalEl.value = "";
+                return;
+            }
+            var diff = outM - inM;
+            if (diff <= 0) diff += (24 * 60);
+            var hours = diff / 60;
+            totalEl.value = hours.toFixed(2);
+        }
+        document.addEventListener('input', function (e) {
+            if (e.target && (e.target.name === 'overtimeIn' || e.target.name === 'overtimeOut')) {
+                computeFiledOvertimeHours();
+            }
+        });
+        document.addEventListener('click', function (e) {
+            var modal = document.getElementById('otFilingModal');
+            if (modal && e.target === modal) {
+                closeOtFilingModal();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', computeFiledOvertimeHours);
+    </script>
 </body>
 </html>

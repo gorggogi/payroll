@@ -82,8 +82,9 @@
         var isAttendancePage = currentPath.includes('/attendance');
         var isLeavePage = currentPath.includes('/leave');
         var isShiftsPage = currentPath.includes('/attendance/shifts');
+        var isOvertimePage = currentPath.includes('/attendance/overtime');
         var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
-        var isAttendanceRelatedPage = isAttendancePage || isLeavePage;
+        var isAttendanceRelatedPage = isAttendancePage || isLeavePage || isOvertimePage;
 
         dropdowns.forEach(function (btn) {
             var menu = btn.nextElementSibling;
