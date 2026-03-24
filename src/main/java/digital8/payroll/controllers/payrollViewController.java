@@ -12,8 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.time.LocalDate;
 import java.time.Month;
-import java.time.YearMonth;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -85,8 +85,9 @@ public class payrollViewController {
         } catch (Exception e) {
             monthEnum = Month.from(java.time.LocalDate.now());
         }
-        YearMonth ym = YearMonth.of(selectedYear, monthEnum);
-        List<DeductionBreakdownItem> deductionsBreakdown = payrollService.getDeductionsBreakdown(empId, ym.atDay(1), ym.atEndOfMonth());
+        LocalDate[] bounds = payrollService.getPayrollPeriodBounds(selectedYear, monthEnum, period);
+        List<DeductionBreakdownItem> deductionsBreakdown =
+                payrollService.getDeductionsBreakdown(empId, bounds[0], bounds[1]);
         model.addAttribute("otherDeductionsBreakdown", deductionsBreakdown != null ? deductionsBreakdown : List.of());
 
         return "html/payroll";

@@ -18,7 +18,9 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
             }
             var period = document.getElementById('period').value;
             var month = document.getElementById('month').value;
-            var url = `/api/payroll/${empId}?period=${encodeURIComponent(period)}&month=${encodeURIComponent(month)}`;
+            var yearEl = document.getElementById('year');
+            var year = yearEl ? yearEl.value : '';
+            var url = `/api/payroll/${empId}?period=${encodeURIComponent(period)}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`;
 
             fetch(url)
                 .then(function(resp){

@@ -107,9 +107,10 @@
                 </select>
                 <label for="period">Period:</label>
                 <select name="period" id="period" onchange="this.form.submit()">
-                    <option value="" th:selected="${selectedPeriod == null || selectedPeriod == ''}">Monthly</option>
-                    <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
                     <option value="monthly" th:selected="${selectedPeriod == 'monthly'}">Monthly</option>
+                    <option value="semi_1" th:selected="${selectedPeriod == 'semi_1'}">Semi-monthly (1–15)</option>
+                    <option value="semi_2" th:selected="${selectedPeriod == 'semi_2'}">Semi-monthly (16–end)</option>
+                    <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
                 </select>
             </form>
 
@@ -143,7 +144,14 @@
     <tr><td>Philhealth</td><td th:text="${item.philhealth != null ? #numbers.formatDecimal(item.philhealth, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Pag-ibig</td><td th:text="${item.pagibig != null ? #numbers.formatDecimal(item.pagibig, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr class="deduct-row"><td><strong>Total Semi-monthly Contributions</strong></td><td th:text="${item.semiMonthlyContributions != null ? #numbers.formatDecimal(item.semiMonthlyContributions, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr class="deduct-row">
+        <td>
+            <strong th:text="${selectedPeriod == 'monthly' ? 'Total Monthly Contributions' : 'Total Semi-monthly Contributions'}">
+                Total Contributions
+            </strong>
+        </td>
+        <td th:text="${item.semiMonthlyContributions != null ? #numbers.formatDecimal(item.semiMonthlyContributions, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
+    </tr>
     <tr class="deduct-row" th:if="${item.totalDeductions != null && item.semiMonthlyContributions == null}"><td><strong>Total Deductions</strong></td><td th:text="${#numbers.formatDecimal(item.totalDeductions, 1, 'COMMA', 2, 'POINT')}">0.00</td></tr>
     
     <tr class="net-row"><td><strong>Net Pay</strong></td><td th:text="${item.netPay != null ? #numbers.formatDecimal(item.netPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
