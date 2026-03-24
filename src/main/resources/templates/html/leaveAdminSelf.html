@@ -152,11 +152,12 @@
                         <th>Reason</th>
                         <th>Status</th>
                         <th>Requested On</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(leaveRequests)}">
-                        <td colspan="7" class="no-data">
+                        <td colspan="8" class="no-data">
                             <p>No leave requests found</p>
                         </td>
                     </tr>
@@ -177,9 +178,66 @@
                                   th:text="${request.status}">Pending</span>
                         </td>
                         <td th:text="${#temporals.format(request.requestedDate, 'MMM dd, yyyy')}">Feb 19, 2026</td>
+                        <td>
+                            <button type="button" 
+                                    class="btn-primary no-print edit-leave-btn"
+                                    th:if="${request.status == 'Pending'}"
+                                    th:data-leave-id="${request.leaveRequestId}"
+                                    th:data-leave-type="${request.leaveType.leaveTypeId}"
+                                    th:data-start-date="${#temporals.format(request.startDate, 'yyyy-MM-dd')}"
+                                    th:data-end-date="${#temporals.format(request.endDate, 'yyyy-MM-dd')}"
+                                    th:data-reason="${request.reason}"
+                                    th:data-status="${request.status}"
+                                    title="Edit leave request">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Edit Leave Modal -->
+        <div id="editLeaveModal" class="leave-modal">
+            <div class="leave-modal-content">
+                <button class="modal-close" onclick="closeEditLeaveModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Edit Leave Request</h3>
+                
+                <form id="editLeaveForm" onsubmit="submitEditLeaveForm(event)">
+                    <input type="hidden" id="leaveRequestId">
+                    
+                    <div class="form-group">
+                        <label for="editLeaveType">Leave Type:</label>
+                        <select id="editLeaveType" name="leaveTypeId" disabled>
+                            <option th:each="type : ${leaveTypes}" 
+                                    th:value="${type.leaveTypeId}" 
+                                    th:text="${type.leaveName}">Sick Leave</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editStartDate">Start Date:</label>
+                            <input type="date" id="editStartDate" name="startDate" required />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editEndDate">End Date:</label>
+                            <input type="date" id="editEndDate" name="endDate" required />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editReason">Reason:</label>
+                        <textarea id="editReason" name="reason" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeEditLeaveModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
             </div>
         </div>
     </section>

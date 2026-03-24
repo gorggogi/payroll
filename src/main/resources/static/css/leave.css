@@ -379,3 +379,184 @@
     justify-content: flex-end;
     gap: .5rem;
 }
+
+/* ==================== EDIT LEAVE MODAL ==================== */
+.leave-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.leave-modal.show {
+    display: flex;
+}
+
+.leave-modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+    flex-direction: column;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.leave-modal-content h3 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+.leave-modal-content .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.leave-modal-content .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--secondary-color);
+}
+
+.leave-modal-content .form-group input[type="text"],
+.leave-modal-content .form-group input[type="date"],
+.leave-modal-content .form-group select,
+.leave-modal-content .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    background-color: #fff;
+}
+
+.leave-modal-content .form-group input[type="date"]:focus,
+.leave-modal-content .form-group input[type="text"]:focus,
+.leave-modal-content .form-group select:focus,
+.leave-modal-content .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(112, 111, 214, 0.1);
+    background-color: #fff;
+}
+
+.leave-modal-content .form-group input:disabled,
+.leave-modal-content .form-group select:disabled,
+.leave-modal-content .form-group textarea:disabled {
+    background-color: #f5f5f5;
+    color: #999;
+    cursor: not-allowed;
+    border-color: #e0e0e0;
+}
+
+.leave-modal-content .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.leave-modal-content .form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.leave-modal-content .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: flex-end;
+}
+
+.leave-modal-content .form-actions button {
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 100px;
+}
+
+.leave-modal-content .form-actions .btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.leave-modal-content .form-actions .btn-primary:hover:not(:disabled) {
+    background-color: var(--secondary-color);
+}
+
+.leave-modal-content .form-actions .btn-secondary {
+    background-color: #e0e0e0;
+    color: var(--secondary-color);
+}
+
+.leave-modal-content .form-actions .btn-secondary:hover:not(:disabled) {
+    background-color: #d0d0d0;
+}
+
+.leave-modal-content .form-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.leave-modal .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    line-height: 1;
+    padding: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+}
+
+.leave-modal .modal-close:hover {
+    color: var(--secondary-color);
+    background-color: #f5f5f5;
+}
