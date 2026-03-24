@@ -140,9 +140,18 @@
     <tr class="service-fee-row"><td><strong>Service Fee</strong></td><td th:text="${item.serviceFee != null ? #numbers.formatDecimal(item.serviceFee, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
 
     <tr><td colspan="2" class="table-section-header"><strong>Statutory Contributions</strong></td></tr>
-    <tr><td>SSS</td><td th:text="${item.sss != null ? #numbers.formatDecimal(item.sss, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Philhealth</td><td th:text="${item.philhealth != null ? #numbers.formatDecimal(item.philhealth, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Pag-ibig</td><td th:text="${item.pagibig != null ? #numbers.formatDecimal(item.pagibig, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr>
+        <td th:text="${selectedPeriod == 'monthly' ? 'SSS' : 'SSS'}">SSS</td>
+        <td th:text="${item.sss != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.sss : item.sss / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
+    </tr>
+    <tr>
+        <td th:text="${selectedPeriod == 'monthly' ? 'Philhealth' : 'Philhealth'}">Philhealth</td>
+        <td th:text="${item.philhealth != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.philhealth : item.philhealth / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
+    </tr>
+    <tr>
+        <td th:text="${selectedPeriod == 'monthly' ? 'Pag-ibig' : 'Pag-ibig'}">Pag-ibig</td>
+        <td th:text="${item.pagibig != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.pagibig : item.pagibig / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
+    </tr>
     <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr class="deduct-row">
         <td>
