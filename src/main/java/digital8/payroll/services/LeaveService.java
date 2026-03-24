@@ -175,4 +175,49 @@ public class LeaveService {
     public long getNewRespondedCountForEmployee(Integer employeeId, LocalDateTime lastViewedAt){
         return leaveRequestRepository.countNewRespondedForEmployee(employeeId, lastViewedAt);
     }
+
+    public LeaveRequests updateLeaveRequest(Integer leaveRequestId, Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason){
+        LeaveRequests request = leaveRequestRepository.findById(leaveRequestId)
+            .orElseThrow(() -> new RuntimeException("Leave request not found"));
+
+        // Verify the request belongs to the employee
+        if (!employeeId.equals(request.getEmployee().getEmployeeId())) {
+            throw new RuntimeException("Unauthorized: You cannot edit another employee's leave request");
+        }
+
+        // Verify the request is still in Pending status
+        if (!"Pending".equals(request.getStatus())) {
+            throw new RuntimeException("Cannot edit leave request with status: " + request.getStatus());
+        }
+
+        // Validate and set leave type
+        LeaveTypes leaveType = leaveTypesRepository.findById(leaveTypeId)
+            .orElseThrow(() -> new RuntimeException("Leave Type not found"));
+        request.setLeaveType(leaveType);
+
+        // Validate dates
+        if (endDate.isBefore(startDate)) {
+            throw new RuntimeException("End date cannot be before start date");
+        }
+
+        // Validate reason
+        if (reason == null || reason.trim().isEmpty()) {
+            throw new RuntimeException("Reason cannot be empty");
+        }
+
+        if (reason.trim().length() < 10) {
+            throw new RuntimeException("Reason must be at least 10 characters");
+        }
+
+        if (reason.trim().length() > 500) {
+            throw new RuntimeException("Reason cannot exceed 500 characters");
+        }
+
+        // Update the request
+        request.setStartDate(startDate);
+        request.setEndDate(endDate);
+        request.setReason(reason.trim());
+
+        return leaveRequestRepository.save(request);
+    }
 }

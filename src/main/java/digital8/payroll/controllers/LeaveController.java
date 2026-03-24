@@ -12,6 +12,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 public class LeaveController {
@@ -139,5 +142,35 @@ public class LeaveController {
         }
 
         return "redirect:/admin/leave";
+    }
+
+    @PutMapping("/api/employee/leave/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateLeaveRequest(
+            @PathVariable Integer id,
+            @RequestParam Integer leaveTypeId,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam String reason,
+            Authentication authentication) {
+        
+        try {
+            Users user = (Users) authentication.getPrincipal();
+            Integer employeeId = user.getEmployee().getEmployeeId();
+            
+            leaveService.updateLeaveRequest(id, employeeId, leaveTypeId, startDate, endDate, reason);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Leave request updated successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 }

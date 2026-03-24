@@ -76,11 +76,12 @@
 
         // Check if we're on specific pages
         var currentPath = window.location.pathname || '';
-        var isPayrollPage = window.location.pathname.includes('/payroll/');
-        var isDeductionsPage = window.location.pathname.includes('/deductions');
-        var isAdjustmentsPage = window.location.pathname.includes('/adjustments');
-        var isAttendancePage = window.location.pathname.includes('/attendance');
-        var isLeavePage = window.location.pathname.includes('/leave');
+        var isPayrollPage = currentPath.includes('/payroll/');
+        var isDeductionsPage = currentPath.includes('/deductions');
+        var isAdjustmentsPage = currentPath.includes('/adjustments');
+        var isAttendancePage = currentPath.includes('/attendance');
+        var isLeavePage = currentPath.includes('/leave');
+        var isShiftsPage = currentPath.includes('/attendance/shifts');
         var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
         var isAttendanceRelatedPage = isAttendancePage || isLeavePage;
 
@@ -140,7 +141,16 @@
                 });
                 
                 // Mark the appropriate attendance menu item as active based on current page
-                if (isLeavePage) {
+                if (isShiftsPage) {
+                    // On shifts page, highlight Shifting link
+                    var shiftsLink = menu.querySelector('a[href*="/attendance/shifts"]');
+                    if (shiftsLink) {
+                        var liShifts = shiftsLink.closest('li');
+                        if (liShifts) {
+                            liShifts.classList.add('active');
+                        }
+                    }
+                } else if (isLeavePage) {
                     // Find Leave link by checking href attribute
                     var leaveLink = menu.querySelector('a[href*="/leave"]');
                     if (leaveLink) {

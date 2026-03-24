@@ -442,7 +442,6 @@ nav.nav-collapsed .nav-indicator i {
     margin: 0 0 0.5rem auto;
     border-left: 2px solid rgba(255, 255, 255, 0.3);
     padding-left: 1rem;
-    gap: .5rem;
 }
 
 .nav-dropdown-menu.show {

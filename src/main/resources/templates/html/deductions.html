@@ -55,8 +55,6 @@
                         </span>
                     </a></li>
                     <li><a href="/employee/attendance/overtime">Overtime</a></li>
-                    <li><a href="/employee/attendance/time-adjustments">Adjustments</a></li>
-                    <li><a href="/employee/attendance/shifts">Shifting</a></li>
                 </ul>
 
                 <a sec:authorize="hasRole('ADMIN')" title="Payroll" class="nav-dropdown-toggle">
@@ -64,7 +62,7 @@
                     <span class="nav-label">Payroll</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
-                <ul class="nav-dropdown-menu">
+                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
                     <li><a href="/admin/deductions">Deductions</a></li>
                     <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
@@ -74,12 +72,10 @@
                     <span class="nav-label">Payroll</span>
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
-                <ul class="nav-dropdown-menu">
+                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
                     <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a th:href="@{/adjustments/{id}(id=${emp_id})}" href="#">Adjustments</a></li>
+                    <li><a href="/employee/deductions">Deductions</a></li>
                 </ul>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
                 <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
             </ul>
             <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
