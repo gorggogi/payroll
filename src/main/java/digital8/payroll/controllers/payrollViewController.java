@@ -69,14 +69,15 @@ public class payrollViewController {
         int currentYear = java.time.Year.now().getValue();
         int selectedYear = (year != null) ? year : currentYear;
         String monthName = (month != null && !month.isBlank()) ? month : Month.of(java.time.LocalDate.now().getMonthValue()).name();
-        List<PayrollItems> items = payrollService.computePayroll(empId, period, monthName, selectedYear);
+        String effectivePeriod = (period != null && !period.isBlank()) ? period : "monthly";
+        List<PayrollItems> items = payrollService.computePayroll(empId, effectivePeriod, monthName, selectedYear);
         if (items == null || items.isEmpty()) {
             items = payrollItemsRepository.findByEmployeeIdOrderByPayrollItemIdDesc(empId);
         }
         model.addAttribute("payrollItems", items != null ? items : List.of());
         model.addAttribute("selectedMonth", monthName);
         model.addAttribute("selectedYear", selectedYear);
-        model.addAttribute("selectedPeriod", period != null ? period : "");
+        model.addAttribute("selectedPeriod", effectivePeriod);
         model.addAttribute("payrollYears", java.util.List.of(currentYear + 1, currentYear, currentYear - 1));
 
         Month monthEnum;
@@ -85,7 +86,7 @@ public class payrollViewController {
         } catch (Exception e) {
             monthEnum = Month.from(java.time.LocalDate.now());
         }
-        LocalDate[] bounds = payrollService.getPayrollPeriodBounds(selectedYear, monthEnum, period);
+        LocalDate[] bounds = payrollService.getPayrollPeriodBounds(selectedYear, monthEnum, effectivePeriod);
         List<DeductionBreakdownItem> deductionsBreakdown =
                 payrollService.getDeductionsBreakdown(empId, bounds[0], bounds[1]);
         model.addAttribute("otherDeductionsBreakdown", deductionsBreakdown != null ? deductionsBreakdown : List.of());
