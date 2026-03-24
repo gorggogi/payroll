@@ -100,4 +100,131 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => alert.remove(), 500);
         }, 5000);
     });
+    
+    // Close modal when clicking outside of it
+    const modal = document.getElementById('editLeaveModal');
+    if (modal) {
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) {
+                closeEditLeaveModal();
+            }
+        });
+    }
+    
+    // Attach event listeners to edit buttons
+    document.querySelectorAll('.edit-leave-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const leaveId = this.getAttribute('data-leave-id');
+            const leaveType = this.getAttribute('data-leave-type');
+            const startDate = this.getAttribute('data-start-date');
+            const endDate = this.getAttribute('data-end-date');
+            const reason = this.getAttribute('data-reason');
+            const status = this.getAttribute('data-status');
+            
+            openEditLeaveModal(leaveId, leaveType, startDate, endDate, reason, status);
+        });
+    });
 });
+
+// ==================== EDIT LEAVE MODAL FUNCTIONS ====================
+
+function openEditLeaveModal(leaveRequestId, leaveTypeId, startDate, endDate, reason, status) {
+    // Populate form fields
+    document.getElementById('leaveRequestId').value = leaveRequestId;
+    document.getElementById('editLeaveType').value = leaveTypeId;
+    document.getElementById('editStartDate').value = startDate;
+    document.getElementById('editEndDate').value = endDate;
+    document.getElementById('editReason').value = reason;
+    
+    // Check if status is Pending - enable/disable fields accordingly
+    const isEditable = status === 'Pending';
+    
+    const leaveTypeSelect = document.getElementById('editLeaveType');
+    const startDateInput = document.getElementById('editStartDate');
+    const endDateInput = document.getElementById('editEndDate');
+    const reasonTextarea = document.getElementById('editReason');
+    const submitBtn = document.querySelector('#editLeaveForm button[type="submit"]');
+    
+    leaveTypeSelect.disabled = !isEditable;
+    startDateInput.disabled = !isEditable;
+    endDateInput.disabled = !isEditable;
+    reasonTextarea.disabled = !isEditable;
+    submitBtn.disabled = !isEditable;
+    
+    // Show modal
+    document.getElementById('editLeaveModal').classList.add('show');
+}
+
+function closeEditLeaveModal() {
+    document.getElementById('editLeaveModal').classList.remove('show');
+    document.getElementById('editLeaveForm').reset();
+}
+
+function submitEditLeaveForm(event) {
+    event.preventDefault();
+    
+    const leaveRequestId = document.getElementById('leaveRequestId').value;
+    const leaveTypeId = document.getElementById('editLeaveType').value;
+    const startDate = document.getElementById('editStartDate').value;
+    const endDate = document.getElementById('editEndDate').value;
+    const reason = document.getElementById('editReason').value.trim();
+    
+    // Validate form
+    if (!leaveTypeId) {
+        alert('Please select a leave type');
+        return;
+    }
+    
+    if (!startDate || !endDate) {
+        alert('Please select both start and end dates');
+        return;
+    }
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    if (end < start) {
+        alert('End date cannot be before start date');
+        return;
+    }
+    
+    if (reason.length < 10) {
+        alert('Please provide a more detailed reason (at least 10 characters)');
+        return;
+    }
+    
+    if (reason.length > 500) {
+        alert('Reason is too long (maximum 500 characters)');
+        return;
+    }
+    
+    // Submit the form
+    const formData = new FormData();
+    formData.append('leaveTypeId', leaveTypeId);
+    formData.append('startDate', startDate);
+    formData.append('endDate', endDate);
+    formData.append('reason', reason);
+    
+    fetch(`/api/employee/leave/${leaveRequestId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update leave request');
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert('Leave request updated successfully!');
+        closeEditLeaveModal();
+        // Reload the page to see the changes
+        window.location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
