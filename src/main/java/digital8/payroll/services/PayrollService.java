@@ -336,21 +336,16 @@ public class PayrollService {
         // Monthly payslips use the MONTHLY table on monthly salary.
         if (semiMonthly) {
             BigDecimal semiMonthlyBase = monthlyRate.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
-            tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY");
+            tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY"); // they call this "semi"
         } else {
             tax = computeWithholdingTaxFromTable(monthlyRate, year, "MONTHLY");
         }
-
+        
         BigDecimal statutoryTotal = sss.add(philhealth).add(pagibig).add(tax);
-        // Semi-monthly payslip deduction split:
-        // - SSS / PhilHealth / Pag-IBIG are monthly amounts → deducted at half.
-        // - WHT is already computed for the semi period (WHT_semi) → do NOT divide
-        // again.
+        
         BigDecimal statutoryDeductedThisSlip;
         if (semiMonthly) {
-            BigDecimal monthlyGovShares = sss.add(philhealth).add(pagibig);
-            BigDecimal govSharesDeductedThisSlip = monthlyGovShares.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
-            statutoryDeductedThisSlip = govSharesDeductedThisSlip.add(tax).setScale(SCALE, ROUND);
+            statutoryDeductedThisSlip = statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
         } else {
             statutoryDeductedThisSlip = statutoryTotal;
         }
