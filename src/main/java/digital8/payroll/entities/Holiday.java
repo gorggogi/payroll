@@ -27,7 +27,7 @@ public class Holiday {
     @Column(name = "holiday_date", nullable = false)
     private LocalDate holidayDate;
 
-    @Column(name = "holiday_type", nullable = false, length = 32)
+    @Column(name = "holiday_type", nullable = true, length = 32)
     private String holidayType;
 
     @Column(name = "active", nullable = false)

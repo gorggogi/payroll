@@ -16,4 +16,17 @@ public interface HolidayRepository extends JpaRepository<Holiday, Integer> {
 
     List<Holiday> findByCountryCodeAndActiveTrueAndHolidayDateBetweenOrderByHolidayDateAsc(
             String countryCode, LocalDate startInclusive, LocalDate endInclusive);
+
+    List<Holiday> findByCountryCodeAndHolidayDateBetweenOrderByHolidayDateAsc(
+            String countryCode, LocalDate start, LocalDate end);
+
+    List<Holiday> findByCountryCodeAndActiveOrderByHolidayDateAsc(
+            String countryCode, boolean active);
+
+    List<Holiday> findByCountryCodeOrderByHolidayDateAsc(String countryCode);
+
+    boolean existsByCountryCodeAndHolidayDateAndActiveTrueAndHolidayIdNot(
+            String countryCode, LocalDate holidayDate, Integer holidayId);
+
+    Optional<Holiday> findByCountryCodeAndHolidayDate(String countryCode, LocalDate holidayDate);
 }
