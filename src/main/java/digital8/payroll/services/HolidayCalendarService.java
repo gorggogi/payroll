@@ -18,18 +18,17 @@ public class HolidayCalendarService {
     }
 
     @Transactional(readOnly = true)
-    public List<Holiday> activeHolidaysInRange(String countryCode, LocalDate start, LocalDate end) {
-        return holidayRepository.findByCountryCodeAndActiveTrueAndHolidayDateBetweenOrderByHolidayDateAsc(
-                countryCode, start, end);
+    public List<Holiday> activeHolidaysInRange(LocalDate start, LocalDate end) {
+        return holidayRepository.findByHolidayDateBetweenOrderByHolidayDateAsc(start, end);
     }
 
     @Transactional(readOnly = true)
-    public Optional<Holiday> findActiveHolidayOn(String countryCode, LocalDate date) {
-        return holidayRepository.findByCountryCodeAndHolidayDateAndActiveTrue(countryCode, date);
+    public Optional<Holiday> findActiveHolidayOn(LocalDate date) {
+        return holidayRepository.findByHolidayDate(date);
     }
 
     @Transactional(readOnly = true)
-    public boolean isActiveHoliday(String countryCode, LocalDate date) {
-        return holidayRepository.existsByCountryCodeAndHolidayDateAndActiveTrue(countryCode, date);
+    public boolean isActiveHoliday(LocalDate date) {
+        return holidayRepository.existsByHolidayDate(date);
     }
 }
