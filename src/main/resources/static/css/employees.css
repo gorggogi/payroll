@@ -323,6 +323,24 @@ section{
     border-radius: 6px;
     font-size: 14px;
 }
+.checkbox-group input[type="checkbox"],
+.add-employee-form .checkbox-group input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    max-width: 16px;
+    min-width: 16px;
+    margin: 0 !important;
+    padding: 0 !important;
+    accent-color: var(--secondary-color);
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.checkbox-label,
+.add-employee-form .checkbox-label {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
 .btn-back { font-size: var(--font-size-300); color: var(--secondary-color); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
 .btn-back:hover { text-decoration: underline; }
 .alert-success { background: #d4edda; color: #155724; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; }
@@ -402,6 +420,26 @@ section{
     gap: 10px;
     justify-content: flex-end;
     margin-top: 12px;
+}
+
+.employee-modal-content label.checkbox-label {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    grid-column: 1 / -1;
+    padding: 10px 0;
+}
+
+.employee-modal-content label.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--secondary-color);
+}
+
+.employee-modal-content label.checkbox-label small {
+    color: #666;
+    font-weight: 400;
 }
 
 .employee-modal .close-btn {

@@ -83,6 +83,7 @@ public class EmployeeViewController {
             @RequestParam String sssNumber,
             @RequestParam String philhealthNumber,
             @RequestParam String pagibigNumber,
+            @RequestParam(required = false) Boolean holidayPayEligible,
             RedirectAttributes redirectAttributes) {
 
         Employees emp = new Employees();
@@ -107,6 +108,7 @@ public class EmployeeViewController {
         emp.setSssNumber(sssNumber);
         emp.setPhilhealthNumber(philhealthNumber);
         emp.setPagibigNumber(pagibigNumber);
+        emp.setHolidayPayEligible(Boolean.TRUE.equals(holidayPayEligible));
 
         Departments dept = new Departments();
         dept.setDepartmentId(departmentId);
