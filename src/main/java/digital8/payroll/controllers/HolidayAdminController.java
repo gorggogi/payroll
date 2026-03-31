@@ -30,7 +30,6 @@ public class HolidayAdminController {
     public String page(
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false, defaultValue = "PH") String country,
             Authentication authentication,
             Model model) {
 
@@ -39,12 +38,11 @@ public class HolidayAdminController {
         int currentYear = Year.now().getValue();
         Integer selectedYear = (year != null) ? year : currentYear;
 
-        List<Holiday> holidays = holidayAdminService.list(country, selectedYear, type);
+        List<Holiday> holidays = holidayAdminService.list(selectedYear, type);
 
         model.addAttribute("holidays", holidays);
         model.addAttribute("selectedYear", selectedYear);
         model.addAttribute("selectedType", type);
-        model.addAttribute("selectedCountry", country);
 
         model.addAttribute("holidayTypes", List.of(
                 Holiday.TYPE_REGULAR,
@@ -57,18 +55,16 @@ public class HolidayAdminController {
 
     @PostMapping
     public String create(
-            @RequestParam String countryCode,
             @RequestParam String holidayName,
             @RequestParam LocalDate holidayDate,
             @RequestParam(required = false) String holidayType,
-            @RequestParam(required = false) String sourceNote,
             Authentication authentication,
             RedirectAttributes ra) {
 
         guardAdmin(authentication);
 
         try {
-            holidayAdminService.create(countryCode, holidayName, holidayDate, holidayType, sourceNote);
+            holidayAdminService.create(holidayName, holidayDate, holidayType);
             ra.addFlashAttribute("successMessage", "Holiday created.");
         } catch (IllegalArgumentException ex) {
             ra.addFlashAttribute("errorMessage", ex.getMessage());
@@ -82,14 +78,13 @@ public class HolidayAdminController {
             @RequestParam String holidayName,
             @RequestParam LocalDate holidayDate,
             @RequestParam(required = false) String holidayType,
-            @RequestParam(required = false) String sourceNote,
             Authentication authentication,
             RedirectAttributes ra) {
 
         guardAdmin(authentication);
 
         try {
-            holidayAdminService.update(id, holidayName, holidayDate, holidayType, sourceNote);
+            holidayAdminService.update(id, holidayName, holidayDate, holidayType);
             ra.addFlashAttribute("successMessage", "Holiday updated.");
         } catch (IllegalArgumentException ex) {
             ra.addFlashAttribute("errorMessage", ex.getMessage());
@@ -119,7 +114,6 @@ public class HolidayAdminController {
 
     @PostMapping("/copy-year")
     public String copyYear(
-            @RequestParam(defaultValue = "PH") String countryCode,
             @RequestParam Integer sourceYear,
             @RequestParam Integer targetYear,
             Authentication authentication,
@@ -128,7 +122,7 @@ public class HolidayAdminController {
         guardAdmin(authentication);
 
         try {
-            int created = holidayAdminService.copyYear(countryCode, sourceYear, targetYear);
+            int created = holidayAdminService.copyYear(sourceYear, targetYear);
             ra.addFlashAttribute("successMessage",
                     "Copied " + created + " holidays from " + sourceYear + " to " + targetYear + ".");
         } catch (IllegalArgumentException ex) {
@@ -140,7 +134,6 @@ public class HolidayAdminController {
 
     @PostMapping("/import")
     public String importCsv(
-            @RequestParam(defaultValue = "PH") String countryCode,
             @RequestParam("file") MultipartFile file,
             Authentication authentication,
             RedirectAttributes ra) {
@@ -153,7 +146,7 @@ public class HolidayAdminController {
         }
 
         try {
-            int created = holidayAdminService.importCsv(countryCode, file.getInputStream());
+            int created = holidayAdminService.importCsv(file.getInputStream());
             ra.addFlashAttribute("successMessage", "Imported " + created + " holidays from CSV.");
         } catch (IllegalArgumentException | IOException ex) {
             ra.addFlashAttribute("errorMessage", "Import failed: " + ex.getMessage());
@@ -164,7 +157,6 @@ public class HolidayAdminController {
 
     @PostMapping("/sync-google")
     public String syncGoogle(
-            @RequestParam(defaultValue = "PH") String countryCode,
             @RequestParam Integer year,
             @RequestParam(defaultValue = "false") boolean dryRun,
             Authentication authentication,
@@ -173,11 +165,10 @@ public class HolidayAdminController {
         guardAdmin(authentication);
 
         try {
-            HolidayAdminService.SyncResult result = holidayAdminService.syncFromGoogle(countryCode, year, dryRun);
+            HolidayAdminService.SyncResult result = holidayAdminService.syncFromGoogle(year, dryRun);
             ra.addFlashAttribute("successMessage",
                     "Google sync complete. Created=" + result.created()
                             + ", Updated=" + result.updated()
-                            + ", Reactivated=" + result.reactivated()
                             + ", Skipped=" + result.skipped()
                             + ", Unmapped=" + result.unmapped());
         } catch (IllegalArgumentException ex) {

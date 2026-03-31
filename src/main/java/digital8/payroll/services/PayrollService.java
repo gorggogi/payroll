@@ -212,7 +212,7 @@ public class PayrollService {
 
         if (eligibleForAdminRegularHolidayPay(emp)) {
 
-            List<Holiday> holidaysInPeriod = holidayCalendarService.activeHolidaysInRange(Holiday.COUNTRY_PH,
+            List<Holiday> holidaysInPeriod = holidayCalendarService.activeHolidaysInRange(
                     periodStart,
                     periodEnd);
 

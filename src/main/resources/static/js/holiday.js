@@ -8,7 +8,6 @@ function openEditHolidayModal(button) {
     const holidayName = button.getAttribute('data-holiday-name') || '';
     const holidayDate = button.getAttribute('data-holiday-date') || '';
     const holidayType = button.getAttribute('data-holiday-type') || '';
-    const sourceNote = button.getAttribute('data-source-note') || '';
 
     const form = document.getElementById('editHolidayForm');
     form.setAttribute('action', '/admin/holidays/' + holidayId + '/update');
@@ -16,7 +15,6 @@ function openEditHolidayModal(button) {
     document.getElementById('editHolidayName').value = holidayName;
     document.getElementById('editHolidayDate').value = holidayDate;
     document.getElementById('editHolidayType').value = holidayType;
-    document.getElementById('editSourceNote').value = sourceNote;
 
     openHolidayModal('editHolidayModal');
 }
@@ -31,4 +29,3 @@ window.addEventListener('click', function (e) {
         if (e.target === m) closeHolidayModal(m.id);
     });
 });
-

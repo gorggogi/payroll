@@ -118,7 +118,7 @@
         <div class="settings-card">
             <h2>Add Holiday</h2>
           <form method="post" action="/admin/holidays">
-    <input type="hidden" name="countryCode" value="PH" />
+
 
     <div class="form-row">
         <div>
@@ -144,12 +144,7 @@
         </div>
     </div>
 
-    <div class="source-note-row">
-        <div>
-            <label for="sourceNote">Source Note (optional):</label>
-            <input id="sourceNote" name="sourceNote" placeholder="Proclamation/DOLE note" />
-        </div>
-    </div>
+
 </form>
         </div>
         <div class="settings-card">
@@ -160,8 +155,6 @@
                     <th>Date</th>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Country</th>
-                    <th>Source</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -173,7 +166,7 @@
                         <form th:action="@{/admin/holidays/{id}/update(id=${h.holidayId})}" method="post" style="display:inline;">
                             <input type="hidden" name="holidayName" th:value="${h.holidayName}" />
                             <input type="hidden" name="holidayDate" th:value="${h.holidayDate}" />
-                            <input type="hidden" name="sourceNote" th:value="${h.sourceNote}" />
+
                             <select name="holidayType" onchange="this.form.submit()">
                                 <option value="" th:selected="${h.holidayType == null || h.holidayType == ''}">UNCLASSIFIED</option>
                                 <option value="REGULAR" th:selected="${h.holidayType == 'REGULAR'}">REGULAR</option>
@@ -182,15 +175,13 @@
                             </select>
                         </form>
                     </td>
-                    <td th:text="${h.countryCode}"></td>
-                    <td th:text="${h.sourceNote}"></td>
+
                     <td>
                         <button type="button"
                                 th:attr="data-holiday-id=${h.holidayId},
                                          data-holiday-name=${h.holidayName},
                                          data-holiday-date=${h.holidayDate},
-                                         data-holiday-type=${#strings.defaultString(h.holidayType, '')},
-                                         data-source-note=${#strings.defaultString(h.sourceNote, '')}"
+                                         data-holiday-type=${#strings.defaultString(h.holidayType, '')}"
                                 onclick="openEditHolidayModal(this)">
                             Edit
                         </button>
@@ -222,7 +213,7 @@
             <button type="button" class="holiday-modal-close" onclick="closeHolidayModal('copyYearModal')">&times;</button>
         </div>
         <form method="post" action="/admin/holidays/copy-year">
-            <input type="hidden" name="countryCode" value="PH" />
+
             <div class="form-row">
                 <div>
                     <label for="sourceYearModal">Source Year</label>
@@ -249,12 +240,12 @@
             <button type="button" class="holiday-modal-close" onclick="closeHolidayModal('importCsvModal')">&times;</button>
         </div>
         <form method="post" action="/admin/holidays/import" enctype="multipart/form-data">
-            <input type="hidden" name="countryCode" value="PH" />
+
             <div>
                 <label for="holidayCsvModal">CSV File</label>
                 <input id="holidayCsvModal" type="file" name="file" accept=".csv" required />
             </div>
-            <small>Format: holiday_name,holiday_date,holiday_type,source_note (yyyy-MM-dd)</small>
+            <small>Format: holiday_name,holiday_date,holiday_type (yyyy-MM-dd)</small>
             <div class="holiday-modal-actions">
                 <button type="button" onclick="closeHolidayModal('importCsvModal')">Cancel</button>
                 <button type="submit">Import CSV</button>
@@ -270,7 +261,7 @@
             <button type="button" class="holiday-modal-close" onclick="closeHolidayModal('syncGoogleModal')">&times;</button>
         </div>
         <form method="post" action="/admin/holidays/sync-google">
-            <input type="hidden" name="countryCode" value="PH" />
+
             <div class="form-row">
                 <div>
                     <label for="syncYearModal">Year</label>
@@ -316,10 +307,7 @@
                         <option value="SPECIAL_WORKING">SPECIAL_WORKING</option>
                     </select>
                 </div>
-                <div>
-                    <label for="editSourceNote">Source Note</label>
-                    <input id="editSourceNote" name="sourceNote" type="text" placeholder="Proclamation/DOLE note" />
-                </div>
+
             </div>
             <div class="holiday-modal-actions">
                 <button type="button" onclick="closeHolidayModal('editHolidayModal')">Cancel</button>

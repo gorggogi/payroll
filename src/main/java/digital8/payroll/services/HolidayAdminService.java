@@ -51,17 +51,14 @@ public class HolidayAdminService {
     }
 
     @Transactional(readOnly = true)
-    public List<Holiday> list(String countryCode, Integer year, String type) {
-        String cc = (countryCode == null || countryCode.isBlank()) ? Holiday.COUNTRY_PH
-                : countryCode.trim().toUpperCase();
-
+    public List<Holiday> list(Integer year, String type) {
         List<Holiday> base;
         if (year != null) {
             LocalDate start = LocalDate.of(year, 1, 1);
             LocalDate end = LocalDate.of(year, 12, 31);
-            base = holidayRepository.findByCountryCodeAndHolidayDateBetweenOrderByHolidayDateAsc(cc, start, end);
+            base = holidayRepository.findByHolidayDateBetweenOrderByHolidayDateAsc(start, end);
         } else {
-            base = holidayRepository.findByCountryCodeOrderByHolidayDateAsc(cc);
+            base = holidayRepository.findAllByOrderByHolidayDateAsc();
         }
 
         if (type != null && !type.isBlank()) {
@@ -80,42 +77,34 @@ public class HolidayAdminService {
     }
 
     @Transactional
-    public Holiday create(String countryCode, String holidayName, LocalDate holidayDate, String holidayType,
-            String sourceNote) {
-        String cc = normalizeCountry(countryCode);
+    public Holiday create(String holidayName, LocalDate holidayDate, String holidayType) {
         String type = normalizeTypeOrNull(holidayType);
 
-        if (holidayRepository.existsByCountryCodeAndHolidayDateAndActiveTrue(cc, holidayDate)) {
-            throw new IllegalArgumentException("Active holiday already exists on that date.");
+        if (holidayRepository.existsByHolidayDate(holidayDate)) {
+            throw new IllegalArgumentException("A holiday already exists on that date.");
         }
 
         Holiday h = new Holiday();
-        h.setCountryCode(cc);
         h.setHolidayName(holidayName.trim());
         h.setHolidayDate(holidayDate);
         h.setHolidayType(type);
-        h.setActive(true);
-        h.setSourceNote(normalizeSourceNoteOrNull(sourceNote));
         return holidayRepository.save(h);
     }
 
     @Transactional
-    public Holiday update(Integer id, String holidayName, LocalDate holidayDate, String holidayType,
-            String sourceNote) {
+    public Holiday update(Integer id, String holidayName, LocalDate holidayDate, String holidayType) {
         Holiday h = holidayRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Holiday not found"));
 
-        String cc = h.getCountryCode();
         String type = normalizeTypeOrNull(holidayType);
 
-        if (holidayRepository.existsByCountryCodeAndHolidayDateAndActiveTrueAndHolidayIdNot(cc, holidayDate, id)) {
+        if (holidayRepository.existsByHolidayDateAndHolidayIdNot(holidayDate, id)) {
             throw new IllegalArgumentException("Another holiday already exists on that date.");
         }
 
         h.setHolidayName(holidayName.trim());
         h.setHolidayDate(holidayDate);
         h.setHolidayType(type);
-        h.setSourceNote(normalizeSourceNoteOrNull(sourceNote));
 
         return holidayRepository.save(h);
     }
@@ -125,10 +114,6 @@ public class HolidayAdminService {
         Holiday h = holidayRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Holiday not found"));
         holidayRepository.delete(h);
-    }
-
-    private String normalizeCountry(String countryCode) {
-        return (countryCode == null || countryCode.isBlank()) ? Holiday.COUNTRY_PH : countryCode.trim().toUpperCase();
     }
 
     private String normalizeType(String holidayType) {
@@ -147,42 +132,31 @@ public class HolidayAdminService {
         return normalizeType(holidayType);
     }
 
-    private String normalizeSourceNoteOrNull(String sourceNote) {
-        if (sourceNote == null)
-            return null;
-        String trimmed = sourceNote.trim();
-        return trimmed.isEmpty() ? null : trimmed;
-    }
-
     @Transactional
-    public int copyYear(String countryCode, int sourceYear, int targetYear) {
+    public int copyYear(int sourceYear, int targetYear) {
         if (sourceYear == targetYear) {
             throw new IllegalArgumentException("Source year and target year cannot be the same.");
         }
 
-        String cc = normalizeCountry(countryCode);
         LocalDate sourceStart = LocalDate.of(sourceYear, 1, 1);
         LocalDate sourceEnd = LocalDate.of(sourceYear, 12, 31);
 
         List<Holiday> sourceRows = holidayRepository
-                .findByCountryCodeAndHolidayDateBetweenOrderByHolidayDateAsc(cc, sourceStart, sourceEnd);
+                .findByHolidayDateBetweenOrderByHolidayDateAsc(sourceStart, sourceEnd);
 
         int created = 0;
         for (Holiday src : sourceRows) {
             LocalDate targetDate = src.getHolidayDate().withYear(targetYear);
 
-            // Skip if an active holiday already exists for target date
-            boolean existsActive = holidayRepository.existsByCountryCodeAndHolidayDateAndActiveTrue(cc, targetDate);
-            if (existsActive)
+            // Skip if a holiday already exists for target date
+            boolean exists = holidayRepository.existsByHolidayDate(targetDate);
+            if (exists)
                 continue;
 
             Holiday h = new Holiday();
-            h.setCountryCode(cc);
             h.setHolidayName(src.getHolidayName());
             h.setHolidayDate(targetDate);
             h.setHolidayType(src.getHolidayType());
-            h.setActive(true);
-            h.setSourceNote(src.getSourceNote());
             holidayRepository.save(h);
             created++;
         }
@@ -191,8 +165,7 @@ public class HolidayAdminService {
     }
 
     @Transactional
-    public int importCsv(String countryCode, InputStream csvStream) throws IOException {
-        String cc = normalizeCountry(countryCode);
+    public int importCsv(InputStream csvStream) throws IOException {
         int created = 0;
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(csvStream, StandardCharsets.UTF_8))) {
@@ -210,7 +183,7 @@ public class HolidayAdminService {
                 }
                 first = false;
 
-                // Expected: holiday_name,holiday_date,holiday_type[,source_note]
+                // Expected: holiday_name,holiday_date,holiday_type
                 String[] cols = parseCsvLine(line);
                 if (cols.length < 3)
                     continue;
@@ -218,20 +191,16 @@ public class HolidayAdminService {
                 String holidayName = cols[0].trim();
                 LocalDate holidayDate = LocalDate.parse(cols[1].trim()); // yyyy-MM-dd
                 String holidayType = normalizeTypeOrNull(cols[2].trim());
-                String sourceNote = (cols.length >= 4) ? cols[3].trim() : null;
 
                 if (holidayName.isBlank())
                     continue;
-                if (holidayRepository.existsByCountryCodeAndHolidayDateAndActiveTrue(cc, holidayDate))
+                if (holidayRepository.existsByHolidayDate(holidayDate))
                     continue;
 
                 Holiday h = new Holiday();
-                h.setCountryCode(cc);
                 h.setHolidayName(holidayName);
                 h.setHolidayDate(holidayDate);
                 h.setHolidayType(holidayType);
-                h.setActive(true);
-                h.setSourceNote(sourceNote == null || sourceNote.isBlank() ? null : sourceNote);
 
                 holidayRepository.save(h);
                 created++;
@@ -241,16 +210,14 @@ public class HolidayAdminService {
         return created;
     }
 
-    public record SyncResult(int created, int updated, int reactivated, int skipped, int unmapped) {
+    public record SyncResult(int created, int updated, int skipped, int unmapped) {
     }
 
     @Transactional
-    public SyncResult syncFromGoogle(String countryCode, int year, boolean dryRun) {
+    public SyncResult syncFromGoogle(int year, boolean dryRun) {
         if (googleApiKey == null || googleApiKey.isBlank()) {
             throw new IllegalArgumentException("Google API key is not configured.");
         }
-
-        String cc = normalizeCountry(countryCode);
 
         String timeMin = year + "-01-01T00:00:00+08:00";
         String timeMax = year + "-12-31T23:59:59+08:00";
@@ -274,7 +241,7 @@ public class HolidayAdminService {
             JsonNode root = objectMapper.readTree(resp.body());
             JsonNode items = root.path("items");
 
-            int created = 0, updated = 0, reactivated = 0, skipped = 0, unmapped = 0;
+            int created = 0, updated = 0, skipped = 0, unmapped = 0;
             Set<String> unmappedTitles = new HashSet<>();
 
             for (JsonNode item : items) {
@@ -297,17 +264,14 @@ public class HolidayAdminService {
                     log.warn("Unmapped Google holiday title for year {}: '{}'", year, summary);
                 }
 
-                var existingOpt = holidayRepository.findByCountryCodeAndHolidayDate(cc, date);
+                var existingOpt = holidayRepository.findByHolidayDate(date);
 
                 if (existingOpt.isEmpty()) {
                     if (!dryRun) {
                         Holiday h = new Holiday();
-                        h.setCountryCode(cc);
                         h.setHolidayName(summary);
                         h.setHolidayDate(date);
                         h.setHolidayType(mappedType);
-                        h.setActive(true);
-                        h.setSourceNote("Google sync " + LocalDate.now());
                         holidayRepository.save(h);
                     }
                     created++;
@@ -315,27 +279,18 @@ public class HolidayAdminService {
                 }
 
                 Holiday existing = existingOpt.get();
-                boolean wasInactive = !existing.isActive();
-                String syncNote = "Google sync " + LocalDate.now();
                 boolean changed = false;
 
                 if (!summary.equals(existing.getHolidayName()))
-                    changed = true;
-                if (!existing.isActive())
                     changed = true;
 
                 // only treat type as changed if mappedType is known and different
                 if (mappedType != null && !mappedType.equals(existing.getHolidayType()))
                     changed = true;
 
-                if (!syncNote.equals(existing.getSourceNote()))
-                    changed = true;
-
                 if (changed) {
                     if (!dryRun) {
                         existing.setHolidayName(summary);
-                        existing.setActive(true);
-                        existing.setSourceNote(syncNote);
 
                         // do not overwrite a manually assigned type with null
                         if (mappedType != null) {
@@ -344,10 +299,7 @@ public class HolidayAdminService {
 
                         holidayRepository.save(existing);
                     }
-                    if (wasInactive)
-                        reactivated++;
-                    else
-                        updated++;
+                    updated++;
                 } else {
                     skipped++;
                 }
@@ -355,7 +307,7 @@ public class HolidayAdminService {
             if (!unmappedTitles.isEmpty()) {
                 log.warn("Google sync year {} unmapped titles: {}", year, unmappedTitles);
             }
-            return new SyncResult(created, updated, reactivated, skipped, unmapped);
+            return new SyncResult(created, updated, skipped, unmapped);
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to sync Google calendar: " + e.getMessage(), e);
         }
