@@ -104,7 +104,7 @@
                         <label for="type">Type:</label>
                         <select id="type" name="type">
                             <option value="">All</option>
-                            <option value="UNCLASSIFIED" th:selected="${selectedType == 'UNCLASSIFIED'}">UNCLASSIFIED</option>
+                            <option value="UNCLASSIFIED" th:selected="${selectedType == 'UNCLASSIFIED'}">Unclassified</option>
                             <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}" th:selected="${t == selectedType}"></option>
                         </select>
                     </div>
@@ -134,7 +134,7 @@
         <div>
             <label for="holidayType">Holiday Type:</label>
             <select id="holidayType" name="holidayType">
-                <option value="">UNCLASSIFIED</option>
+                <option value="">Unclassified</option>
                 <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}"></option>
             </select>
         </div>
@@ -160,8 +160,6 @@
                     <th>Date</th>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Country</th>
-                    <th>Source</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
@@ -175,15 +173,13 @@
                             <input type="hidden" name="holidayDate" th:value="${h.holidayDate}" />
                             <input type="hidden" name="sourceNote" th:value="${h.sourceNote}" />
                             <select name="holidayType" onchange="this.form.submit()">
-                                <option value="" th:selected="${h.holidayType == null || h.holidayType == ''}">UNCLASSIFIED</option>
-                                <option value="REGULAR" th:selected="${h.holidayType == 'REGULAR'}">REGULAR</option>
-                                <option value="SPECIAL_NON_WORKING" th:selected="${h.holidayType == 'SPECIAL_NON_WORKING'}">SPECIAL_NON_WORKING</option>
-                                <option value="SPECIAL_WORKING" th:selected="${h.holidayType == 'SPECIAL_WORKING'}">SPECIAL_WORKING</option>
+                                <option value="" th:selected="${h.holidayType == null || h.holidayType == ''}">Unclassified</option>
+                                <option value="REGULAR" th:selected="${h.holidayType == 'REGULAR'}">Regular</option>
+                                <option value="SPECIAL_NON_WORKING" th:selected="${h.holidayType == 'SPECIAL_NON_WORKING'}">Special Non-Working</option>
+                                <option value="SPECIAL_WORKING" th:selected="${h.holidayType == 'SPECIAL_WORKING'}">Special Working</option>
                             </select>
                         </form>
                     </td>
-                    <td th:text="${h.countryCode}"></td>
-                    <td th:text="${h.sourceNote}"></td>
                     <td>
                         <button type="button"
                                 th:attr="data-holiday-id=${h.holidayId},
@@ -310,10 +306,10 @@
                 <div>
                     <label for="editHolidayType">Holiday Type</label>
                     <select id="editHolidayType" name="holidayType">
-                        <option value="">UNCLASSIFIED</option>
-                        <option value="REGULAR">REGULAR</option>
-                        <option value="SPECIAL_NON_WORKING">SPECIAL_NON_WORKING</option>
-                        <option value="SPECIAL_WORKING">SPECIAL_WORKING</option>
+                        <option value="">Unclassified</option>
+                        <option value="REGULAR">Regular</option>
+                        <option value="SPECIAL_NON_WORKING">Special Non-Working</option>
+                        <option value="SPECIAL_WORKING">Special Working</option>
                     </select>
                 </div>
                 <div>

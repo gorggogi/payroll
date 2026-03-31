@@ -46,31 +46,37 @@ section .settings-card .form-row-actions {
   border-collapse: collapse;
   font-size: 14px;
 }
+
 .holiday-table th,
 .holiday-table td {
   border: 1px solid #e3e3e3;
-  padding: 8px 10px;
+  padding: 0.5rem 0.75rem !important;
   text-align: left;
   vertical-align: middle;
 }
+
 .holiday-table th {
   background: #2b2e63;
   color: #fff;
   font-size: 14px;
   font-weight: 600;
 }
+
 .holiday-table button {
   font-size: 12px;
   padding: 5px 10px;
 }
 
-/* keep row action buttons side-by-side */
+.holiday-table td:nth-child(3), .holiday-table th:nth-child(3) {
+  width: 25%;
+}
+
 .holiday-table td:last-child {
   white-space: nowrap;
-  width: 1%;
+  width: 25%;
 }
 .holiday-table th:last-child {
-  width: 1%;
+  width: 25%;
 }
 .holiday-table td:last-child form {
   display: inline-flex !important;
@@ -78,6 +84,19 @@ section .settings-card .form-row-actions {
 }
 .holiday-table td:last-child form:first-of-type {
   margin-left: 0;
+}
+
+.holiday-table td:nth-child(3) select{
+  width: 100%;
+}
+
+.holiday-table td:last-child button, .holiday-table td:last-child form{
+  width: 50%;
+  margin: 0;
+}
+
+.holiday-table td:last-child form button{
+  width: 100%;
 }
 
 /* bottom action bar (part of page flow, not sticky/fixed) */
