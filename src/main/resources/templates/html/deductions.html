@@ -164,8 +164,10 @@
     <!-- Modal: Manage deduction types -->
     <div id="modalManageTypes" class="deduction-modal" style="display:none; z-index: 2000;">
         <div class="deduction-modal-content deduction-modal-content--types" style="max-height: 85vh; overflow-y: auto;">
-            <button type="button" class="modal-close" onclick="closeModal('modalManageTypes')">&times;</button>
-            <h3>Deduction types</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Deduction types</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalManageTypes')">&times;</button>
+            </div>
             <div class="deduction-types-toolbar">
                 <p class="deduction-help">Used in the dropdown when you assign a deduction. You can also add a type while assigning.</p>
                 <button type="button" class="btn-apply" onclick="openModal('modalAddType')">
@@ -196,8 +198,10 @@
     <!-- Modal: Add deduction type -->
     <div id="modalAddType" class="deduction-modal" style="display:none; z-index: 2100;">
         <div class="deduction-modal-content">
-            <button type="button" class="modal-close" onclick="closeModal('modalAddType')">&times;</button>
-            <h3>Add deduction type</h3>
+            <div class="modal-header">
+                <h3 style="margin: 0;">Add deduction type</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalAddType')">&times;</button>
+            </div>
             <form action="/admin/deductions/types" method="post">
                 <div class="form-group">
                     <label for="deductionName">Name *</label>
@@ -223,8 +227,10 @@
     <!-- Modal: Edit deduction type -->
     <div id="modalEditType" class="deduction-modal" style="display:none; z-index: 2100;">
         <div class="deduction-modal-content">
-            <button type="button" class="modal-close" onclick="closeModal('modalEditType')">&times;</button>
-            <h3>Edit deduction type</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Edit deduction type</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalEditType')">&times;</button>
+            </div>
             <form action="/admin/deductions/types/update" method="post">
                 <input type="hidden" id="editTypeId" name="id" value="">
                 <div class="form-group">
@@ -251,8 +257,10 @@
     <!-- Modal: Add deduction (assign to employee) -->
     <div id="modalAddDeduction" class="deduction-modal" style="display:none; z-index: 1000;">
         <div class="deduction-modal-content">
-            <button type="button" class="modal-close" onclick="closeModal('modalAddDeduction')">&times;</button>
-            <h3>Add deduction (assign to employee)</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
+                <h3 style="margin: 0;">Add deduction (assign to employee)</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalAddDeduction')">&times;</button>
+            </div>
             <form action="/admin/deductions/assign" method="post">
                 <div class="form-group">
                     <label for="employeeId">Employee *</label>

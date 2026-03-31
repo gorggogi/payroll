@@ -68,19 +68,20 @@ section .settings-card .form-row-actions {
 }
 
 .holiday-table td:nth-child(3), .holiday-table th:nth-child(3) {
-  width: 25%;
+  width: 20%;
 }
 
 .holiday-table td:last-child {
   white-space: nowrap;
-  width: 25%;
+  width: 20%;
 }
 .holiday-table th:last-child {
-  width: 25%;
+  width: 20%;
 }
 .holiday-table td:last-child form {
   display: inline-flex !important;
   margin: 0 0 0 6px;
+  width: 50%;
 }
 .holiday-table td:last-child form:first-of-type {
   margin-left: 0;
@@ -90,13 +91,24 @@ section .settings-card .form-row-actions {
   width: 100%;
 }
 
-.holiday-table td:last-child button, .holiday-table td:last-child form{
+.holiday-table td:last-child button{
   width: 50%;
   margin: 0;
+  padding-inline: .9rem;
 }
 
 .holiday-table td:last-child form button{
   width: 100%;
+}
+
+.holiday-table td button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2b2e63;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
 }
 
 /* bottom action bar (part of page flow, not sticky/fixed) */
@@ -125,29 +137,36 @@ section .settings-card .form-row-actions {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 2000;
+  z-index: 2000;;
 }
+
 .holiday-modal.show {
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .holiday-modal-content {
   width: min(680px, 92vw);
   background: #fff;
   border-radius: 10px;
   padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
 }
+
 .holiday-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 14px;
 }
+
 .holiday-modal-header h3 {
   margin: 0;
   font-size: 1.1rem;
 }
+
 .holiday-modal form .form-row {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -155,12 +174,14 @@ section .settings-card .form-row-actions {
   align-items: end;
   margin-bottom: 12px;
 }
+
 .holiday-modal form label {
   display: block;
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
 }
+
 .holiday-modal form input,
 .holiday-modal form select {
   width: 100%;
@@ -168,6 +189,7 @@ section .settings-card .form-row-actions {
   padding: 6px 8px;
   box-sizing: border-box;
 }
+
 .holiday-modal-actions {
   display: flex;
   justify-content: flex-end;

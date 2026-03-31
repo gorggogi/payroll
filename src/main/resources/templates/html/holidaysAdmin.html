@@ -188,11 +188,11 @@
                                          data-holiday-type=${#strings.defaultString(h.holidayType, '')},
                                          data-source-note=${#strings.defaultString(h.sourceNote, '')}"
                                 onclick="openEditHolidayModal(this)">
-                            Edit
+                            <i class="fa-solid fa-pen-to-square"></i> Edit
                         </button>
                         <form th:action="@{/admin/holidays/{id}/delete(id=${h.holidayId})}" method="post" style="display:inline"
                             onsubmit="return confirm('Delete this holiday?');">
-                            <button type="submit">Delete</button>
+                            <button type="submit"><i class="fa-solid fa-trash"></i> Delete </button>
                         </form>
                     </td>
                 </tr>

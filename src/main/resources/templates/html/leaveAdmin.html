@@ -80,16 +80,9 @@
             <div class="head">
                 <h1>Leave Management</h1>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <a href="/admin/my-leave" class="btn-secondary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem;">
-                        <i class="fa-solid fa-user-clock"></i>
-                        <span>My Leave</span>
-                        <span data-nav-indicator="leaveSelf"
-                              style="display:none; color:#c00; font-size:0.9em;"
-                              title="Updates to your leave requests"
-                              aria-label="Updates to your leave requests">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a>
+                    <button type="button" class="btn-my-leave" onclick="window.location.href='/admin/my-leave'">
+                        <i class="fa-solid fa-user-clock"></i> My Leave
+                    </button>
                     <button type="button" class="btn-print" onclick="window.print()">
                         <i class="fa-solid fa-print"></i> Print
                     </button>
