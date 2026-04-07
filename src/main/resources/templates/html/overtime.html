@@ -10,59 +10,7 @@
     <link rel="stylesheet" href="/css/attendance.css" />
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
-    <style>
-        .overtime-input { width: 5.5rem; max-width: 100%; }
-        .flash-msg { margin: 1rem 0; padding: 0.75rem 1rem; border-radius: 6px; }
-        .flash-msg.success { background: #e8f5e9; border: 1px solid #a5d6a7; }
-        .flash-msg.error { background: #ffebee; border: 1px solid #ef9a9a; }
-        .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-        .ot-panel { margin: 1.25rem 0; padding: 1rem 1.25rem; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; }
-        .ot-panel h2 { margin: 0 0 1rem; font-size: 1.1rem; }
-        .ot-form-grid { display: grid; gap: 0.75rem 1.25rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); align-items: end; }
-        .ot-form-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; }
-        .ot-form-grid input, .ot-form-grid textarea { padding: 0.4rem 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-        .ot-form-grid textarea { grid-column: 1 / -1; min-height: 4rem; resize: vertical; }
-        .btn-primary { cursor: pointer; border: none; padding: 0.5rem 1rem; border-radius: 6px; background: #1976d2; color: #fff; }
-        .btn-success { cursor: pointer; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; background: #2e7d32; color: #fff; font-size: 0.875rem; }
-        .btn-danger { cursor: pointer; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; background: #c62828; color: #fff; font-size: 0.875rem; }
-        .ot-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .reason-cell { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ot-modal {
-            display: none;
-            position: fixed;
-            z-index: 1200;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background: rgba(0, 0, 0, 0.45);
-            padding: 2rem 1rem;
-        }
-        .ot-modal-content {
-            background: #fff;
-            max-width: 860px;
-            margin: 0 auto;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-            padding: 1rem 1.25rem 1.25rem;
-        }
-        .ot-modal-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-        .ot-modal-close {
-            border: none;
-            background: transparent;
-            font-size: 1.6rem;
-            line-height: 1;
-            cursor: pointer;
-            color: #444;
-        }
-    </style>
+        <link rel="stylesheet" href="/css/overtime.css" />
 </head>
 <body>
     <div class="container">
@@ -173,10 +121,10 @@
                             <td>
                                 <div class="ot-actions">
                                     <form th:action="@{/admin/attendance/overtime/approve/{id}(id=${r.overtimeRequestId})}" method="post">
-                                        <button type="submit" class="btn-success">Approve</button>
+                                        <button type="submit" class="btn-approve"><i class="fa-solid fa-check"></i></button>
                                     </form>
                                     <form th:action="@{/admin/attendance/overtime/reject/{id}(id=${r.overtimeRequestId})}" method="post">
-                                        <button type="submit" class="btn-danger">Reject</button>
+                                        <button type="submit" class="btn-reject"><i class="fa-solid fa-xmark"></i></button>
                                     </form>
                                 </div>
                             </td>

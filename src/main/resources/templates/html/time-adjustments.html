@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/css/global.css" />
     <link rel="stylesheet" href="/css/homeAdmin.css" />
     <link rel="stylesheet" href="/css/nav.css" />
-    <link rel="stylesheet" href="/css/ot.css" />
+    <link rel="stylesheet" href="/css/time-adjustments.css" />
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
     
@@ -81,39 +81,41 @@
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
-            <div class="ot-panel">
-                <h2 style="margin:0 0 0.75rem 0;"><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
-                <p style="margin:0 0 1rem 0;color:#555;font-size:0.9rem;">
-                    File format per line:
-                    <br/>`empNo tab date(YYYY-MM-DD) tab time(HH:MM:SS) tab 1 tab logType(0|1|2|3) tab 1`
-                    <br/>Example: `40 2010-11-01 09:55:07 1 0 1`
+            <div class="adjust-panel">
+                <h2><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
+                <p class="adjust-panel-desc">
+                    Sample format to put here.
                 </p>
 
                 <form method="post"
                       th:action="@{/admin/attendance/time-adjustments/upload}"
                       enctype="multipart/form-data">
-                    <div class="ot-form-grid" style="grid-template-columns: 1fr 1fr;">
-                        <label>
+                    <div class="adjust-form-grid">
+                        <label class="input-file">
                             Biometrics file
                             <input type="file" name="file" accept=".csv,.txt,.dat" required />
                         </label>
-                        <label>
-                            <span style="font-size:0.9rem;">Overwrite existing attendance</span>
+                        <label class="overwrite-checkbox">
+                            <span>Overwrite existing attendance</span>
                             <input type="checkbox" name="overwrite" value="true" checked />
                         </label>
+                            <div class="adjust-form-grid-row">
+                                <label class="overwrite-checkbox">
+                                    <span style="font-size:0.9rem;">Overwrite existing attendance</span>
+                                    <input type="checkbox" name="overwrite" value="true" checked />
+                                </label>
+                                <div class="adjust-panel-btn">
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-file-import"></i> Import DTR
+                                    </button>
+                                </div>
+                            </div>
                     </div>
-
-                    <p style="margin-top:1rem;">
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-file-import"></i> Import DTR
-                        </button>
-                    </p>
                 </form>
 
-                <div th:if="${uploadImportSummary != null}" style="margin-top:1rem;font-size:0.9rem;">
+                <div th:if="${uploadImportSummary != null}" class="adjust-import-summary">
                     <strong>Import summary:</strong>
-                    <pre style="white-space:pre-wrap;background:#f5f5f5;padding:0.75rem;border-radius:6px;margin-top:0.5rem;"
-                         th:text="${uploadImportSummary}"></pre>
+                    <pre class="adjust-import-summary-pre" th:text="${uploadImportSummary}"></pre>
                 </div>
             </div>
         </section>

@@ -116,7 +116,10 @@ public class Employees{
 
     @Column (nullable = false, unique = false)
     private BigDecimal factorRate;
-    
+
+    @Column(nullable = false)
+    private boolean holidayPayEligible = false;
+
 
     public Users getUser() {
         return user;
@@ -303,6 +306,14 @@ public class Employees{
 
     public void setPagibigNumber(String pagibigNumber) {
         this.pagibigNumber = pagibigNumber;
+    }
+
+    public boolean isHolidayPayEligible() {
+        return holidayPayEligible;
+    }
+
+    public void setHolidayPayEligible(boolean holidayPayEligible) {
+        this.holidayPayEligible = holidayPayEligible;
     }
 
 
