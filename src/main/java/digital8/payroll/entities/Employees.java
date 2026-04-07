@@ -114,12 +114,19 @@ public class Employees{
     @JsonIgnoreProperties ({"employee"})
     private Users user;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private BigDecimal factorRate;
+    
+    @Column(name = "holidayPayEligible", nullable = false)
+    private boolean holidayPayEligible;
 
-    @Column(nullable = false)
-    private boolean holidayPayEligible = false;
+    public boolean isHolidayPayEligible() {
+        return holidayPayEligible;
+    }
 
+    public void setHolidayPayEligible(boolean holidayPayEligible) {
+        this.holidayPayEligible = holidayPayEligible;
+    }
 
     public Users getUser() {
         return user;
