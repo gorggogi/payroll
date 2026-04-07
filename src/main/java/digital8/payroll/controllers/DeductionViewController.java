@@ -199,4 +199,28 @@ public class DeductionViewController {
         ra.addFlashAttribute("message", "Assignment removed.");
         return "redirect:/admin/deductions";
     }
+    
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/assign/edit")
+    public String editAssignment(
+            @RequestParam Integer id,
+            @RequestParam Integer employeeId,
+            @RequestParam Integer deductionId,
+            @RequestParam java.math.BigDecimal amount,
+            @RequestParam(required = false) Boolean isRecurring,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            RedirectAttributes ra) {
+        employeeDeductionsRepository.findById(id).ifPresent(ed -> {
+            ed.setEmployeeId(employeeId);
+            ed.setDeductionId(deductionId);
+            ed.setAmount(amount);
+            ed.setIsRecurring(isRecurring == null || Boolean.TRUE.equals(isRecurring));
+            ed.setStartDate(java.time.LocalDate.parse(startDate));
+            ed.setEndDate(java.time.LocalDate.parse(endDate));
+            employeeDeductionsRepository.save(ed);
+        });
+        ra.addFlashAttribute("message", "Deduction assignment updated.");
+        return "redirect:/admin/deductions";
+    }
 }
