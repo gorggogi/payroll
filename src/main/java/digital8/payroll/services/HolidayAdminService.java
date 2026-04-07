@@ -336,18 +336,22 @@ public class HolidayAdminService {
                 || t.contains("maundy thursday")
                 || t.contains("good friday")
                 || t.contains("araw ng kagitingan")
+                || t.contains("the day of valor")
                 || t.contains("labor day")
                 || t.contains("independence day")
                 || t.contains("national heroes day")
                 || t.contains("bonifacio day")
                 || t.contains("christmas day")
-                || t.contains("rizal day")) {
+                || t.contains("rizal day")
+                || t.contains("eid al-fitr")
+                || t.contains("eid al-adha")) {
             return Holiday.TYPE_REGULAR;
         }
 
         if (t.contains("special working")
                 || t.contains("edsa people power")
-                || t.contains("people power revolution")) {
+                || t.contains("people power revolution")
+                || t.contains("people power anniversary")) {
             return Holiday.TYPE_SPECIAL_WORKING;
         }
 
@@ -358,7 +362,12 @@ public class HolidayAdminService {
                 || t.contains("all souls")
                 || t.contains("immaculate conception")
                 || t.contains("christmas eve")
-                || t.contains("last day of the year")) {
+                || t.contains("last day of the year")
+                || t.contains("easter sunday")
+                || t.contains("ramadan start")
+                || t.contains("amun jadid")
+                || t.contains("maulid un-nabi")
+                || t.contains("lailatul isra wal mi raj")) {
             return Holiday.TYPE_SPECIAL_NON_WORKING;
         }
 

@@ -20,6 +20,8 @@ import java.io.IOException;
 @RequestMapping("/admin/holidays")
 public class HolidayAdminController {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HolidayAdminController.class);
+
     private final HolidayAdminService holidayAdminService;
 
     public HolidayAdminController(HolidayAdminService holidayAdminService) {
@@ -34,6 +36,15 @@ public class HolidayAdminController {
             Model model) {
 
         guardAdmin(authentication);
+
+        // Identify and log all unclassified holidays so they can be assigned a type
+        List<Holiday> unclassified = holidayAdminService.list(null, "UNCLASSIFIED");
+        if (!unclassified.isEmpty()) {
+            log.warn("Found {} unclassified holidays that need type mapping:", unclassified.size());
+            for (Holiday h : unclassified) {
+                log.warn(" - {} ({})", h.getHolidayName(), h.getHolidayDate());
+            }
+        }
 
         int currentYear = Year.now().getValue();
         Integer selectedYear = (year != null) ? year : currentYear;

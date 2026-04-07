@@ -47,14 +47,14 @@
                     <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
                 </a>
                 <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
-                    <li><a href="/employee/attendance">Daily Time Record</a></li>
-                    <li><a href="/employee/leave" title="Leave">
+                    <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
+                    <li><a th:href="@{/employee/leave}" title="Leave">
                         <span class="nav-label">Leave</span>
                         <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Responded leave requests" aria-label="Responded leave requests" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'">
                             <i class="fa-solid fa-circle-exclamation"></i>
                         </span>
                     </a></li>
-                    <li><a href="/employee/attendance/overtime">Overtime</a></li>
+                    <li><a th:href="@{/employee/attendance/overtime}">Overtime</a></li>
                 </ul>
 
                 <a sec:authorize="hasRole('ADMIN')" title="Payroll" class="nav-dropdown-toggle">
