@@ -31,6 +31,8 @@ import digital8.payroll.repositories.DeductionsRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.SssTableRepository;
+import digital8.payroll.repositories.TaxTableRepository;
+import digital8.payroll.repositories.PhilhealthTableRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class PayrollServiceTest {
@@ -38,11 +40,11 @@ public class PayrollServiceTest {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private AttendanceRepository attendanceRepository;
     @Mock private SssTableRepository sssTableRepository;
+    @Mock private TaxTableRepository taxTableRepository;
+    @Mock private PhilhealthTableRepository philhealthTableRepository;
     @Mock private EmployeeDeductionsRepository employeeDeductionsRepository;
     @Mock private DeductionsRepository deductionsRepository;
-    
-    // Other repositories are @Autowired in the service but aren't strictly required for mocking
-    // if the logic doesn't reach them (e.g. philhealth/tax tables are bypassed in the new logic).
+    @Mock private HolidayCalendarService holidayCalendarService;
     
     @InjectMocks
     private PayrollService payrollService;
