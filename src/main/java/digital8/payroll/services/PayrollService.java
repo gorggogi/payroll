@@ -109,18 +109,8 @@ public class PayrollService {
         return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
     }
 
-    private boolean eligibleForAdminRegularHolidayPay(Employees emp) {
-        if (emp == null)
-            return false;
-
-        // TEMP: map “office admin” to system role ADMIN
-        if (emp.getUser() == null)
-            return false;
-        if (emp.getUser().getRole() == null)
-            return false;
-
-        String roleName = emp.getUser().getRole().getRoleName();
-        return roleName != null && roleName.equalsIgnoreCase("ADMIN");
+    private boolean eligibleForRegularHolidayPay(Employees emp) {
+        return emp != null && emp.isHolidayPayEligible();
     }
 
     /**
@@ -210,9 +200,9 @@ public class PayrollService {
         // day.
         BigDecimal holidayPay = BigDecimal.ZERO;
 
-        if (eligibleForAdminRegularHolidayPay(emp)) {
+        if (eligibleForRegularHolidayPay(emp)) {
 
-            List<Holiday> holidaysInPeriod = holidayCalendarService.activeHolidaysInRange(Holiday.COUNTRY_PH,
+            List<Holiday> holidaysInPeriod = holidayCalendarService.activeHolidaysInRange(
                     periodStart,
                     periodEnd);
 

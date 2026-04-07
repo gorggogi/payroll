@@ -1,12 +1,6 @@
 /* undo broad homeAdmin section flex side-effects for this page */
-section > div,
-section .settings-card,
-section .settings-card div {
+section > div {
   display: block;
-}
-section .settings-card form div {
-  display: block !important;
-  margin-bottom: 0 !important;
 }
 
 /* default content spacing */
@@ -17,29 +11,18 @@ section {
 /* compact inline forms */
 section .settings-card form .form-row {
   display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(4, minmax(170px, 1fr));
   gap: 10px;
   align-items: end;
   margin-bottom: 8px !important;
-  width: 100%;
-  box-sizing: border-box;
 }
-section .settings-card form .form-row > div {
+
+
+
+/* list wrapper keeps table + action buttons same width */
+.holiday-list-wrapper {
   display: block !important;
-}
-section .settings-card form .form-row input,
-section .settings-card form .form-row select {
-  width: 100% !important;
-  max-width: none !important;
-}
-section .settings-card .source-note-row {
-  display: grid !important;
-  grid-template-columns: minmax(320px, 560px);
-  gap: 8px;
-}
-section .settings-card .form-row-actions {
-  display: flex !important;
-  align-items: end;
+  width: 100%;
 }
 
 /* table readability */
@@ -47,6 +30,8 @@ section .settings-card .form-row-actions {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  box-sizing: border-box;
+  table-layout: fixed;
 }
 
 .holiday-table th,
@@ -117,11 +102,13 @@ section .settings-card .form-row-actions {
 .holiday-fab-bar {
   position: static;
   width: 100%;
-  display: flex;
-  justify-content: flex-end;
+  display: flex !important;
+  justify-content: flex-end !important;
   gap: 10px;
   margin-top: 14px;
   margin-bottom: 8px;
+  box-sizing: border-box;
+  padding: 0;
 }
 .holiday-fab-btn {
   padding: 8px 12px;
@@ -200,15 +187,7 @@ section .settings-card .form-row-actions {
 }
 
 /* responsive */
-@media (max-width: 1100px) {
-  section .settings-card form .form-row {
-    grid-template-columns: 1fr 1fr;
-  }
-}
 @media (max-width: 700px) {
-  section .settings-card form .form-row {
-    grid-template-columns: 1fr;
-  }
   .holiday-modal form .form-row {
     grid-template-columns: 1fr !important;
   }

@@ -231,6 +231,7 @@ public class EmployeeService {
         if (updated.getPhilhealthNumber() != null) existing.setPhilhealthNumber(updated.getPhilhealthNumber());
         if (updated.getPagibigNumber() != null) existing.setPagibigNumber(updated.getPagibigNumber());
         if (updated.getBank_Account() != null) existing.setBank_Account(updated.getBank_Account());
+        existing.setHolidayPayEligible(updated.isHolidayPayEligible());
 
         // Update department if provided
         if (updated.getDepartment() != null && updated.getDepartment().getDepartmentId() != null) {

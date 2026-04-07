@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Table(name = "holiday")
 public class Holiday {
 
-    public static final String COUNTRY_PH = "PH";
+
     public static final String TYPE_REGULAR = "REGULAR";
     public static final String TYPE_SPECIAL_NON_WORKING = "SPECIAL_NON_WORKING";
     public static final String TYPE_SPECIAL_WORKING = "SPECIAL_WORKING";
@@ -18,8 +18,7 @@ public class Holiday {
     @Column(name = "holiday_id", nullable = false)
     private Integer holidayId;
 
-    @Column(name = "country_code", nullable = false, length = 2)
-    private String countryCode = COUNTRY_PH;
+
 
     @Column(name = "holiday_name", nullable = false)
     private String holidayName;
@@ -30,11 +29,9 @@ public class Holiday {
     @Column(name = "holiday_type", nullable = true, length = 32)
     private String holidayType;
 
-    @Column(name = "active", nullable = false)
-    private boolean active = true;
 
-    @Column(name = "source_note", length = 512)
-    private String sourceNote;
+
+
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -62,13 +59,7 @@ public class Holiday {
     this.holidayId = holidayId; 
     }
 
-    public String getCountryCode() { 
-    return countryCode; 
-    }
 
-    public void setCountryCode(String countryCode) { 
-    this.countryCode = countryCode; 
-    }
 
     public String getHolidayName() { 
     return holidayName; 
@@ -94,21 +85,9 @@ public class Holiday {
     this.holidayType = holidayType; 
     }
 
-    public boolean isActive() { 
-    return active; 
-    }
 
-    public void setActive(boolean active) { 
-    this.active = active; 
-    }
 
-    public String getSourceNote() { 
-    return sourceNote; 
-    }
 
-    public void setSourceNote(String sourceNote) { 
-    this.sourceNote = sourceNote; 
-    }
 
     public LocalDateTime getCreatedAt() { 
     return createdAt; 
