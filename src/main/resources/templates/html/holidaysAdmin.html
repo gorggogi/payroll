@@ -98,118 +98,135 @@
                 <p th:text="${errorMessage}"></p>
             </div>
 
-            <div class="settings-card">
-                <h2>Filters</h2>
-                <form method="get" action="/admin/holidays">
-                    <div class="form-row">
-                        <div>
-                            <label for="year">Year:</label>
-                            <select id="year" name="year">
-                                <option th:each="y : ${yearOptions}" th:value="${y}" th:text="${y}"
-                                    th:selected="${y == selectedYear}"></option>
-                            </select>
-                        </div>
+            <div class="holiday-action-bar">
+                <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('filterModal')">
+                    <i class="fa-solid fa-filter"></i> Filters
+                </button>
+                <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('addHolidayModal')">
+                    <i class="fa-solid fa-plus"></i> Add Holiday
+                </button>
+            </div>
 
-                        <div>
-                            <label for="type">Type:</label>
-                            <select id="type" name="type">
-                                <option value="">All</option>
-                                <option value="UNCLASSIFIED" th:selected="${selectedType == 'UNCLASSIFIED'}">
-                                    Unclassified</option>
-                                <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}"
-                                    th:selected="${t == selectedType}"></option>
-                            </select>
+            <!-- Filter Modal -->
+            <div id="filterModal" class="holiday-modal">
+                <div class="holiday-modal-content">
+                    <div class="holiday-modal-header">
+                        <h3>Filter Holidays</h3>
+                        <button type="button" class="holiday-modal-close"
+                            onclick="closeHolidayModal('filterModal')">&times;</button>
+                    </div>
+                    <form method="get" action="/admin/holidays">
+                        <div class="form-row">
+                            <div>
+                                <label for="year">Year</label>
+                                <select id="year" name="year">
+                                    <option th:each="y : ${yearOptions}" th:value="${y}" th:text="${y}"
+                                        th:selected="${y == selectedYear}"></option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="type">Type</label>
+                                <select id="type" name="type">
+                                    <option value="">All</option>
+                                    <option value="UNCLASSIFIED" th:selected="${selectedType == 'UNCLASSIFIED'}">
+                                        Unclassified</option>
+                                    <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}"
+                                        th:selected="${t == selectedType}"></option>
+                                </select>
+                            </div>
                         </div>
-
-                        <div class="form-row-actions">
+                        <div class="holiday-modal-actions">
+                            <button type="button" onclick="closeHolidayModal('filterModal')">Cancel</button>
                             <button type="submit">Apply Filter</button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
-            <div class="settings-card">
-                <h2>Add Holiday</h2>
-                <form method="post" action="/admin/holidays">
 
-
-                    <div class="form-row">
-                        <div>
-                            <label for="holidayName">Holiday Name:</label>
-                            <input id="holidayName" name="holidayName" placeholder="Holiday name" required />
+            <!-- Add Holiday Modal -->
+            <div id="addHolidayModal" class="holiday-modal">
+                <div class="holiday-modal-content">
+                    <div class="holiday-modal-header">
+                        <h3>Add Holiday</h3>
+                        <button type="button" class="holiday-modal-close"
+                            onclick="closeHolidayModal('addHolidayModal')">&times;</button>
+                    </div>
+                    <form method="post" action="/admin/holidays">
+                        <div class="form-row">
+                            <div>
+                                <label for="holidayName">Holiday Name</label>
+                                <input id="holidayName" name="holidayName" placeholder="Holiday name" required />
+                            </div>
+                            <div>
+                                <label for="holidayDate">Holiday Date</label>
+                                <input id="holidayDate" type="date" name="holidayDate" required />
+                            </div>
+                            <div>
+                                <label for="holidayType">Holiday Type</label>
+                                <select id="holidayType" name="holidayType">
+                                    <option value="">Unclassified</option>
+                                    <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}"></option>
+                                </select>
+                            </div>
                         </div>
-
-                        <div>
-                            <label for="holidayDate">Holiday Date:</label>
-                            <input id="holidayDate" type="date" name="holidayDate" required />
-                        </div>
-
-                        <div>
-                            <label for="holidayType">Holiday Type:</label>
-                            <select id="holidayType" name="holidayType">
-                                <option value="">Unclassified</option>
-                                <option th:each="t : ${holidayTypes}" th:value="${t}" th:text="${t}"></option>
-                            </select>
-                        </div>
-
-                        <div class="form-row-actions">
+                        <div class="holiday-modal-actions">
+                            <button type="button" onclick="closeHolidayModal('addHolidayModal')">Cancel</button>
                             <button type="submit">Add Holiday</button>
                         </div>
-                    </div>
-
-
-                </form>
+                    </form>
+                </div>
             </div>
-            <div class="settings-card">
-                <h2>Holiday List</h2>
-                <table class="holiday-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="h : ${holidays}">
-                            <td th:text="${h.holidayDate}"></td>
-                            <td th:text="${h.holidayName}"></td>
-                            <td>
-                                <form th:action="@{/admin/holidays/{id}/update(id=${h.holidayId})}" method="post"
-                                    style="display:inline;">
-                                    <input type="hidden" name="holidayName" th:value="${h.holidayName}" />
-                                    <input type="hidden" name="holidayDate" th:value="${h.holidayDate}" />
 
-                                    <select name="holidayType" onchange="this.form.submit()">
-                                        <option value="" th:selected="${h.holidayType == null || h.holidayType == ''}">
-                                            Unclassified</option>
-                                        <option value="REGULAR" th:selected="${h.holidayType == 'REGULAR'}">Regular
-                                        </option>
-                                        <option value="SPECIAL_NON_WORKING"
-                                            th:selected="${h.holidayType == 'SPECIAL_NON_WORKING'}">Special Non-Working
-                                        </option>
-                                        <option value="SPECIAL_WORKING"
-                                            th:selected="${h.holidayType == 'SPECIAL_WORKING'}">Special Working</option>
-                                    </select>
-                                </form>
-                            </td>
-                            <td>
-                                <button type="button" th:attr="data-holiday-id=${h.holidayId},
+            <div class="holiday-list-wrapper">
+            <h2>Holiday List</h2>
+            <table class="holiday-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="h : ${holidays}">
+                        <td th:text="${h.holidayDate}"></td>
+                        <td th:text="${h.holidayName}"></td>
+                        <td>
+                            <form th:action="@{/admin/holidays/{id}/update(id=${h.holidayId})}" method="post"
+                                style="display:inline;">
+                                <input type="hidden" name="holidayName" th:value="${h.holidayName}" />
+                                <input type="hidden" name="holidayDate" th:value="${h.holidayDate}" />
+
+                                <select name="holidayType" onchange="this.form.submit()">
+                                    <option value="" th:selected="${h.holidayType == null || h.holidayType == ''}">
+                                        Unclassified</option>
+                                    <option value="REGULAR" th:selected="${h.holidayType == 'REGULAR'}">Regular
+                                    </option>
+                                    <option value="SPECIAL_NON_WORKING"
+                                        th:selected="${h.holidayType == 'SPECIAL_NON_WORKING'}">Special Non-Working
+                                    </option>
+                                    <option value="SPECIAL_WORKING" th:selected="${h.holidayType == 'SPECIAL_WORKING'}">
+                                        Special Working</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <button type="button" th:attr="data-holiday-id=${h.holidayId},
                                          data-holiday-name=${h.holidayName},
                                          data-holiday-date=${h.holidayDate},
                                          data-holiday-type=${#strings.defaultString(h.holidayType, '')}"
-                                    onclick="openEditHolidayModal(this)">
-                                    Edit
-                                </button>
-                                <form th:action="@{/admin/holidays/{id}/delete(id=${h.holidayId})}" method="post"
-                                    style="display:inline" onsubmit="return confirm('Delete this holiday?');">
-                                    <button type="submit">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                                onclick="openEditHolidayModal(this)">
+                                Edit
+                            </button>
+                            <form th:action="@{/admin/holidays/{id}/delete(id=${h.holidayId})}" method="post"
+                                style="display:inline" onsubmit="return confirm('Delete this holiday?');">
+                                <button type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
             <div class="holiday-fab-bar">
                 <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('copyYearModal')">
                     Copy Previous Year
@@ -220,6 +237,7 @@
                 <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('syncGoogleModal')">
                     Sync Google
                 </button>
+            </div>
             </div>
             <!-- Copy Year Modal -->
             <div id="copyYearModal" class="holiday-modal">
