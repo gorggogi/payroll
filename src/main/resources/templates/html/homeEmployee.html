@@ -28,9 +28,9 @@
                 </a>
                 <ul class="nav-dropdown-menu">
                     <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
-                    <li><a href="/employee/leave" title="Leave">
+                    <li><a th:href="@{/employee/leave}" title="Leave">
                         <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Leave request update" aria-label="Leave request update" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'">
+                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Responded leave requests" aria-label="Responded leave requests" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'">
                             <i class="fa-solid fa-circle-exclamation"></i>
                         </span>
                     </a></li>

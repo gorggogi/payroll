@@ -76,6 +76,7 @@
 
         // Check if we're on specific pages
         var currentPath = window.location.pathname || '';
+        var pathNorm = currentPath.replace(/\/+$/, '') || '/';
         var isPayrollPage = currentPath.includes('/payroll/');
         var isDeductionsPage = currentPath.includes('/deductions');
         var isAdjustmentsPage = currentPath.includes('/adjustments');
@@ -83,8 +84,10 @@
         var isLeavePage = currentPath.includes('/leave');
         var isShiftsPage = currentPath.includes('/attendance/shifts');
         var isOvertimePage = currentPath.includes('/attendance/overtime');
+        var isTimeAdjustmentsPage = currentPath.includes('/attendance/time-adjustments');
+        var isDtrPage = pathNorm === '/admin/attendance' || pathNorm === '/employee/attendance';
         var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
-        var isAttendanceRelatedPage = isAttendancePage || isLeavePage || isOvertimePage;
+        var isAttendanceRelatedPage = isAttendancePage || isLeavePage || isOvertimePage || isTimeAdjustmentsPage || isShiftsPage;
 
         dropdowns.forEach(function (btn) {
             var menu = btn.nextElementSibling;
@@ -143,7 +146,6 @@
                 
                 // Mark the appropriate attendance menu item as active based on current page
                 if (isShiftsPage) {
-                    // On shifts page, highlight Shifting link
                     var shiftsLink = menu.querySelector('a[href*="/attendance/shifts"]');
                     if (shiftsLink) {
                         var liShifts = shiftsLink.closest('li');
@@ -152,7 +154,6 @@
                         }
                     }
                 } else if (isLeavePage) {
-                    // Find Leave link by checking href attribute
                     var leaveLink = menu.querySelector('a[href*="/leave"]');
                     if (leaveLink) {
                         var li = leaveLink.closest('li');
@@ -160,17 +161,35 @@
                             li.classList.add('active');
                         }
                     }
-                } else {
-                    // Find Daily Time Record link - first attendance link
-                    var allLinks = Array.from(menu.querySelectorAll('a'));
-                    var dtrLink = allLinks.find(function(link) {
-                        return link.href.includes('/attendance') && !link.href.includes('/overtime') && !link.href.includes('time-adjustments') && !link.href.includes('/shifts');
-                    });
-                    if (dtrLink) {
-                        var li = dtrLink.closest('li');
-                        if (li) {
-                            li.classList.add('active');
+                } else if (isOvertimePage) {
+                    var otLink = menu.querySelector('a[href*="/attendance/overtime"]');
+                    if (otLink) {
+                        var liOt = otLink.closest('li');
+                        if (liOt) {
+                            liOt.classList.add('active');
                         }
+                    }
+                } else if (isTimeAdjustmentsPage) {
+                    var taLink = menu.querySelector('a[href*="time-adjustments"]');
+                    if (taLink) {
+                        var liTa = taLink.closest('li');
+                        if (liTa) {
+                            liTa.classList.add('active');
+                        }
+                    }
+                } else if (isDtrPage) {
+                    var dtrCandidates = menu.querySelectorAll('a[href]');
+                    for (var di = 0; di < dtrCandidates.length; di++) {
+                        try {
+                            var dp = new URL(dtrCandidates[di].href, window.location.href).pathname.replace(/\/+$/, '') || '/';
+                            if (dp === '/admin/attendance' || dp === '/employee/attendance') {
+                                var liDtr = dtrCandidates[di].closest('li');
+                                if (liDtr) {
+                                    liDtr.classList.add('active');
+                                }
+                                break;
+                            }
+                        } catch (e) { /* ignore */ }
                     }
                 }
             }

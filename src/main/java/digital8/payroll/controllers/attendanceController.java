@@ -489,6 +489,16 @@ public class attendanceController {
 
         return "html/overtime";
     }
+    @GetMapping("/admin/attendance/time-adjustments")
+    public String adjustmentsPage(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer empId,
+            HttpServletRequest request,
+            Model model,
+            Authentication authentication) {
+        return "html/time-adjustments";
+    }
 
     @PostMapping("/employee/attendance/overtime/request")
     public String submitOvertimeRequest(
