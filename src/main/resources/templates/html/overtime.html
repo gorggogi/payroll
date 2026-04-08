@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -14,80 +14,11 @@
 </head>
 <body>
     <div class="container">
-        <nav>
-            <div class="nav-header">
-                <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
-            </div>
-            <ul>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/home}" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-
-                <a sec:authorize="hasRole('ADMIN')" title="Attendance" class="nav-dropdown-toggle active">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
-                    <li><a th:href="@{/admin/leave}" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li class="active"><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
-                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
-                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
-                </ul>
-
-                <a sec:authorize="hasRole('EMPLOYEE')" title="Attendance" class="nav-dropdown-toggle active">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
-                    <li><a th:href="@{/employee/leave}" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Responded leave requests" aria-label="Responded leave requests" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li class="active"><a th:href="@{/employee/attendance/overtime}">Overtime</a></li>
-                </ul>
-
-                <a title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${self_emp_id != null ? self_emp_id : emp_id})}" href="#">Payroll</a></li>
-                    <li sec:authorize="hasRole('ADMIN')"><a href="/admin/deductions">Deductions</a></li>
-                    <li sec:authorize="hasRole('ADMIN')"><a href="/admin/adjustments">Adjustments</a></li>
-                </ul>
-                
-                <!-- Tables group -->
-                <a sec:authorize="hasRole('ADMIN')" title="Tables" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-table"></i>
-                    <span class="nav-label">Tables</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/holidays}">Holidays</a></li>
-                    <li><a href="/admin/tables/premium">Premium Tables</a></li>
-                </ul>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-            </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
-        </nav>
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
         <section>
             <div class="head">
-                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}">— <span th:text="${employeeName}">Name</span></span></h1>
+                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}">â€” <span th:text="${employeeName}">Name</span></span></h1>
             </div>
 
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
@@ -175,7 +106,7 @@
             <form method="get" th:action="${overtimeFilterAction}" id="overtimeFilterForm" class="attendance-filter">
                 <label for="empId" sec:authorize="hasRole('ADMIN')">Employee</label>
                 <select sec:authorize="hasRole('ADMIN')" name="empId" id="empId" onchange="this.form.submit()">
-                    <option value="" th:selected="${viewingEmployeeId == null}">— Select —</option>
+                    <option value="" th:selected="${viewingEmployeeId == null}">â€” Select â€”</option>
                     <option th:each="e : ${allEmployees}" th:value="${e.employeeId}"
                             th:selected="${viewingEmployeeId != null and viewingEmployeeId == e.employeeId}"
                             th:text="${e.lastName + ', ' + e.firstName}">Doe, Jane</option>
@@ -224,7 +155,7 @@
                             <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
                             <td th:text="${r.totalHours != null ? #numbers.formatDecimal(r.totalHours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
                             <td th:text="${r.status}"></td>
-                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '—'}"></td>
+                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : 'â€”'}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
                             <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
                         </tr>
@@ -262,10 +193,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
                             <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
-                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : '—'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : 'â€”'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
                             <td>
                                 <label th:for="|ot_${a.attendanceId}|" class="visually-hidden">Overtime on DTR</label>
                                 <input class="overtime-input" type="number" step="0.25" min="0"
@@ -308,10 +239,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
                             <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
-                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : '—'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : 'â€”'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
                             <td th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'COMMA', 2, 'POINT') : '0.00'}"></td>
                         </tr>
                     </tbody>
@@ -384,3 +315,4 @@
     </script>
 </body>
 </html>
+

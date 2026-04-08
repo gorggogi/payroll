@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -19,82 +19,21 @@
 <body class="light">
 
     <div class="container">
-        <nav>
-            <div class="nav-header">
-                <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">
-                    <i class="fa-solid fa-chevron-left"></i>
-                </button>
-            </div>
-            <ul>
-                <a href="/admin/home" title="Home">
-                    <li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li>
-                </a>
-                <a href="/admin/employees" title="Employees">
-                    <li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li>
-                </a>
-
-                <!-- Attendance group -->
-                <a title="Attendance" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
-                    <li><a href="/admin/leave" title="Leave">
-                            <span class="nav-label">Leave</span>
-                            <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator"
-                                title="Pending leave requests" aria-label="Pending leave requests"
-                                th:style="${pendingLeaveCount != null and pendingLeaveCount > 0} ? '' : 'display:none'">
-                                <i class="fa-solid fa-circle-exclamation"></i>
-                            </span>
-                        </a></li>
-                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
-                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
-                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
-                </ul>
-
-                <!-- Payroll group -->
-                <a title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a href="/admin/adjustments">Adjustments</a></li>
-                </ul>
-
-                <!-- Tables group -->
-                <a title="Tables" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-table"></i>
-                    <span class="nav-label">Tables</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a href="/admin/holidays">Holidays</a></li>
-                    <li><a href="/admin/tables/premium">Premium Tables</a></li>
-                </ul>
-
-                <a href="/admin/settings" title="Settings">
-                    <li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li>
-                </a>
-            </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span
-                    class="nav-label">Logout</span></a>
-        </nav>
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
         <section>
             <div class="header" style="justify-content: space-between; align-items: center; padding-bottom: 15px;">
                 <h1 class="page-title" style="margin: 0;">Premium Tables</h1>
                 <!-- Year Selector -->
                 <div class="year-selector-wrapper">
-                    <form id="yearForm" action="/admin/tables/premium" method="get" class="flex-row-center" style="margin: 0;">
+                    <form id="yearForm" action="/admin/tables/premium" method="get" class="flex-row-center"
+                        style="margin: 0;">
                         <input type="hidden" name="tab" id="activeTabField" th:value="${activeTab}" />
-                        <label for="yearSelect" style="margin-right: 10px; font-weight: 500; font-size: 15px; color: #495057;">Effective Year:</label>
+                        <label for="yearSelect"
+                            style="margin-right: 10px; font-weight: 500; font-size: 15px; color: #495057;">Effective
+                            Year:</label>
                         <select name="year" id="yearSelect" onchange="document.getElementById('yearForm').submit()"
-                            class="year-dropdown" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ced4da;">
+                            class="year-dropdown"
+                            style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ced4da;">
                             <!-- Basic loop for years -->
                             <option th:each="y : ${#numbers.sequence(2023, 2030)}" th:value="${y}" th:text="${y}"
                                 th:selected="${y == currentYear}"></option>
@@ -121,17 +60,22 @@
                 <!-- SSS TAB CONTENT -->
                 <div id="sss-tab" class="tab-content"
                     th:style="${activeTab == 'sss' ? 'display:block;' : 'display:none;'}">
-                    <div class="action-bar" style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
-                        <button type="button" class="btn btn-secondary" onclick="toggleSssEditMode()" id="sssEditBtn">Edit Brackets</button>
-                        <button type="button" class="btn btn-danger" onclick="toggleSssDeleteMode()" id="sssDeleteBtn">Delete Brackets</button>
-                        <button type="button" class="btn btn-primary" onclick="openSssModal()" id="sssAddBtn"><i class='bx bx-plus'></i> Add SSS Bracket</button>
+                    <div class="action-bar"
+                        style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="toggleSssEditMode()"
+                            id="sssEditBtn">Edit Brackets</button>
+                        <button type="button" class="btn btn-danger" onclick="toggleSssDeleteMode()"
+                            id="sssDeleteBtn">Delete Brackets</button>
+                        <button type="button" class="btn btn-primary" onclick="openSssModal()" id="sssAddBtn"><i
+                                class='bx bx-plus'></i> Add SSS Bracket</button>
                     </div>
                     <div class="table-wrapper" id="sssTableWrapper">
                         <table class="table premium-table" id="sssTable">
                             <thead>
                                 <tr>
                                     <th class="cb-col text-center" style="display:none; width: 50px;">
-                                        <input type="checkbox" id="selectAllSss" onclick="toggleAllSssCheckboxes(this)" />
+                                        <input type="checkbox" id="selectAllSss"
+                                            onclick="toggleAllSssCheckboxes(this)" />
                                     </th>
                                     <th>Range From (₱)</th>
                                     <th>Range To (₱)</th>
@@ -141,16 +85,26 @@
                             </thead>
                             <tbody>
                                 <tr th:if="${sssList == null or sssList.isEmpty()}">
-                                    <td colspan="5" class="text-center" id="sssEmptyMsg">No SSS data found for the selected year.</td>
+                                    <td colspan="5" class="text-center" id="sssEmptyMsg">No SSS data found for the
+                                        selected year.</td>
                                 </tr>
                                 <tr th:each="row : ${sssList}" th:data-id="${row.sssId}" class="data-row">
                                     <td class="cb-col text-center" style="display:none;">
-                                        <input type="checkbox" class="row-checkbox sss-checkbox" th:value="${row.sssId}" />
+                                        <input type="checkbox" class="row-checkbox sss-checkbox"
+                                            th:value="${row.sssId}" />
                                     </td>
-                                    <td class="col-rangeFrom" th:data-val="${row.rangeFrom}" th:text="${#numbers.formatDecimal(row.rangeFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-rangeTo" th:data-val="${row.rangeTo}" th:text="${#numbers.formatDecimal(row.rangeTo, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-employeeShare" th:data-val="${row.employeeShare}" th:text="${#numbers.formatDecimal(row.employeeShare, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-employerShare" th:data-val="${row.employerShare}" th:text="${#numbers.formatDecimal(row.employerShare, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-rangeFrom" th:data-val="${row.rangeFrom}"
+                                        th:text="${#numbers.formatDecimal(row.rangeFrom, 1, 'COMMA', 2, 'POINT')}">0.00
+                                    </td>
+                                    <td class="col-rangeTo" th:data-val="${row.rangeTo}"
+                                        th:text="${#numbers.formatDecimal(row.rangeTo, 1, 'COMMA', 2, 'POINT')}">0.00
+                                    </td>
+                                    <td class="col-employeeShare" th:data-val="${row.employeeShare}"
+                                        th:text="${#numbers.formatDecimal(row.employeeShare, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
+                                    <td class="col-employerShare" th:data-val="${row.employerShare}"
+                                        th:text="${#numbers.formatDecimal(row.employerShare, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -160,10 +114,14 @@
                 <!-- WITHHOLDING TAX TAB CONTENT -->
                 <div id="tax-tab" class="tab-content"
                     th:style="${activeTab == 'tax' ? 'display:block;' : 'display:none;'}">
-                    <div class="action-bar" style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
-                        <button type="button" class="btn btn-secondary" onclick="toggleTaxEditMode()" id="taxEditBtn">Edit Brackets</button>
-                        <button type="button" class="btn btn-danger" onclick="toggleTaxDeleteMode()" id="taxDeleteBtn">Delete Brackets</button>
-                        <button type="button" class="btn btn-primary" onclick="openTaxModal()" id="taxAddBtn"><i class='bx bx-plus'></i> Add Tax Bracket</button>
+                    <div class="action-bar"
+                        style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="toggleTaxEditMode()"
+                            id="taxEditBtn">Edit Brackets</button>
+                        <button type="button" class="btn btn-danger" onclick="toggleTaxDeleteMode()"
+                            id="taxDeleteBtn">Delete Brackets</button>
+                        <button type="button" class="btn btn-primary" onclick="openTaxModal()" id="taxAddBtn"><i
+                                class='bx bx-plus'></i> Add Tax Bracket</button>
                     </div>
 
                     <h3 class="frequency-title">Semi-Monthly Brackets</h3>
@@ -186,12 +144,22 @@
                                 </tr>
                                 <tr th:each="row : ${taxSemiList}" th:data-id="${row.taxId}" class="data-row">
                                     <td class="cb-col text-center" style="display:none;">
-                                        <input type="checkbox" class="row-checkbox tax-checkbox" th:value="${row.taxId}" />
+                                        <input type="checkbox" class="row-checkbox tax-checkbox"
+                                            th:value="${row.taxId}" />
                                     </td>
-                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}" th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-compensationTo" th:data-val="${row.compensationTo != null ? row.compensationTo : ''}" th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">0.00</td>
-                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}" th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-taxRate" th:data-val="${row.taxRate}" th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">0%</td>
+                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}"
+                                        th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
+                                    <td class="col-compensationTo"
+                                        th:data-val="${row.compensationTo != null ? row.compensationTo : ''}"
+                                        th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">
+                                        0.00</td>
+                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}"
+                                        th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
+                                    <td class="col-taxRate" th:data-val="${row.taxRate}"
+                                        th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">
+                                        0%</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -217,12 +185,22 @@
                                 </tr>
                                 <tr th:each="row : ${taxMonthlyList}" th:data-id="${row.taxId}" class="data-row">
                                     <td class="cb-col text-center" style="display:none;">
-                                        <input type="checkbox" class="row-checkbox tax-checkbox" th:value="${row.taxId}" />
+                                        <input type="checkbox" class="row-checkbox tax-checkbox"
+                                            th:value="${row.taxId}" />
                                     </td>
-                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}" th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-compensationTo" th:data-val="${row.compensationTo != null ? row.compensationTo : ''}" th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">0.00</td>
-                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}" th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">0.00</td>
-                                    <td class="col-taxRate" th:data-val="${row.taxRate}" th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">0%</td>
+                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}"
+                                        th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
+                                    <td class="col-compensationTo"
+                                        th:data-val="${row.compensationTo != null ? row.compensationTo : ''}"
+                                        th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">
+                                        0.00</td>
+                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}"
+                                        th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">
+                                        0.00</td>
+                                    <td class="col-taxRate" th:data-val="${row.taxRate}"
+                                        th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">
+                                        0%</td>
                                 </tr>
                             </tbody>
                         </table>

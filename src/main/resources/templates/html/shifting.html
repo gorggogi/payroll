@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -108,62 +108,7 @@
 </head>
 <body>
     <div class="container">
-        <nav>
-            <div class="nav-header">
-                <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
-            </div>
-            <ul>
-                <a href="/admin/home" title="Home"><li ><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-
-                <!-- Attendance group -->
-                <a title="Attendance" class="nav-dropdown-toggle active">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
-                    <li><a th:href="@{/admin/leave}" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
-                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
-                    <li class="active"><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
-                </ul>
-
-                <!-- Payroll group -->
-                <a title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a href="/admin/adjustments">Adjustments</a></li>
-                </ul>
-                
-                <!-- Tables group -->
-                <a title="Tables" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-table"></i>
-                    <span class="nav-label">Tables</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a href="/admin/holidays">Holidays</a></li>
-                    <li><a href="/admin/tables/premium">Premium Tables</a></li>
-                </ul>
-
-                
-                <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-            </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
-        </nav>
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
     <section>
         <div class="head">
             <h1>Shifting</h1>
@@ -177,7 +122,7 @@
         </div>
 
         <h2 class="no-print" style="margin: 1.5rem 0 0.5rem 0;">Schedule classes (weekly pattern)</h2>
-        <p class="no-payroll no-print">Create a <b>schedule class</b> for the month, set Sun–Sat, then tick employees who use it. One schedule per employee per month.</p>
+        <p class="no-payroll no-print">Create a <b>schedule class</b> for the month, set Sunâ€“Sat, then tick employees who use it. One schedule per employee per month.</p>
 
         <form method="get" th:action="@{/admin/attendance/shifts}" class="attendance-filter no-print" style="margin-bottom: 1rem; flex-wrap: wrap;">
             <div>
@@ -237,7 +182,7 @@
                     <input type="hidden" name="scheduleYear" th:value="${scheduleYear}" />
                     <input type="hidden" name="scheduleMonth" th:value="${scheduleMonth}" />
                     <label for="newTemplateName">Name</label>
-                    <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director — March" />
+                    <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director â€” March" />
                     <button type="submit" class="btn-print no-print" style="margin-top: 1rem;">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
@@ -246,12 +191,12 @@
         </div>
 
         <p th:if="${scheduleTemplates == null or #lists.size(scheduleTemplates) == 0}" class="no-payroll no-print">
-            No schedule class for this month yet — click <b>New schedule class</b>.
+            No schedule class for this month yet â€” click <b>New schedule class</b>.
         </p>
 
         <div th:if="${selectedTemplateId != null}" class="schedule-toolbar no-print">
             <button type="button" class="btn-print" onclick="openEditScheduleModal()">
-                <i class="fa-solid fa-calendar-week"></i> Edit Sun–Sat
+                <i class="fa-solid fa-calendar-week"></i> Edit Sunâ€“Sat
             </button>
             <button type="button" class="btn-print" onclick="openAssignEmployeesModal()">
                 <i class="fa-solid fa-user-group"></i> Assign employees
@@ -272,7 +217,7 @@
                 <h2 style="margin: 0 0 0.5rem 0;">Edit schedule class</h2>
                 <p class="no-payroll" style="margin-bottom: 1rem;" th:text="${selectedTemplateName}">Name</p>
                 <p class="no-payroll" style="margin-bottom: 1rem;"
-                   th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear} · Sun–Sat|"></p>
+                   th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear} Â· Sunâ€“Sat|"></p>
 
                 <form th:action="@{/admin/attendance/schedule-template/save-days}" method="post" id="editScheduleForm">
                     <input type="hidden" name="templateId" th:value="${selectedTemplateId}" />
@@ -337,7 +282,7 @@
                 <form th:action="@{/admin/attendance/schedule-template/assign}" method="post" id="assignEmployeesForm">
                     <input type="hidden" name="assignTemplateId" th:value="${selectedTemplateId}" />
                     <input type="search" class="employee-assign-search" id="employeeAssignFilter"
-                           placeholder="Search by name…" autocomplete="off" oninput="filterAssignEmployees(this.value)" />
+                           placeholder="Search by nameâ€¦" autocomplete="off" oninput="filterAssignEmployees(this.value)" />
 
                     <div class="employee-assign-grid" th:if="${employees != null and #lists.size(employees) > 0}">
                         <label class="employee-assign-chip employee-assign-row"
@@ -348,7 +293,7 @@
                             <span th:text="${e.lastName + ', ' + e.firstName}">Name</span>
                         </label>
                     </div>
-                    <p th:if="${employees == null or #lists.size(employees) == 0}" class="alert-error">No employees — add employees first.</p>
+                    <p th:if="${employees == null or #lists.size(employees) == 0}" class="alert-error">No employees â€” add employees first.</p>
 
                     <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
                         <button type="submit" class="btn-print" th:disabled="${employees == null or #lists.size(employees) == 0}">

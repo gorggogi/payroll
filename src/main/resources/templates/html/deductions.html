@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -12,86 +12,7 @@
 </head>
 <body>
     <div class="container">
-        <nav class="no-print">
-            <div class="nav-header">
-                <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i class="fa-solid fa-chevron-left"></i></button>
-            </div>
-            <ul>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" href="/employee/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a sec:authorize="hasRole('ADMIN')" href="/admin/employees" title="Employees"><li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-                <!-- Attendance group - ADMIN -->
-                <a sec:authorize="hasRole('ADMIN')" title="Attendance" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
-                    <li><a href="/admin/attendance">Daily Time Record</a></li>
-                    <li><a href="/admin/leave" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li><a href="/admin/attendance/overtime">Overtime</a></li>
-                    <li><a href="/admin/attendance/time-adjustments">Adjustments</a></li>
-                    <li><a href="/admin/attendance/shifts">Shifting</a></li>
-                </ul>
-
-                <!-- Attendance group - EMPLOYEE -->
-                <a sec:authorize="hasRole('EMPLOYEE')" title="Attendance" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
-                    <li><a th:href="@{/employee/leave}" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Responded leave requests" aria-label="Responded leave requests" th:style="${respondedLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li><a th:href="@{/employee/attendance/overtime}">Overtime</a></li>
-                </ul>
-
-                <a sec:authorize="hasRole('ADMIN')" title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a th:href="@{/admin/adjustments}">Adjustments</a></li>
-                </ul>
-                <a sec:authorize="hasRole('EMPLOYEE')" title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a th:href="@{/employee/deductions}">Deductions</a></li>
-                    <li><a th:href="@{/employee/adjustments}">Adjustments</a></li>
-                </ul>
-                <!-- Tables group -->
-                <a sec:authorize="hasRole('ADMIN')" title="Tables" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-table"></i>
-                    <span class="nav-label">Tables</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/holidays}">Holidays</a></li>
-                    <li><a th:href="@{/admin/tables/premium}">Premium Tables</a></li>
-                </ul>
-                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-                <a sec:authorize="hasRole('EMPLOYEE')" th:href="@{/employee/settings}" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-            </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span class="nav-label">Logout</span></a>
-        </nav>
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
         <section>
             <div class="head">
@@ -244,7 +165,7 @@
                     <label for="editEndDate">End date *</label>
                     <input type="date" id="editEndDate" name="endDate" required>
                 </div>
-                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6‑month loan would use Start = first month, End = 6 months later.</p>
+                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6â€‘month loan would use Start = first month, End = 6 months later.</p>
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalEditDeduction')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-save"></i> Save changes</button>
@@ -291,7 +212,7 @@
                 </li>
             </ul>
             <p class="no-data" th:if="${deductionTypes == null or deductionTypes.isEmpty()}">
-                No types yet. Click “Add type” or use “Add deduction” → “Add new type”.
+                No types yet. Click â€œAdd typeâ€ or use â€œAdd deductionâ€ â†’ â€œAdd new typeâ€.
             </p>
         </div>
     </div>
@@ -375,7 +296,7 @@
                     <select id="deductionId" name="deductionId" required>
                         <option value="">Select type</option>
                         <option th:each="d : ${deductionTypes}" th:value="${d.deductionId}" th:text="${d.deductionName + ' (' + d.deductionType + ')'}"></option>
-                        <option value="ADD_TYPE">── Add new type ──</option>
+                        <option value="ADD_TYPE">â”€â”€ Add new type â”€â”€</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -405,7 +326,7 @@
                     <label for="endDate">End date *</label>
                     <input type="date" id="endDate" name="endDate" required>
                 </div>
-                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6‑month loan would use Start = first month, End = 6 months later.</p>
+                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6â€‘month loan would use Start = first month, End = 6 months later.</p>
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalAddDeduction')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-link"></i> Assign</button>
@@ -445,4 +366,5 @@
     <script src="/js/nav.js"></script>
 </body>
 </html>
+
 
