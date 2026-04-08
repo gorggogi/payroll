@@ -93,7 +93,7 @@
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
             <div sec:authorize="hasRole('ADMIN')" class="ot-panel" th:if="${pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
-                <h2><i class="fa-solid fa-clock"></i> Pending overtime requests</h2>
+                <h2>Pending overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>
                         <tr class="attendanceHeader">

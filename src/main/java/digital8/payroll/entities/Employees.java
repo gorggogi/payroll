@@ -120,13 +120,6 @@ public class Employees{
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
-    public boolean isHolidayPayEligible() {
-        return holidayPayEligible;
-    }
-
-    public void setHolidayPayEligible(boolean holidayPayEligible) {
-        this.holidayPayEligible = holidayPayEligible;
-    }
 
     public Users getUser() {
         return user;
