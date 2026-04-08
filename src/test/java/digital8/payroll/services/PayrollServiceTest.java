@@ -33,6 +33,7 @@ import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.SssTableRepository;
 import digital8.payroll.repositories.TaxTableRepository;
 import digital8.payroll.repositories.PhilhealthTableRepository;
+import digital8.payroll.repositories.PagibigTableRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class PayrollServiceTest {
@@ -42,6 +43,7 @@ public class PayrollServiceTest {
     @Mock private SssTableRepository sssTableRepository;
     @Mock private TaxTableRepository taxTableRepository;
     @Mock private PhilhealthTableRepository philhealthTableRepository;
+    @Mock private PagibigTableRepository pagibigTableRepository;
     @Mock private EmployeeDeductionsRepository employeeDeductionsRepository;
     @Mock private DeductionsRepository deductionsRepository;
     @Mock private HolidayCalendarService holidayCalendarService;

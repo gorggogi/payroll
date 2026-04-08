@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Tables | Digital8</title>
+
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" th:href="@{/css/premiumTables.css}">
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+</head>
+
+<body class="light">
+
+    <div class="container">
+        <nav>
+            <div class="nav-header">
+                <h1><span class="nav-brand">Payroll System</span></h1>
+                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            </div>
+            <ul>
+                <a href="/admin/home" title="Home">
+                    <li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li>
+                </a>
+                <a href="/admin/employees" title="Employees">
+                    <li><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li>
+                </a>
+
+                <!-- Attendance group -->
+                <a title="Attendance" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span class="nav-label">Attendance</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
+                    <li><a href="/admin/leave" title="Leave">
+                            <span class="nav-label">Leave</span>
+                            <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator"
+                                title="Pending leave requests" aria-label="Pending leave requests"
+                                th:style="${pendingLeaveCount != null and pendingLeaveCount > 0} ? '' : 'display:none'">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </span>
+                        </a></li>
+                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
+                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
+                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
+                </ul>
+
+                <!-- Payroll group -->
+                <a title="Payroll" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-money-bill"></i>
+                    <span class="nav-label">Payroll</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
+                    <li><a href="/admin/deductions">Deductions</a></li>
+                    <li><a href="/admin/adjustments">Adjustments</a></li>
+                </ul>
+
+                <!-- Tables group -->
+                <a title="Tables" class="nav-dropdown-toggle">
+                    <i class="fa-solid fa-table"></i>
+                    <span class="nav-label">Tables</span>
+                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
+                </a>
+                <ul class="nav-dropdown-menu">
+                    <li><a href="/admin/holidays">Holidays</a></li>
+                    <li><a href="/admin/tables/premium">Premium Tables</a></li>
+                </ul>
+
+                <a href="/admin/settings" title="Settings">
+                    <li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li>
+                </a>
+            </ul>
+            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span
+                    class="nav-label">Logout</span></a>
+        </nav>
+        <section>
+            <div class="header" style="justify-content: space-between; align-items: center; padding-bottom: 15px;">
+                <h1 class="page-title" style="margin: 0;">Premium Tables</h1>
+                <!-- Year Selector -->
+                <div class="year-selector-wrapper">
+                    <form id="yearForm" action="/admin/tables/premium" method="get" class="flex-row-center" style="margin: 0;">
+                        <input type="hidden" name="tab" id="activeTabField" th:value="${activeTab}" />
+                        <label for="yearSelect" style="margin-right: 10px; font-weight: 500; font-size: 15px; color: #495057;">Effective Year:</label>
+                        <select name="year" id="yearSelect" onchange="document.getElementById('yearForm').submit()"
+                            class="year-dropdown" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #ced4da;">
+                            <!-- Basic loop for years -->
+                            <option th:each="y : ${#numbers.sequence(2023, 2030)}" th:value="${y}" th:text="${y}"
+                                th:selected="${y == currentYear}"></option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div style="margin-bottom: 25px;">
+                <div class="tabs">
+                    <button class="tab-btn" th:classappend="${activeTab == 'sss'} ? 'active' : ''"
+                        onclick="switchThemeTab('sss')">SSS</button>
+                    <button class="tab-btn" th:classappend="${activeTab == 'tax'} ? 'active' : ''"
+                        onclick="switchThemeTab('tax')">Withholding Tax</button>
+                    <button class="tab-btn" th:classappend="${activeTab == 'philhealth'} ? 'active' : ''"
+                        onclick="switchThemeTab('philhealth')">PhilHealth</button>
+                    <button class="tab-btn" th:classappend="${activeTab == 'pagibig'} ? 'active' : ''"
+                        onclick="switchThemeTab('pagibig')">Pag-IBIG</button>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <!-- SSS TAB CONTENT -->
+                <div id="sss-tab" class="tab-content"
+                    th:style="${activeTab == 'sss' ? 'display:block;' : 'display:none;'}">
+                    <div class="action-bar" style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="toggleSssEditMode()" id="sssEditBtn">Edit Brackets</button>
+                        <button type="button" class="btn btn-danger" onclick="toggleSssDeleteMode()" id="sssDeleteBtn">Delete Brackets</button>
+                        <button type="button" class="btn btn-primary" onclick="openSssModal()" id="sssAddBtn"><i class='bx bx-plus'></i> Add SSS Bracket</button>
+                    </div>
+                    <div class="table-wrapper" id="sssTableWrapper">
+                        <table class="table premium-table" id="sssTable">
+                            <thead>
+                                <tr>
+                                    <th class="cb-col text-center" style="display:none; width: 50px;">
+                                        <input type="checkbox" id="selectAllSss" onclick="toggleAllSssCheckboxes(this)" />
+                                    </th>
+                                    <th>Range From (₱)</th>
+                                    <th>Range To (₱)</th>
+                                    <th>Employee Share (₱)</th>
+                                    <th>Employer Share (₱)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${sssList == null or sssList.isEmpty()}">
+                                    <td colspan="5" class="text-center" id="sssEmptyMsg">No SSS data found for the selected year.</td>
+                                </tr>
+                                <tr th:each="row : ${sssList}" th:data-id="${row.sssId}" class="data-row">
+                                    <td class="cb-col text-center" style="display:none;">
+                                        <input type="checkbox" class="row-checkbox sss-checkbox" th:value="${row.sssId}" />
+                                    </td>
+                                    <td class="col-rangeFrom" th:data-val="${row.rangeFrom}" th:text="${#numbers.formatDecimal(row.rangeFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-rangeTo" th:data-val="${row.rangeTo}" th:text="${#numbers.formatDecimal(row.rangeTo, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-employeeShare" th:data-val="${row.employeeShare}" th:text="${#numbers.formatDecimal(row.employeeShare, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-employerShare" th:data-val="${row.employerShare}" th:text="${#numbers.formatDecimal(row.employerShare, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- WITHHOLDING TAX TAB CONTENT -->
+                <div id="tax-tab" class="tab-content"
+                    th:style="${activeTab == 'tax' ? 'display:block;' : 'display:none;'}">
+                    <div class="action-bar" style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                        <button type="button" class="btn btn-secondary" onclick="toggleTaxEditMode()" id="taxEditBtn">Edit Brackets</button>
+                        <button type="button" class="btn btn-danger" onclick="toggleTaxDeleteMode()" id="taxDeleteBtn">Delete Brackets</button>
+                        <button type="button" class="btn btn-primary" onclick="openTaxModal()" id="taxAddBtn"><i class='bx bx-plus'></i> Add Tax Bracket</button>
+                    </div>
+
+                    <h3 class="frequency-title">Semi-Monthly Brackets</h3>
+                    <div class="table-wrapper mb-4" id="taxSemiTableWrapper">
+                        <table class="table premium-table" id="taxSemiTable">
+                            <thead>
+                                <tr>
+                                    <th class="cb-col text-center" style="display:none; width: 50px;">
+                                        <input type="checkbox" onclick="toggleAllCheckboxes(this, 'taxSemiTable')" />
+                                    </th>
+                                    <th>Compensation From (₱)</th>
+                                    <th>Compensation To (₱)</th>
+                                    <th>Additional Tax (₱)</th>
+                                    <th>Tax Rate (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${taxSemiList == null or taxSemiList.isEmpty()}">
+                                    <td colspan="4" class="text-center">No semi-monthly tax brackets defined.</td>
+                                </tr>
+                                <tr th:each="row : ${taxSemiList}" th:data-id="${row.taxId}" class="data-row">
+                                    <td class="cb-col text-center" style="display:none;">
+                                        <input type="checkbox" class="row-checkbox tax-checkbox" th:value="${row.taxId}" />
+                                    </td>
+                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}" th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-compensationTo" th:data-val="${row.compensationTo != null ? row.compensationTo : ''}" th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">0.00</td>
+                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}" th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-taxRate" th:data-val="${row.taxRate}" th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 class="frequency-title mt-4">Monthly Brackets</h3>
+                    <div class="table-wrapper" id="taxMonthlyTableWrapper">
+                        <table class="table premium-table" id="taxMonthlyTable">
+                            <thead>
+                                <tr>
+                                    <th class="cb-col text-center" style="display:none; width: 50px;">
+                                        <input type="checkbox" onclick="toggleAllCheckboxes(this, 'taxMonthlyTable')" />
+                                    </th>
+                                    <th>Compensation From (₱)</th>
+                                    <th>Compensation To (₱)</th>
+                                    <th>Additional Tax (₱)</th>
+                                    <th>Tax Rate (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${taxMonthlyList == null or taxMonthlyList.isEmpty()}">
+                                    <td colspan="4" class="text-center">No monthly tax brackets defined.</td>
+                                </tr>
+                                <tr th:each="row : ${taxMonthlyList}" th:data-id="${row.taxId}" class="data-row">
+                                    <td class="cb-col text-center" style="display:none;">
+                                        <input type="checkbox" class="row-checkbox tax-checkbox" th:value="${row.taxId}" />
+                                    </td>
+                                    <td class="col-compensationFrom" th:data-val="${row.compensationFrom}" th:text="${#numbers.formatDecimal(row.compensationFrom, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-compensationTo" th:data-val="${row.compensationTo != null ? row.compensationTo : ''}" th:text="${row.compensationTo != null ? #numbers.formatDecimal(row.compensationTo, 1, 'COMMA', 2, 'POINT') : 'AND ABOVE'}">0.00</td>
+                                    <td class="col-additionalTax" th:data-val="${row.additionalTax}" th:text="${#numbers.formatDecimal(row.additionalTax, 1, 'COMMA', 2, 'POINT')}">0.00</td>
+                                    <td class="col-taxRate" th:data-val="${row.taxRate}" th:text="${#numbers.formatDecimal(row.taxRate * 100, 1, 'COMMA', 0, 'POINT')} + '%'">0%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PHILHEALTH TAB CONTENT (Flat Rate) -->
+                <div id="philhealth-tab" class="tab-content"
+                    th:style="${activeTab == 'philhealth' ? 'display:block;' : 'display:none;'}">
+                    <div class="rate-card">
+                        <h3>PhilHealth Contribution Rate</h3>
+                        <p class="rate-description">Set the flat employee contribution rate for the year <span
+                                th:text="${currentYear}"></span>.</p>
+
+                        <form th:action="@{/admin/tables/premium/philhealth/save}" method="post" class="rate-form">
+                            <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
+
+                            <div class="form-group flex-row-center" style="gap: 15px;">
+                                <label for="philhealthRateVal">Rate (%):</label>
+                                <input type="number" id="philhealthRateVal" name="rate" step="0.01" min="0" required
+                                    th:value="${philhealthRate}" class="form-control" style="width: 150px;" />
+                                <button type="submit" class="btn btn-primary">Save Rate</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- PAG-IBIG TAB CONTENT (Flat Rate) -->
+                <div id="pagibig-tab" class="tab-content"
+                    th:style="${activeTab == 'pagibig' ? 'display:block;' : 'display:none;'}">
+                    <div class="rate-card">
+                        <h3>Pag-IBIG Contribution Rate</h3>
+                        <p class="rate-description">Set the flat employee contribution rate for the year <span
+                                th:text="${currentYear}"></span>.</p>
+
+                        <form th:action="@{/admin/tables/premium/pagibig/save}" method="post" class="rate-form">
+                            <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
+
+                            <div class="form-group flex-row-center" style="gap: 15px;">
+                                <label for="pagibigRateVal">Rate (%):</label>
+                                <input type="number" id="pagibigRateVal" name="rate" step="0.01" min="0" required
+                                    th:value="${pagibigRate}" class="form-control" style="width: 150px;" />
+                                <button type="submit" class="btn btn-primary">Save Rate</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SSS Modal -->
+        <div id="sssModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="sssModalTitle">Add SSS Row</h3>
+                    <span class="modal-close" onclick="closeSssModal()">&times;</span>
+                </div>
+                <form th:action="@{/admin/tables/premium/sss/save}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="sssId" name="sssId" />
+                        <input type="hidden" id="sssEffectiveYear" name="effectiveYear" th:value="${currentYear}" />
+
+                        <div class="form-group">
+                            <label for="sssRangeFrom">Range From (₱)</label>
+                            <input type="number" id="sssRangeFrom" name="rangeFrom" step="0.01" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="sssRangeTo">Range To (₱)</label>
+                            <input type="number" id="sssRangeTo" name="rangeTo" step="0.01" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="sssEmployeeShare">Employee Share (₱)</label>
+                            <input type="number" id="sssEmployeeShare" name="employeeShare" step="0.01" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="sssEmployerShare">Employer Share (₱)</label>
+                            <input type="number" id="sssEmployerShare" name="employerShare" step="0.01" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeSssModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tax Modal -->
+        <div id="taxModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="taxModalTitle">Add Tax Bracket</h3>
+                    <span class="modal-close" onclick="closeTaxModal()">&times;</span>
+                </div>
+                <form th:action="@{/admin/tables/premium/tax/save}" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" id="taxId" name="taxId" />
+                        <input type="hidden" id="taxEffectiveYear" name="effectiveYear" th:value="${currentYear}" />
+
+                        <div class="form-group">
+                            <label for="taxPayFrequency">Pay Frequency</label>
+                            <select id="taxPayFrequency" name="payFrequency" required>
+                                <option value="SEMI_MONTHLY">Semi-Monthly</option>
+                                <option value="MONTHLY">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="taxCompensationFrom">Compensation From (₱)</label>
+                            <input type="number" id="taxCompensationFrom" name="compensationFrom" step="0.01"
+                                required />
+                        </div>
+                        <div class="form-group">
+                            <label for="taxCompensationTo">Compensation To (₱)</label>
+                            <input type="number" id="taxCompensationTo" name="compensationTo" step="0.01"
+                                placeholder="Leave blank for AND ABOVE" />
+                        </div>
+                        <div class="form-group">
+                            <label for="taxAdditionalTax">Additional Baseline Tax (₱)</label>
+                            <input type="number" id="taxAdditionalTax" name="additionalTax" step="0.01" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="taxTaxRate">Tax Rate (%)</label>
+                            <!-- In DB it's decimal, like 0.15 for 15%. This script will convert for UI if needed, but simplest is enter decimal -->
+                            <input type="number" id="taxTaxRate" name="taxRate" step="0.01"
+                                placeholder="Ex: 0.15 for 15%" required />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeTaxModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+    <script src="/js/nav.js"></script>
+    <script th:src="@{/js/navIndicator.js}"></script>
+    <script th:src="@{/js/premiumTables.js}"></script>
+</body>
+
+</html>
