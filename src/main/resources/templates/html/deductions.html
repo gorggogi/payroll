@@ -93,6 +93,39 @@
             <p th:if="${message}" class="alert-success" th:text="${message}"></p>
 
             <div class="deduction-section">
+                <!-- Deduction summary cards for employees -->
+                <div sec:authorize="hasRole('EMPLOYEE')" class="deduction-card leave-card">
+                    <h2>Deduction Balance</h2>
+                    <div class="balance-grid">
+                        <div class="balance-item">
+                            <div class="balance-info">
+                                <h3>Outstanding Obligation</h3>
+                                <p class="balance-days">
+                                    <span th:text="${deductionOutstandingObligation}">0.00</span> PHP
+                                </p>
+                                <small>Total obligation for all active deductions</small>
+                            </div>
+                        </div>
+                        <div class="balance-item">
+                            <div class="balance-info">
+                                <h3>Monthly Cutoff</h3>
+                                <p class="balance-days">
+                                    <span th:text="${deductionMonthlyCutoff}">0.00</span> PHP
+                                </p>
+                                <small>Amount deducted this cutoff</small>
+                            </div>
+                        </div>
+                        <div class="balance-item">
+                            <div class="balance-info">
+                                <h3>Outstanding Balance</h3>
+                                <p class="balance-days">
+                                    <span th:text="${deductionOutstandingBalance}">0.00</span> PHP
+                                </p>
+                                <small>Remaining balance for all deductions</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="section-head deduction-section-head">
                     <h2 class="no-print"><i class="fa-solid fa-user-minus"></i> <span sec:authorize="hasRole('ADMIN')">Employee deductions</span><span sec:authorize="hasRole('EMPLOYEE')">My deductions</span></h2>
                     <div sec:authorize="hasRole('ADMIN')" class="deduction-section-actions no-print">
@@ -152,7 +185,63 @@
                                     <input type="hidden" name="id" th:value="${row.employeeDeductionId}">
                                     <button type="submit" class="btn-remove" title="Remove"><i class="fa-solid fa-trash"></i></button>
                                 </form>
+                                <button type="button" class="btn-edit" title="Edit" onclick="openEditDeductionModal(this)"
+                                    th:data-id="${row.employeeDeductionId}"
+                                    th:data-employee-id="${row.employeeId}"
+                                    th:data-deduction-id="${row.deductionId}"
+                                    th:data-amount="${row.amount}"
+                                    th:data-recurring="${row.recurring}"
+                                    th:data-start="${row.startDate}"
+                                    th:data-end="${row.endDate}">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
                             </td>
+                            <!-- Modal: Edit deduction assignment -->
+    <div id="modalEditDeduction" class="deduction-modal">
+        <div class="deduction-modal-content">
+            <div class="modal-header modal-header--deduction">
+                <h3>Edit deduction (assign to employee)</h3>
+                <button type="button" class="modal-close" onclick="closeModal('modalEditDeduction')">&times;</button>
+            </div>
+            <form id="editDeductionForm" action="/admin/deductions/assign/edit" method="post">
+                <input type="hidden" id="editDeductionId" name="id">
+                <div class="form-group">
+                    <label for="editEmployeeId">Employee *</label>
+                    <select id="editEmployeeId" name="employeeId" required>
+                        <option value="">Select employee</option>
+                        <option th:each="e : ${employees}" th:value="${e.employeeId}" th:text="${e.lastName + ', ' + e.firstName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editDeductionTypeId">Deduction type *</label>
+                    <select id="editDeductionTypeId" name="deductionId" required>
+                        <option value="">Select type</option>
+                        <option th:each="d : ${deductionTypes}" th:value="${d.deductionId}" th:text="${d.deductionName + ' (' + d.deductionType + ')'}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editAmount">Amount (PHP) *</label>
+                    <input type="number" id="editAmount" name="amount" required min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="editRecurring" name="isRecurring" value="true"> Recurring (deduct every pay period)</label>
+                </div>
+                <div class="form-group">
+                    <label for="editStartDate">Start date *</label>
+                    <input type="date" id="editStartDate" name="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEndDate">End date *</label>
+                    <input type="date" id="editEndDate" name="endDate" required>
+                </div>
+                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6‑month loan would use Start = first month, End = 6 months later.</p>
+                <div class="form-actions">
+                    <button type="button" class="btn-reset" onclick="closeModal('modalEditDeduction')">Cancel</button>
+                    <button type="submit" class="btn-apply"><i class="fa-solid fa-save"></i> Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
                         </tr>
                     </tbody>
                 </table>
@@ -164,10 +253,10 @@
     </div>
 
     <!-- Modal: Manage deduction types -->
-    <div id="modalManageTypes" class="deduction-modal" style="display:none; z-index: 2000;">
-        <div class="deduction-modal-content deduction-modal-content--types" style="max-height: 85vh; overflow-y: auto;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">Deduction types</h3>
+    <div id="modalManageTypes" class="deduction-modal">
+        <div class="deduction-modal-content deduction-modal-content--types">
+            <div class="modal-header modal-header--deduction">
+                <h3>Deduction types</h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalManageTypes')">&times;</button>
             </div>
             <div class="deduction-types-toolbar">
@@ -198,10 +287,10 @@
     </div>
 
     <!-- Modal: Add deduction type -->
-    <div id="modalAddType" class="deduction-modal" style="display:none; z-index: 2100;">
+    <div id="modalAddType" class="deduction-modal">
         <div class="deduction-modal-content">
-            <div class="modal-header">
-                <h3 style="margin: 0;">Add deduction type</h3>
+            <div class="modal-header modal-header--deduction">
+                <h3>Add deduction type</h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalAddType')">&times;</button>
             </div>
             <form action="/admin/deductions/types" method="post">
@@ -227,10 +316,10 @@
     </div>
 
     <!-- Modal: Edit deduction type -->
-    <div id="modalEditType" class="deduction-modal" style="display:none; z-index: 2100;">
+    <div id="modalEditType" class="deduction-modal">
         <div class="deduction-modal-content">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">Edit deduction type</h3>
+            <div class="modal-header modal-header--deduction">
+                <h3>Edit deduction type</h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalEditType')">&times;</button>
             </div>
             <form action="/admin/deductions/types/update" method="post">
@@ -257,10 +346,10 @@
     </div>
 
     <!-- Modal: Add deduction (assign to employee) -->
-    <div id="modalAddDeduction" class="deduction-modal" style="display:none; z-index: 1000;">
+    <div id="modalAddDeduction" class="deduction-modal">
         <div class="deduction-modal-content">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;">
-                <h3 style="margin: 0;">Add deduction (assign to employee)</h3>
+            <div class="modal-header modal-header--deduction">
+                <h3>Add deduction (assign to employee)</h3>
                 <button type="button" class="modal-close" onclick="closeModal('modalAddDeduction')">&times;</button>
             </div>
             <form action="/admin/deductions/assign" method="post">
