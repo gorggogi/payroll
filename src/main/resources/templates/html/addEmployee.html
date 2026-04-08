@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -15,62 +15,7 @@
 
 <body>
     <div class="container">
-        <nav>
-            <div class="nav-header">
-                <h1><span class="nav-brand">Payroll System</span></h1>
-                <button class="nav-toggle" id="navToggle" type="button" aria-label="Toggle navigation"><i
-                        class="fa-solid fa-chevron-left"></i></button>
-            </div>
-            <ul>
-                <a href="/admin/home" title="Home"><li><i class="fa-solid fa-house"></i><span class="nav-label">Home</span></li></a>
-                <a href="/admin/employees" title="Employees"><li class="active"><i class="fa-solid fa-people-group"></i><span class="nav-label">Employees</span></li></a>
-
-                <!-- Attendance group -->
-                <a title="Attendance" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-calendar"></i>
-                    <span class="nav-label">Attendance</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
-                    <li><a href="/admin/leave" title="Leave">
-                        <span class="nav-label">Leave</span>
-                        <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount > 0} ? '' : 'display:none'">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </span>
-                    </a></li>
-                    <li><a th:href="@{/admin/attendance/overtime}">Overtime</a></li>
-                    <li><a th:href="@{/admin/attendance/time-adjustments}">Adjustments</a></li>
-                    <li><a th:href="@{/admin/attendance/shifts}">Shifting</a></li>
-                </ul>
-
-                <!-- Payroll group -->
-                <a title="Payroll" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-money-bill"></i>
-                    <span class="nav-label">Payroll</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a th:href="@{/payroll/{id}(id=${emp_id})}" href="#">Payroll</a></li>
-                    <li><a href="/admin/deductions">Deductions</a></li>
-                    <li><a href="/admin/adjustments">Adjustments</a></li>
-                </ul>
-                
-                <!-- Tables group -->
-                <a title="Tables" class="nav-dropdown-toggle">
-                    <i class="fa-solid fa-table"></i>
-                    <span class="nav-label">Tables</span>
-                    <i class="fa-solid fa-chevron-down nav-dropdown-icon"></i>
-                </a>
-                <ul class="nav-dropdown-menu">
-                    <li><a href="/admin/holidays">Holidays</a></li>
-                </ul>
-
-                <a href="/admin/settings" title="Settings"><li><i class="fa-solid fa-gear"></i><span class="nav-label">Settings</span></li></a>
-            </ul>
-            <a href="/logout" class="logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i><span
-                    class="nav-label">Logout</span></a>
-        </nav>
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
         <section>
             <div class="head">
@@ -174,16 +119,16 @@
                     <div class="form-group">
                         <label for="factorRate">Pay factor (days/month) *</label>
                         <select id="factorRate" name="factorRate" required>
-                            <option value="20">20 — monthly ÷ 20 (common)</option>
-                            <option value="21.75" selected>21.75 — DOLE-style (52×5÷12)</option>
-                            <option value="22">22 — alternate policy</option>
-                            <option value="24">24 — 6-day week variant</option>
+                            <option value="20">20 â€” monthly Ã· 20 (common)</option>
+                            <option value="21.75" selected>21.75 â€” DOLE-style (52Ã—5Ã·12)</option>
+                            <option value="22">22 â€” alternate policy</option>
+                            <option value="24">24 â€” 6-day week variant</option>
                         </select>
-                        <small>HR picks the rule your company uses for monthly → daily rate.</small>
+                        <small>HR picks the rule your company uses for monthly â†’ daily rate.</small>
                     </div>
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label"><input type="checkbox" name="holidayPayEligible" value="true" /> Holiday Pay Eligible</label>
-                        <small>If checked, this employee receives 2× pay on regular holidays.</small>
+                        <small>If checked, this employee receives 2Ã— pay on regular holidays.</small>
                     </div>
                 </div>
 

@@ -8,6 +8,7 @@ import digital8.payroll.repositories.SssTableRepository;
 import digital8.payroll.repositories.PhilhealthTableRepository;
 import digital8.payroll.repositories.TaxTableRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
+import digital8.payroll.repositories.PagibigTableRepository;
 import digital8.payroll.repositories.DeductionsRepository;
 import digital8.payroll.dto.DeductionBreakdownItem;
 import digital8.payroll.entities.Deductions;
@@ -17,6 +18,8 @@ import digital8.payroll.entities.Attendance;
 import digital8.payroll.entities.SssTable;
 import digital8.payroll.entities.TaxTable;
 import digital8.payroll.entities.EmployeeDeductions;
+import digital8.payroll.entities.PagibigTable;
+import digital8.payroll.entities.PhilhealthTable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -72,6 +75,8 @@ public class PayrollService {
     private SssTableRepository sssTableRepository;
     @Autowired
     private PhilhealthTableRepository philhealthTableRepository;
+    @Autowired
+    private PagibigTableRepository pagibigTableRepository;
     @Autowired
     private TaxTableRepository taxTableRepository;
     @Autowired
@@ -316,8 +321,8 @@ public class PayrollService {
         // (SSS/PhilHealth/HDMF),
         // regardless of employment type.
         sss = computeSss(premiumBase, year);
-        philhealth = computePhilhealth(premiumBase);
-        pagibig = computePagibig(premiumBase);
+        philhealth = computePhilhealth(premiumBase, year);
+        pagibig = computePagibig(premiumBase, year);
 
         // HR policy: withholding tax follows bracket tables (not 5% EWT), even for Job
         // Order.
@@ -417,17 +422,29 @@ public class PayrollService {
     }
 
     /**
-     * PhilHealth: flat formula (premiumBase × 5%) / 2
+     * PhilHealth: flat formula (premiumBase × Rate)
+     * Fetched dynamically from table, falling back to 2.5% if unconfigured.
      */
-    private BigDecimal computePhilhealth(BigDecimal premiumBase) {
-        return premiumBase.multiply(PHILHEALTH_RATE).setScale(SCALE, ROUND);
+    private BigDecimal computePhilhealth(BigDecimal premiumBase, int year) {
+        BigDecimal activeRate = PHILHEALTH_RATE;
+        List<PhilhealthTable> rates = philhealthTableRepository.findByEffectiveYearOrderByRangeFromAsc(year);
+        if (rates != null && !rates.isEmpty() && rates.get(0).getEmployeeShare() != null) {
+            activeRate = rates.get(0).getEmployeeShare().divide(new BigDecimal("100"), 4, ROUND);
+        }
+        return premiumBase.multiply(activeRate).setScale(SCALE, ROUND);
     }
 
     /**
-     * Pag-IBIG (HDMF): flat 2% of premium base, no cap.
+     * Pag-IBIG (HDMF): flat formula (premiumBase × Rate)
+     * Fetched dynamically from table, falling back to 2.0% if unconfigured.
      */
-    private BigDecimal computePagibig(BigDecimal premiumBase) {
-        return premiumBase.multiply(PAGIBIG_RATE).setScale(SCALE, ROUND);
+    private BigDecimal computePagibig(BigDecimal premiumBase, int year) {
+        BigDecimal activeRate = PAGIBIG_RATE;
+        List<PagibigTable> rates = pagibigTableRepository.findByEffectiveYearOrderByRangeFromAsc(year);
+        if (rates != null && !rates.isEmpty() && rates.get(0).getEmployeeShare() != null) {
+            activeRate = rates.get(0).getEmployeeShare().divide(new BigDecimal("100"), 4, ROUND);
+        }
+        return premiumBase.multiply(activeRate).setScale(SCALE, ROUND);
     }
 
     private BigDecimal withholdingTaxFromBracketRows(BigDecimal taxablePay, List<TaxTable> rows) {

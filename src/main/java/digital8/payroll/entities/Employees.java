@@ -121,7 +121,6 @@ public class Employees {
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
-
     public Users getUser() {
         return user;
     }
