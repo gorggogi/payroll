@@ -99,15 +99,6 @@
                 <p th:text="${errorMessage}"></p>
             </div>
 
-            <div class="holiday-action-bar">
-                <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('filterModal')">
-                    <i class="fa-solid fa-filter"></i> Filters
-                </button>
-                <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('addHolidayModal')">
-                    <i class="fa-solid fa-plus"></i> Add Holiday
-                </button>
-            </div>
-
             <!-- Filter Modal -->
             <div id="filterModal" class="holiday-modal">
                 <div class="holiday-modal-content">
@@ -179,7 +170,17 @@
             </div>
 
             <div class="holiday-list-wrapper">
-                <h2>Holiday List</h2>
+                <div class="holiday-header">
+                    <h2>Holiday List</h2>
+                    <div class="holiday-action-bar">
+                        <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('filterModal')">
+                            <i class="fa-solid fa-filter"></i> Filters
+                        </button>
+                        <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('addHolidayModal')">
+                            <i class="fa-solid fa-plus"></i> Add Holiday
+                        </button>
+                    </div>
+                </div>
                 <table class="holiday-table">
                     <thead>
                         <tr>
@@ -219,11 +220,11 @@
                                          data-holiday-date=${h.holidayDate},
                                          data-holiday-type=${#strings.defaultString(h.holidayType, '')}"
                                     onclick="openEditHolidayModal(this)">
-                                    Edit
+                                    <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 <form th:action="@{/admin/holidays/{id}/delete(id=${h.holidayId})}" method="post"
                                     style="display:inline" onsubmit="return confirm('Delete this holiday?');">
-                                    <button type="submit">Delete</button>
+                                    <button type="submit"><i class="fa-solid fa-trash"></i></button>
                                 </form>
                             </td>
                         </tr>

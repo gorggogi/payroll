@@ -5,16 +5,16 @@ section > div {
 
 /* default content spacing */
 section {
-  padding-bottom: 24px;
+  padding-bottom: 1.5rem;
 }
 
 /* compact inline forms */
 section .settings-card form .form-row {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(170px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, minmax(10.625rem, 1fr));
+  gap: 7rem;
   align-items: end;
-  margin-bottom: 8px !important;
+  margin-bottom: 0.5rem !important;
 }
 
 
@@ -25,11 +25,22 @@ section .settings-card form .form-row {
   width: 100%;
 }
 
+.holiday-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.holiday-action-bar {
+  gap: .25rem;
+}
+
 /* table readability */
 .holiday-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 0.875rem;
   box-sizing: border-box;
   table-layout: fixed;
 }
@@ -45,57 +56,47 @@ section .settings-card form .form-row {
 .holiday-table th {
   background: #2b2e63;
   color: #fff;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .holiday-table button {
-  font-size: 12px;
-  padding: 5px 10px;
+  font-size: 0.75rem;
+  padding: 0.3125rem 0.625rem;
 }
 
 .holiday-table td:nth-child(3), .holiday-table th:nth-child(3) {
   width: 20%;
 }
 
-.holiday-table td:last-child {
-  white-space: nowrap;
-  width: 20%;
-}
 .holiday-table th:last-child {
   width: 20%;
 }
-.holiday-table td:last-child form {
-  display: inline-flex !important;
-  margin: 0 0 0 6px;
-  width: 50%;
-}
+
 .holiday-table td:last-child form:first-of-type {
   margin-left: 0;
+}
+
+.holiday-table td:last-child {
+  display: flex;
+  justify-content: center;
+  gap: .5rem;
 }
 
 .holiday-table td:nth-child(3) select{
   width: 100%;
 }
 
-.holiday-table td:last-child button{
-  width: 50%;
-  margin: 0;
-  padding-inline: .9rem;
-}
-
-.holiday-table td:last-child form button{
-  width: 100%;
-}
-
 .holiday-table td button {
-  padding: 8px 12px;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: #2b2e63;
   color: #fff;
   cursor: pointer;
-  font-size: 12px;
+}
+
+.holiday-table td button i {
+  margin-inline: .25rem;
 }
 
 /* bottom action bar (part of page flow, not sticky/fixed) */
@@ -104,9 +105,9 @@ section .settings-card form .form-row {
   width: 100%;
   display: flex !important;
   justify-content: flex-end !important;
-  gap: 10px;
-  margin-top: 14px;
-  margin-bottom: 8px;
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+  margin-bottom: 0.5rem;
   box-sizing: border-box;
   padding: 0;
 }
