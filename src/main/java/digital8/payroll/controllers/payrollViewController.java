@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import digital8.payroll.dto.DeductionBreakdownItem;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.PayrollItemsRepository;
+import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.services.PayrollService;
 import digital8.payroll.services.EmployeeService;
@@ -34,6 +35,24 @@ public class payrollViewController {
     private PayrollService payrollService;
     @Autowired
     private PayrollItemsRepository payrollItemsRepository;
+    @Autowired
+    private UsersRepository usersRepository;
+
+    /**
+     * Nav and templates sometimes hit /payroll or /payroll/ when no employee id is in the URL.
+     * Redirect to the signed-in user's payroll when we can resolve their employee id.
+     */
+    @GetMapping(path = { "", "/" })
+    public RedirectView payrollRoot(Authentication authentication) {
+        Integer empId = resolveCurrentUserEmployeeId(authentication);
+        if (empId != null) {
+            return new RedirectView("/payroll/" + empId, false);
+        }
+        boolean admin = authentication != null && authentication.getPrincipal() instanceof Users
+                && ((Users) authentication.getPrincipal()).getRole() != null
+                && "ADMIN".equalsIgnoreCase(((Users) authentication.getPrincipal()).getRole().getRoleName());
+        return new RedirectView(admin ? "/admin/home" : "/employee/home", false);
+    }
 
     @GetMapping("/{empId}")
     public Object payrollPage(
@@ -92,5 +111,21 @@ public class payrollViewController {
         model.addAttribute("otherDeductionsBreakdown", deductionsBreakdown != null ? deductionsBreakdown : List.of());
 
         return "html/payroll";
+    }
+
+    private Integer resolveCurrentUserEmployeeId(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        if (authentication.getPrincipal() instanceof Users) {
+            Users user = (Users) authentication.getPrincipal();
+            if (user.getEmployee() != null) {
+                return user.getEmployee().getEmployeeId();
+            }
+            return null;
+        }
+        return usersRepository.findByEmail(authentication.getName())
+                .map(u -> u.getEmployee() != null ? u.getEmployee().getEmployeeId() : null)
+                .orElse(null);
     }
 }

@@ -79,7 +79,9 @@
         var pathNorm = currentPath.replace(/\/+$/, '') || '/';
         var isPayrollPage = currentPath.includes('/payroll/');
         var isDeductionsPage = currentPath.includes('/deductions');
-        var isAdjustmentsPage = currentPath.includes('/adjustments');
+        // Payroll adjustments page(s), not attendance time-adjustments URL
+        var isAdjustmentsPage = currentPath.includes('/adjustments')
+            && currentPath.indexOf('/attendance/time-adjustments') === -1;
         var isAttendancePage = currentPath.includes('/attendance');
         var isLeavePage = currentPath.includes('/leave');
         var isShiftsPage = currentPath.includes('/attendance/shifts');
@@ -89,9 +91,21 @@
         var isPayrollRelatedPage = isPayrollPage || isDeductionsPage || isAdjustmentsPage;
         var isAttendanceRelatedPage = isAttendancePage || isLeavePage || isOvertimePage || isTimeAdjustmentsPage || isShiftsPage;
 
+        /** Next .nav-dropdown-menu after toggle (DOM repair may insert nodes between). */
+        function menuForNavToggle(btn) {
+            var el = btn.nextElementSibling;
+            while (el) {
+                if (el.classList && el.classList.contains('nav-dropdown-menu')) {
+                    return el;
+                }
+                el = el.nextElementSibling;
+            }
+            return null;
+        }
+
         dropdowns.forEach(function (btn) {
-            var menu = btn.nextElementSibling;
-            if (!menu || !menu.classList.contains('nav-dropdown-menu')) return;
+            var menu = menuForNavToggle(btn);
+            if (!menu) return;
 
             // Determine which dropdown this is based on button title
             var btnTitle = btn.getAttribute('title') || '';
@@ -115,21 +129,41 @@
                     item.classList.remove('active');
                 });
                 
-                // Mark the appropriate menu item as active based on current page
+                // Mark submenu active by link href (role-specific menus differ in item count/order)
                 if (isPayrollPage) {
-                    var payrollItem = menu.querySelector('li:nth-child(1)');
-                    if (payrollItem) {
-                        payrollItem.classList.add('active');
+                    var payrollAnchors = menu.querySelectorAll('a[href]');
+                    for (var pi = 0; pi < payrollAnchors.length; pi++) {
+                        try {
+                            if (new URL(payrollAnchors[pi].href, window.location.href).pathname.indexOf('/payroll/') !== -1) {
+                                var lip = payrollAnchors[pi].closest('li');
+                                if (lip) {
+                                    lip.classList.add('active');
+                                }
+                                break;
+                            }
+                        } catch (e) { /* ignore */ }
                     }
                 } else if (isDeductionsPage) {
-                    var deductionsItem = menu.querySelector('li:nth-child(2)');
-                    if (deductionsItem) {
-                        deductionsItem.classList.add('active');
+                    var dedA = menu.querySelector('a[href*="deductions"]');
+                    if (dedA) {
+                        var lid = dedA.closest('li');
+                        if (lid) {
+                            lid.classList.add('active');
+                        }
                     }
                 } else if (isAdjustmentsPage) {
-                    var adjustmentsItem = menu.querySelector('li:nth-child(3)');
-                    if (adjustmentsItem) {
-                        adjustmentsItem.classList.add('active');
+                    var adjAs = menu.querySelectorAll('a[href*="adjustments"]');
+                    for (var ai = 0; ai < adjAs.length; ai++) {
+                        try {
+                            var ap = new URL(adjAs[ai].href, window.location.href).pathname;
+                            if (ap.indexOf('/adjustments') !== -1 && ap.indexOf('time-adjustments') === -1) {
+                                var lia = adjAs[ai].closest('li');
+                                if (lia) {
+                                    lia.classList.add('active');
+                                }
+                                break;
+                            }
+                        } catch (e) { /* ignore */ }
                     }
                 }
             }
@@ -308,8 +342,8 @@
         // Reposition menus on window resize
         window.addEventListener('resize', function () {
             dropdowns.forEach(function (btn) {
-                var menu = btn.nextElementSibling;
-                if (menu && menu.classList.contains('nav-dropdown-menu') && menu.classList.contains('show')) {
+                var menu = menuForNavToggle(btn);
+                if (menu && menu.classList.contains('show')) {
                     var nav = document.querySelector('nav');
                     var isCollapsed = nav.classList.contains('nav-collapsed');
                     var isSmallScreen = window.innerWidth < 1180;
@@ -331,16 +365,16 @@
                 if (btn.contains(e.target)) {
                     isClickInside = true;
                 }
-                var menu = btn.nextElementSibling;
-                if (menu && menu.classList.contains('nav-dropdown-menu') && menu.contains(e.target)) {
+                var menu = menuForNavToggle(btn);
+                if (menu && menu.contains(e.target)) {
                     isClickInside = true;
                 }
             });
             if (!isClickInside) {
                 // Close all dropdowns
                 dropdowns.forEach(function (btn) {
-                    var menu = btn.nextElementSibling;
-                    if (menu && menu.classList.contains('nav-dropdown-menu')) {
+                    var menu = menuForNavToggle(btn);
+                    if (menu) {
                         if (!btn.classList.contains('nav-dropdown-pinned')) {
                             menu.classList.remove('show');
                         }
