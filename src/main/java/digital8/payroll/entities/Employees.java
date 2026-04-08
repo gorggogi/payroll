@@ -1,4 +1,5 @@
 package digital8.payroll.entities;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -18,92 +19,92 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 @Entity
-@Table (name="employees")
+@Table(name = "employees")
 @JsonPropertyOrder({
-    "employeeId",
-    "employeeNumber",
-    "lastName",
-    "firstName",
-    "middleName",
-    "contactNumber",
-    "department",
-    "position",
-    "employmentStatus",
-    "employmentType",
-    "basicSalary",
-    "dateHired",
-    "birthDate",
-    "address",
-    "sssNumber",
-    "tin",
-    "philhealthNumber",
-    "pagibigNumber",
-    "bank_Account",
-    "payType"
+        "employeeId",
+        "employeeNumber",
+        "lastName",
+        "firstName",
+        "middleName",
+        "contactNumber",
+        "department",
+        "position",
+        "employmentStatus",
+        "employmentType",
+        "basicSalary",
+        "dateHired",
+        "birthDate",
+        "address",
+        "sssNumber",
+        "tin",
+        "philhealthNumber",
+        "pagibigNumber",
+        "bank_Account",
+        "payType"
 })
-public class Employees{
+public class Employees {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private Integer employeeId;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String employeeNumber;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String firstName;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String middleName;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String lastName;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private LocalDate birthDate;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String address;
 
     @Transient
     private String email;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String contactNumber;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private LocalDate dateHired;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String employmentStatus;
-    
-    @Column (nullable = false, unique = false)
+
+    @Column(nullable = false, unique = false)
     private String employmentType;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departmentId", nullable = false)
     private Departments department;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private String payType;
 
-    @Column (nullable = false, unique = false)
+    @Column(nullable = false, unique = false)
     private BigDecimal basicSalary;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String bank_Account;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String tin;
-    
-    @Column (nullable = false, unique = true)
+
+    @Column(nullable = false, unique = true)
     private String sssNumber;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String philhealthNumber;
 
-    @Column (nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String pagibigNumber;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -111,12 +112,12 @@ public class Employees{
     private Positions position;
 
     @OneToOne(mappedBy = "employee", fetch = FetchType.EAGER)
-    @JsonIgnoreProperties ({"employee"})
+    @JsonIgnoreProperties({ "employee" })
     private Users user;
 
     @Column(nullable = false, unique = false)
     private BigDecimal factorRate;
-    
+
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
@@ -316,17 +317,4 @@ public class Employees{
         this.holidayPayEligible = holidayPayEligible;
     }
 
-
-
-
-
-
 }
-
-
-
-    
-    
-
-    
-
