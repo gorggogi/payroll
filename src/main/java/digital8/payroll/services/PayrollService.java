@@ -324,20 +324,23 @@ public class PayrollService {
         philhealth = computePhilhealth(premiumBase, year);
         pagibig = computePagibig(premiumBase, year);
 
-        // HR policy: withholding tax follows bracket tables (not 5% EWT), even for Job
-        // Order.
-        // Semi-monthly payslips use the SEMI_MONTHLY table on J31 (= monthly salary /
-        // 2).
-        // Monthly payslips use the MONTHLY table on monthly salary.
+        // WHT: for semi-monthly, use SEMI_MONTHLY table on premiumBase/2.
+        // For monthly, use MONTHLY table on premiumBase.
+        // Using premiumBase (not monthlyRate) ensures sub-30k employees (capped at ₱20k)
+        // stay in the 0% bracket → WHT = 0, matching HR's sample computation.
         if (semiMonthly) {
-            BigDecimal semiMonthlyBase = monthlyRate.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
-            tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY"); // they call this "semi"
+            BigDecimal semiBase = premiumBase.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+            tax = computeWithholdingTaxFromTable(semiBase, year, "SEMI_MONTHLY");
         } else {
-            tax = computeWithholdingTaxFromTable(monthlyRate, year, "MONTHLY");
+            tax = computeWithholdingTaxFromTable(premiumBase, year, "MONTHLY");
         }
-        
+
+        // Total statutory deducted this slip:
+        // Semi-monthly: (SSS + PhilHealth + Pag-IBIG + SEMI_WHT) / 2
+        //   → WHT is the semi-monthly bracket value; the entire sum is divided by 2
+        //   → matches HR's spreadsheet: all four columns summed then halved
+        // Monthly: SSS + PhilHealth + Pag-IBIG + MONTHLY_WHT
         BigDecimal statutoryTotal = sss.add(philhealth).add(pagibig).add(tax);
-        
         BigDecimal statutoryDeductedThisSlip;
         if (semiMonthly) {
             statutoryDeductedThisSlip = statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);

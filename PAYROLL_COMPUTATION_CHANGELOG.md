@@ -1,78 +1,168 @@
-# Payroll System Computation Redesign & Implementation Log
-**Date:** March 2026
-**Target:** To bring the Spring Boot `PayrollService` math into perfect alignment with the official company payroll spreadsheet and modern Philippine DOLE / TRAIN Law requirements.
+# Payroll System Computation Changelog
+**Last Updated:** April 2026
+**Purpose:** Document the current implementation of payroll computation logic in `PayrollService.java`, serving as the single source of truth for what the system actually does.
 
 ---
 
-## 1. Core Rate Constants & Rules Adapted
+## 1. Core Rate Constants & Rules
 
-To ensure perfect centavo matching with the spreadsheet, the following fundamental formulas were hardcoded into `PayrollService.java`:
-- **Working Days Per Month:** Fixed 20.
-- **Hours Per Day:** Fixed 8.
-- **Daily Rate Formula:** `Monthly Rate ÷ 20`
-- **Hourly Rate Formula:** `Daily Rate ÷ 8`
-- **Per-Minute Rate Formula:** `Hourly Rate ÷ 60` 
-  - *Fix Applied:* The per-minute rate is forced to exactly 2 decimal places unconditionally before multiplying against late/undertime minutes, as standard DOLE payroll spreadsheets typically do.
+All rate derivation follows fixed constants hardcoded in `PayrollService.java`:
 
-### Employment Type Switching
-The application now supports dynamic rate calculation via `employmentType` string switching (`Regular` vs `Job Order`):
-- **Job Order:** 
-  - Overtime Multiplier = 1.0x
-  - SSS, PhilHealth, Pag-IBIG Contributions = ₱0.00
-  - Tax Calculation = 5% flat Withholding / EWT on Total Earnings
-- **Regular:**
-  - Overtime Multiplier = 1.25x
-  - SSS = Computed via `ssstable` SQL brackets lookup
-  - PhilHealth & Pag-IBIG = Standard % flat formulas
-  - Tax Calculation = Base TRAIN table / Simplified formula (`Base Rate × 10% - 2,395.90`)
+| Constant | Value | Formula |
+|---|---|---|
+| Working days/month | 20 | Fixed |
+| Hours/day | 8 | Fixed |
+| Daily Rate | `monthlyRate / 20` | |
+| Hourly Rate | `dailyRate / 8` | |
+| Per-Minute Rate | `hourlyRate / 60` | Rounded to 2 decimals **before** multiplying against minutes |
+
+> The per-minute rate is rounded to 2 decimal places early (e.g. ₱2.19 instead of ₱2.1875) to match HR's spreadsheet behavior.
 
 ---
 
-## 2. Statutory Contributions (PhilHealth, Pag-IBIG, SSS)
+## 2. Employment Type
 
-Instead of relying on outdated DB lookup structures, we overhauled how these are computed:
+The system supports two employment types: `Regular` and `Job Order`.
 
-- **Salary Splitting Cap:** Both PhilHealth and Pag-IBIG formulas are applied against a capped "Premium Base". If an employee's Monthly Salary is below ₱30,000, their Premium Base is strictly capped at ₱20,000 for these exact percentage calculations.
-- **PhilHealth:** Shifted to a mathematical formula `(Premium Base × 5%) ÷ 2` to represent the 50/50 Employee/Employer split. It no longer relies on heavy SQL table fetching.
-- **Pag-IBIG:** Shifted to a flat `Premium Base × 2%` formula. Removed the hardcoded legacy ₱100.00 maximum cap logic since real Pag-IBIG contributions scale upwards.
-- **SSS Bracket Generation:** Created a robust NodeJS script (`generate_sss.js`) that outputs real-world SSS Circular No. 2024-006 brackets (14%-15% bounds up to ₱35,000 MSC ceilings) directly into `populate_statutory_tables.sql` for instant DB population.
+| | Regular | Job Order |
+|---|---|---|
+| SSS | Bracket lookup (premiumBase) | Same — all employees contribute |
+| PhilHealth | % formula (premiumBase) | Same |
+| Pag-IBIG | % formula (premiumBase) | Same |
+| WHT | Bracket table (premiumBase) | Same |
+| OT Multiplier | **1.0x (⚠️ pending fix to 1.25x)** | 1.0x |
 
----
-
-## 3. Deductions & Adjustments Rework
-
-- **Unified Deduction Architecture:**
-  - All employee deductions (Cash Advances, Loans, Union Dues, Penalties, etc.) are now treated **identically** — no special-casing for any deduction type.
-  - Administrators create a deduction on the Deductions page, choose a type from the dropdown, assign it to an employee, and it automatically appears as its own named row on the payslip.
-  - The backend uses a single `computeEmployeeDeductions()` method and a single `getDeductionsBreakdown()` method. There is no type-based filtering or branching.
-  - The old `computeCashAdvance()` method and hardcoded "Cash Advance" UI row have been completely removed.
-- **Deduction Enums/Types:** Fixed SQL truncation (`Data truncated for column 'deductionType'`) to guarantee that test data respects the system's strict `deductionType` Enumerated values ('Advance', 'Loan', 'Union', 'Other').
-- **Non-Recurring Timeframes:** Adjusted test SQL mocks to ensure non-recurring deductions strictly cover their active `startDate` / `endDate`, ensuring `PayrollService` successfully harvests them.
+> **Note:** The original design intended Job Order employees to pay 5% flat EWT and no government contributions. This was revised — HR policy now applies government contributions to all employees regardless of type. The bracket table (not simplified formula) is used for WHT for all employees.
 
 ---
 
-## 4. UI & Payslip Transparency (`payroll.html` & `payroll.js`)
+## 3. Premium Base (Salary Splitting)
 
-To visually mirror the detailed spreadsheet, we expanded the static HTML tables and dynamically-generated Javascript payslips to display **3x times as much information:**
-- Splitting generic Gross Pay into transparent: `Daily Rate`, `Hourly Rate`, `Overtime Rate`, and `Allowances`.
-- Breaking down Statutory Taxes directly line-by-line (`SSS`, `PhilHealth`, `Pag-IBIG`, etc.).
-- Exposing the `Total Late/Undertime Minutes` variable directly on the UI alongside the resulting peso value deduction.
-- Introduced the concept of the `Service Fee` (Total Earnings minus Non-Statutory generic Deductions) before determining `Net Pay`.
+The `premiumBase` is used as the taxable base for all four statutory deductions (SSS, PhilHealth, Pag-IBIG, WHT):
 
----
+```
+if monthlyRate < ₱30,000:
+    premiumBase = min(monthlyRate, ₱20,000)   // capped at ₱20k
+else:
+    premiumBase = monthlyRate
+```
 
-## 5. SQL DB Schema Modifications
-
-Because the backend Java object grew from a simple `netPay / grossPay` layout into a high-granularity snapshot, several `ALTER TABLE payrollitems` changes were drafted in `update_payroll_schema.sql` to persist the following nullable columns:
-- `daily_rate`, `hourly_rate`, `per_minute_rate`
-- `total_worked_hours`, `total_ot_hours`
-- `late_undertime_minutes`, `late_undertime_deduction`
-- `cash_advance`
-- `adjustment_earnings`, `adjustment_deductions`
-- `service_fee`
-- `semi_monthly_contributions`, `employment_type`
+**Why:** Employees earning below ₱30,000 are treated as having their salary split into a ₱20,000 basic component (subject to government contributions) and a non-taxable allowance portion. This matches HR's spreadsheet behavior exactly.
 
 ---
 
-## Summary
-The system is now capable of correctly ingesting standard DOLE-style workweeks with partial minute truncations, calculating precise OT and EWT percentages selectively by Employment Type, reading real-world PHP SSS database rules alongside mathematically perfect PhilHealth/Pag-IBIG % calculations, and seamlessly storing—and displaying—these granular results dynamically. 
+## 4. Statutory Contributions
+
+### SSS
+Computed via bracket lookup in `ssstable` using `premiumBase` and current year.
+Based on SSS Circular No. 2024-006 (14%–15% contribution bands up to ₱35,000 MSC ceiling).
+
+### PhilHealth
+```
+PhilHealth = (premiumBase × 5%) / 2    // 2.5% employee share
+```
+
+### Pag-IBIG
+```
+Pag-IBIG = premiumBase × 2%
+```
+
+### Withholding Tax (WHT)
+
+**Semi-monthly:**
+```
+semiBase = premiumBase / 2
+SEMI_WHT = SEMI_MONTHLY_table(semiBase)
+```
+
+**Monthly:**
+```
+MONTHLY_WHT = MONTHLY_table(premiumBase)
+```
+
+> **Critical:** Use `premiumBase / 2`, NOT `monthlyRate / 2`. Sub-30k employees have `premiumBase = ₱20,000`, so `semiBase = ₱10,000`, which stays in the 0% bracket → WHT = ₱0. Using `monthlyRate / 2` incorrectly pushes these employees into a taxable bracket. (This was an active bug, fixed April 2026.)
+
+---
+
+## 5. Total Statutory Deductions (Final Formula)
+
+### Semi-monthly
+```
+Total = (SSS + PhilHealth + Pag-IBIG + SEMI_WHT) / 2
+```
+- All four values are summed first, then the entire sum is divided by 2
+- **Matches HR's spreadsheet exactly** — verified against all rows in `files/Sample computation - Sheet1.csv`
+- Each line item displayed on the payslip = the full value divided by 2, so all displayed lines sum to the total
+
+### Monthly
+```
+Total = SSS + PhilHealth + Pag-IBIG + MONTHLY_WHT
+```
+
+---
+
+## 6. Non-Statutory Deductions
+
+All employee deductions (loans, cash advances, union dues, etc.) are handled identically with no type-based branching:
+
+- Stored in `employeedeductions` table with `startDate`, `endDate`, `isRecurring`, `amount`
+- **Recurring deductions:** included if the cutoff date range overlaps the deduction's active window (`startDate ≤ periodEnd AND endDate ≥ periodStart`)
+- **One-time deductions:** included only if `startDate` falls within the cutoff window
+- Named breakdown per deduction type appears on the payslip
+
+> **Known issue (⚠️ pending fix):** Recurring deductions are currently included on **both** `semi_1` and `semi_2` cutoffs for semi-monthly pay. The intended behavior is to deduct once per month (second cutoff only). Fix pending.
+
+---
+
+## 7. Net Pay Formula
+
+```
+Net Pay = Service Fee - Total Statutory Deductions
+
+where:
+  Service Fee = Total Earnings - Total Non-Statutory Deductions
+  Total Earnings = Basic Pay + Overtime Pay + Holiday Pay + Adjustment Earnings
+```
+
+---
+
+## 8. UI / Payslip Display
+
+Both `payroll.html` (Thymeleaf) and `payroll.js` (API/compute-button path) display contributions consistently:
+
+| Line | Semi-monthly display | Monthly display |
+|---|---|---|
+| SSS | `item.sss / 2` | `item.sss` |
+| PhilHealth | `item.philhealth / 2` | `item.philhealth` |
+| Pag-IBIG | `item.pagibig / 2` | `item.pagibig` |
+| Withholding Tax | `item.tax / 2` | `item.tax` |
+| **Total** | `semiMonthlyContributions` | `totalDeductions` |
+
+> `item.sss/philhealth/pagibig` store monthly amounts. `item.tax` stores the SEMI_WHT value for semi-monthly payslips, or MONTHLY_WHT for monthly. All four displayed lines are halved for semi-monthly so they add up exactly to the total.
+
+---
+
+## 9. Known Pending Items
+
+| # | Item | Status |
+|---|---|---|
+| 1 | OT multiplier for Regular employees (should be 1.25x, currently 1.0x) | ⚠️ Pending |
+| 2 | Recurring deductions deducted on both semi_1 and semi_2 (should be once per month) | ⚠️ Pending |
+| 3 | Adjustment Earnings not yet wired to payroll (Bonuses/Adjustments page is a stub) | ⚠️ Pending |
+| 4 | Special Non-Working Holiday pay (30% premium for unworked SNWHs) | ⚠️ Pending |
+
+---
+
+## 10. DB Schema (payrollitems table)
+
+Key columns persisted per payslip computation:
+
+| Column | Description |
+|---|---|
+| `daily_rate`, `hourly_rate`, `per_minute_rate` | Rate breakdown |
+| `total_worked_hours`, `total_ot_hours` | Hours breakdown |
+| `late_undertime_minutes`, `late_undertime_deduction` | Late/undertime |
+| `adjustment_earnings`, `adjustment_deductions` | Earnings adjustments and employee deductions |
+| `service_fee` | Total earnings minus non-statutory deductions |
+| `semi_monthly_contributions` | Total statutory deducted this slip |
+| `employment_type` | `Regular` or `Job Order` |

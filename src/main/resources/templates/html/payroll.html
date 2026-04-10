@@ -90,7 +90,7 @@
         <td th:text="${selectedPeriod == 'monthly' ? 'Pag-ibig' : 'Pag-ibig'}">Pag-ibig</td>
         <td th:text="${item.pagibig != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.pagibig : item.pagibig / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
     </tr>
-    <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.tax : item.tax / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr class="deduct-row">
         <td>
             <strong th:text="${selectedPeriod == 'monthly' ? 'Total Monthly Contributions' : 'Total Semi-monthly Contributions'}">
