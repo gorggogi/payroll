@@ -125,6 +125,9 @@ public class Employees {
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
+    @Column(name = "ot_multiplier", precision = 5, scale = 2)
+    private BigDecimal otMultiplier = BigDecimal.ONE;
+
     public Users getUser() {
         return user;
     }
@@ -326,6 +329,14 @@ public class Employees {
 
     public void setHolidayPayEligible(boolean holidayPayEligible) {
         this.holidayPayEligible = holidayPayEligible;
+    }
+
+    public BigDecimal getOtMultiplier() {
+        return otMultiplier;
+    }
+
+    public void setOtMultiplier(BigDecimal otMultiplier) {
+        this.otMultiplier = otMultiplier;
     }
 
 }

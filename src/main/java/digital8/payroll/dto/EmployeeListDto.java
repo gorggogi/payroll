@@ -19,6 +19,7 @@ public class EmployeeListDto {
     private BigDecimal basicSalary;
     private String departmentName;
     private String positionName;
+    private BigDecimal otMultiplier;
 
     public Integer getEmployeeId() { return employeeId; }
     public void setEmployeeId(Integer employeeId) { this.employeeId = employeeId; }
@@ -50,4 +51,6 @@ public class EmployeeListDto {
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
     public String getPositionName() { return positionName; }
     public void setPositionName(String positionName) { this.positionName = positionName; }
+    public BigDecimal getOtMultiplier() { return otMultiplier; }
+    public void setOtMultiplier(BigDecimal otMultiplier) { this.otMultiplier = otMultiplier; }
 }

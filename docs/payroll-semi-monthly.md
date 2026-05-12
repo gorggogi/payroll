@@ -1,5 +1,7 @@
 # Semi-monthly Payroll Logic (System Documentation)
 
+> **STATUS: SUPERSEDED** -- This document is outdated. See `PAYROLL_COMPUTATION.md` for the current implementation.
+
 This document describes **how semi-monthly payslips are computed** in this system, including:
 - **Where inputs come from** (UI, APIs, database tables/entities)
 - **Exact cutoff rules**
@@ -24,7 +26,7 @@ Applies to the current implementation in:
 | Attendance rows | `attendance` table | Filtered to cutoff range |
 | Non-statutory deductions | `EmployeeDeductions` table | Filtered to cutoff range |
 | SSS bracket | `ssstable` table | Looked up by `premiumBase` and `year` |
-| WHT brackets | `taxtable` table | `effectiveYear` and `pay_frequency='SEMI_MONTHLY'` |
+| WHT brackets | `taxtable` table | `effectiveYear` and `pay_frequency='MONTHLY'` (uses `premiumBase`) |
 
 ### Cutoff date range (semi-monthly)
 
@@ -79,30 +81,37 @@ All currency amounts are rounded to **2 decimals** (HALF_UP) at the points indic
 - **PhilHealth** = `(premiumBase * 0.05) / 2`  (2.5% employee share)
 - **Pag-IBIG** = `premiumBase * 0.02`
 
-#### G) Withholding tax (WHT) — SEMI_MONTHLY table for semi cutoffs
+#### G) Withholding tax (WHT) — SEMI_MONTHLY table on `premiumBase / 2`
 
-For semi-monthly payslips, the system computes WHT using the **SEMI_MONTHLY** bracket table:
+For **semi-monthly** payslips:
+- `semiBase = premiumBase / 2`
+- `SEMI_WHT = SEMI_MONTHLY_table(semiBase)`
 
-- `J31 = monthlyRate / 2`
-- `taxablePay = J31`
-- WHT is computed using `taxtable` rows where `pay_frequency='SEMI_MONTHLY'`
+For **monthly** payslips:
+- `MONTHLY_WHT = MONTHLY_table(premiumBase)`
 
-WHT is computed from bracket rows like this:
+> **Critical:** use `premiumBase`, NOT `monthlyRate`. Sub-30k employees have `premiumBase = ₱20,000`, so `semiBase = ₱10,000`, which stays in the 0% bracket → WHT = ₱0. Using `monthlyRate / 2` instead pushes these employees across the bracket threshold and produces a wrong non-zero WHT.
 
-1) Select bracket rows for the chosen `effectiveYear` and `pay_frequency='SEMI_MONTHLY'` (falling back to `year - 1` if none are found).
-2) Pick the bracket whose `compensationFrom` is the highest value such that `compensationFrom <= taxablePay`.
-3) Compute `excess = taxablePay - compensationFrom`.
-4) Compute `WHT = additionalTax + taxRate * excess`.
-5) Round WHT to 2 decimals (HALF_UP) and floor at 0 (never negative).
+WHT bracket lookup:
+1. Select bracket rows for `effectiveYear` and `pay_frequency='SEMI_MONTHLY'` (or `'MONTHLY'`).
+2. Pick the bracket where `compensationFrom <= semiBase`.
+3. `WHT = additionalTax + taxRate × (semiBase − compensationFrom)`.
+4. Clamp at 0, round to 2 decimals (HALF_UP).
 
-On the payslip:
-- SSS / PhilHealth / Pag-IBIG are deducted at half (because they are monthly amounts)
-- WHT is deducted as the computed `WHT_semi` value (not divided again)
+#### H) Total statutory deducted this slip
 
-#### H) What’s actually deducted on the slip (semi-monthly)
+**Semi-monthly (final formula, matches HR spreadsheet):**
+```
+Total = (SSS + PhilHealth + Pag-IBIG + SEMI_WHT) / 2
+```
+- All four values are summed first, then divided by 2
+- Each line item displayed on the payslip = `monthly_value / 2` (SSS, Phil, Pag) or `SEMI_WHT / 2` (WHT)
+- The line items therefore add up exactly to the total
 
-- **Statutory total (monthly bundle)** = `SSS + PhilHealth + Pag-IBIG + WHT`
-- **Total Semi-monthly Contributions (deducted)** = `(SSS + PhilHealth + Pag-IBIG) / 2 + WHT_semi`
+**Monthly:**
+```
+Total = SSS + PhilHealth + Pag-IBIG + MONTHLY_WHT
+```
 
 #### I) Net pay
 
@@ -115,7 +124,7 @@ On the payslip:
 Monthly uses the **same pipeline** as semi-monthly, but with these differences:
 
 - **Date range**: full month (1st → last day)
-- **WHT base**: `taxablePay = monthlyRate` (MONTHLY bracket table)
+- **WHT base**: `taxablePay = premiumBase` (MONTHLY bracket table)
 - **Statutory deducted**: `statutoryDeductedThisSlip = statutoryTotal` (no `/ 2`)
 
 Specifically:

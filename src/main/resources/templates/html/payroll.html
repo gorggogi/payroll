@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -46,8 +46,8 @@
                 <label for="period">Period:</label>
                 <select name="period" id="period" onchange="this.form.submit()">
                     <option value="monthly" th:selected="${selectedPeriod == 'monthly'}">Monthly</option>
-                    <option value="semi_1" th:selected="${selectedPeriod == 'semi_1'}">Semi-monthly (1â€“15)</option>
-                    <option value="semi_2" th:selected="${selectedPeriod == 'semi_2'}">Semi-monthly (16â€“end)</option>
+                    <option value="semi_1" th:selected="${selectedPeriod == 'semi_1'}">Semi-monthly (1&ndash;15)</option>
+                    <option value="semi_2" th:selected="${selectedPeriod == 'semi_2'}">Semi-monthly (16&ndash;end)</option>
                     <option value="biweekly" th:selected="${selectedPeriod == 'biweekly'}">Biweekly</option>
                 </select>
             </form>
@@ -90,7 +90,7 @@
         <td th:text="${selectedPeriod == 'monthly' ? 'Pag-ibig' : 'Pag-ibig'}">Pag-ibig</td>
         <td th:text="${item.pagibig != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.pagibig : item.pagibig / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td>
     </tr>
-    <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal(item.tax, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Withholding Tax</td><td th:text="${item.tax != null ? #numbers.formatDecimal((selectedPeriod == 'monthly' ? item.tax : item.tax / 2), 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr class="deduct-row">
         <td>
             <strong th:text="${selectedPeriod == 'monthly' ? 'Total Monthly Contributions' : 'Total Semi-monthly Contributions'}">

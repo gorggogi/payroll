@@ -78,7 +78,8 @@ public class EmployeeViewController {
             @RequestParam String employmentType,
             @RequestParam String payType,
             @RequestParam java.math.BigDecimal basicSalary,
-            @RequestParam(required = false)java.math.BigDecimal factorRate,
+            @RequestParam(required = false) java.math.BigDecimal factorRate,
+            @RequestParam(required = false) java.math.BigDecimal otMultiplier,
             @RequestParam String bank_Account,
             @RequestParam String tin,
             @RequestParam String sssNumber,
@@ -111,6 +112,9 @@ public class EmployeeViewController {
         emp.setPhilhealthNumber(philhealthNumber);
         emp.setPagibigNumber(pagibigNumber);
         emp.setHolidayPayEligible(Boolean.TRUE.equals(holidayPayEligible));
+        if (otMultiplier != null && otMultiplier.compareTo(BigDecimal.ZERO) > 0) {
+            emp.setOtMultiplier(otMultiplier);
+        }
 
         Departments dept = new Departments();
         dept.setDepartmentId(departmentId);

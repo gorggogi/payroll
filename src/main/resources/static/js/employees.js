@@ -269,15 +269,22 @@ function renderEmployeeDetail(emp) {
             </option>
         `).join('');
 
-        const factorOptions = [
+            const factorOptions = [
             { value: '20', label: '20 — monthly ÷ 20 (common)' },
             { value: '21.75', label: '21.75 — DOLE-style (52×5÷12)' },
             { value: '22', label: '22 — alternate policy' },
             { value: '24', label: '24 — 6-day week variant' }
-        ].map (o=>`<option value="${o.value}" ${emp.factorRate === o.value ? 'selected' : ''}>
+        ].map (o=>`<option value="${o.value}" ${emp.factorRate == o.value ? 'selected' : ''}>
             ${o.label}
             </option>
             `).join('');
+
+            const otOptions = [
+            { value: '1.0', label: '1.0x' },
+            { value: '1.25', label: '1.25x (regular employee)' }
+        ].map(o => `<option value="${o.value}" ${(emp.otMultiplier == o.value || (!emp.otMultiplier && o.value == '1.0')) ? 'selected' : ''}>
+            ${o.label}
+            </option>`).join('');
 
             modal.innerHTML = `
             <div class="employee-modal-content">
@@ -311,6 +318,7 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
                     <label>Pay factor: <select name="factorRate">${factorOptions}</select></label>
+                    <label>OT multiplier: <select name="otMultiplier">${otOptions}</select></label>
                     <label>Department: <select name="departmentId">
                         <option value="">-- Select Department --</option>
                         ${deptOptions}
@@ -405,6 +413,7 @@ function saveEmployee(employeeId) {
         pagibigNumber: formData.get('pagibigNumber'),
         bank_Account: formData.get('bank_Account'),
         factorRate: formData.get('factorRate') ? Number(formData.get('factorRate')) : null,
+        otMultiplier: formData.get('otMultiplier') ? Number(formData.get('otMultiplier')) : null,
         holidayPayEligible: form.querySelector('[name="holidayPayEligible"]').checked,
     };
 
@@ -452,6 +461,7 @@ function saveEmployee(employeeId) {
                     payType: saved.payType,
                     basicSalary: saved.basicSalary,
                     dateHired: saved.dateHired,
+                    otMultiplier: saved.otMultiplier,
                     departmentName: saved.department ? saved.department.departmentName : existing.departmentName,
                     positionName: saved.position ? saved.position.positionName : existing.positionName
                 };

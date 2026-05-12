@@ -35,6 +35,9 @@ public class EmployeeDeductions{
     @Column (nullable = false, unique = false)
     private LocalDate endDate;
 
+    @Column (nullable = false, unique = false)
+    private String deductionCutoff = "SEMI_2"; // SEMI_1, SEMI_2, or BOTH
+
     public Integer getEmployeeDeductionId() {
         return employeeDeductionId;
     }
@@ -89,6 +92,14 @@ public class EmployeeDeductions{
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public String getDeductionCutoff() {
+        return deductionCutoff;
+    }
+
+    public void setDeductionCutoff(String deductionCutoff) {
+        this.deductionCutoff = deductionCutoff;
     }
 
 }
