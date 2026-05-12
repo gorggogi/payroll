@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -119,16 +119,22 @@
                     <div class="form-group">
                         <label for="factorRate">Pay factor (days/month) *</label>
                         <select id="factorRate" name="factorRate" required>
-                            <option value="20">20 â€” monthly Ã· 20 (common)</option>
-                            <option value="21.75" selected>21.75 â€” DOLE-style (52Ã—5Ã·12)</option>
-                            <option value="22">22 â€” alternate policy</option>
-                            <option value="24">24 â€” 6-day week variant</option>
+                            <option value="20">20</option>
+                            <option value="21.75" selected>21.75</option>
                         </select>
-                        <small>HR picks the rule your company uses for monthly â†’ daily rate.</small>
+                        <small>HR picks the rule the company uses for the monthly to daily rate conversion.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="otMultiplier">OT Multiplier *</label>
+                        <select id="otMultiplier" name="otMultiplier" required>
+                            <option value="1.0" selected>1.0x</option>
+                            <option value="1.25">1.25x</option>
+                        </select>
+                        <small>Multiplier applied to hourly rate for overtime hours.</small>
                     </div>
                     <div class="form-group checkbox-group">
                         <label class="checkbox-label"><input type="checkbox" name="holidayPayEligible" value="true" /> Holiday Pay Eligible</label>
-                        <small>If checked, this employee receives 2Ã— pay on regular holidays.</small>
+                        <small>If checked, this employee receives 2x pay on regular holidays.</small>
                     </div>
                 </div>
 

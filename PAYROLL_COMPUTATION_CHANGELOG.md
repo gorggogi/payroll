@@ -1,4 +1,7 @@
 # Payroll System Computation Changelog
+
+> **STATUS: SUPERSEDED** -- This document is outdated. See `PAYROLL_COMPUTATION.md` for the current implementation.
+
 **Last Updated:** April 2026
 **Purpose:** Document the current implementation of payroll computation logic in `PayrollService.java`, serving as the single source of truth for what the system actually does.
 

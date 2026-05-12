@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -98,7 +98,7 @@
                     <thead>
                         <tr class="attendanceHeader">
                             <th sec:authorize="hasRole('ADMIN')">Employee</th>
-                            <th>Deduction</th><th>Type</th><th>Amount</th><th>Recurring</th><th>Start</th><th>End</th>
+                            <th>Deduction</th><th>Type</th><th>Amount</th><th>Recurring</th><th>Cutoff</th><th>Start</th><th>End</th>
                             <th sec:authorize="hasRole('ADMIN')"></th>
                         </tr>
                     </thead>
@@ -109,6 +109,7 @@
                             <td th:text="${row.deductionType}"></td>
                             <td th:text="${row.amount != null ? #numbers.formatDecimal(row.amount, 1, 'POINT', 2, 'COMMA') : ''}"></td>
                             <td th:text="${row.recurring ? 'Yes' : 'No'}"></td>
+                            <td th:text="${row.deductionCutoff == 'SEMI_1' ? '1st (1-15)' : (row.deductionCutoff == 'BOTH' ? 'Both' : '2nd (16-end)')}"></td>
                             <td th:text="${row.startDate}"></td>
                             <td th:text="${row.endDate}"></td>
                             <td sec:authorize="hasRole('ADMIN')">
@@ -122,12 +123,23 @@
                                     th:data-deduction-id="${row.deductionId}"
                                     th:data-amount="${row.amount}"
                                     th:data-recurring="${row.recurring}"
+                                    th:data-cutoff="${row.deductionCutoff}"
                                     th:data-start="${row.startDate}"
                                     th:data-end="${row.endDate}">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
                             </td>
-                            <!-- Modal: Edit deduction assignment -->
+                        </tr>
+                    </tbody>
+                </table>
+                <p th:if="${assignmentRows != null and !assignmentRows.isEmpty()}" class="deduction-table-help">Recurring = deducted each pay period between Start and End. In Payroll, pick Year + Month to see deductions for that period.</p>
+                <p sec:authorize="hasRole('ADMIN')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No employee deductions. Click "Add deduction" to assign one.</p>
+                <p sec:authorize="hasRole('EMPLOYEE')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No deductions assigned to you.</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal: Edit deduction assignment -->
     <div id="modalEditDeduction" class="deduction-modal">
         <div class="deduction-modal-content">
             <div class="modal-header modal-header--deduction">
@@ -155,6 +167,14 @@
                     <input type="number" id="editAmount" name="amount" required min="0" step="0.01">
                 </div>
                 <div class="form-group">
+                    <label for="editDeductionCutoff">Apply on cutoff *</label>
+                    <select id="editDeductionCutoff" name="deductionCutoff">
+                        <option value="SEMI_1">1st cutoff (1&ndash;15)</option>
+                        <option value="SEMI_2">2nd cutoff (16&ndash;end)</option>
+                        <option value="BOTH">Both cutoffs</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label><input type="checkbox" id="editRecurring" name="isRecurring" value="true"> Recurring (deduct every pay period)</label>
                 </div>
                 <div class="form-group">
@@ -165,22 +185,13 @@
                     <label for="editEndDate">End date *</label>
                     <input type="date" id="editEndDate" name="endDate" required>
                 </div>
-                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6â€‘month loan would use Start = first month, End = 6 months later.</p>
+                <p class="deduction-help">For semi-monthly employees: choose which cutoff this deduction is applied on. Most loans are deducted on the 2nd cutoff.</p>
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalEditDeduction')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-save"></i> Save changes</button>
                 </div>
             </form>
         </div>
-    </div>
-                        </tr>
-                    </tbody>
-                </table>
-                <p th:if="${assignmentRows != null and !assignmentRows.isEmpty()}" class="deduction-table-help">Recurring = deducted each pay period between Start and End. In Payroll, pick Year + Month to see deductions for that period.</p>
-                <p sec:authorize="hasRole('ADMIN')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No employee deductions. Click "Add deduction" to assign one.</p>
-                <p sec:authorize="hasRole('EMPLOYEE')" th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No deductions assigned to you.</p>
-            </div>
-        </section>
     </div>
 
     <!-- Modal: Manage deduction types -->
@@ -212,7 +223,7 @@
                 </li>
             </ul>
             <p class="no-data" th:if="${deductionTypes == null or deductionTypes.isEmpty()}">
-                No types yet. Click â€œAdd typeâ€ or use â€œAdd deductionâ€ â†’ â€œAdd new typeâ€.
+                No types yet. Click &ldquo;Add type&rdquo; or use &ldquo;Add deduction&rdquo; &rarr; &ldquo;Add new type&rdquo;.
             </p>
         </div>
     </div>
@@ -296,7 +307,7 @@
                     <select id="deductionId" name="deductionId" required>
                         <option value="">Select type</option>
                         <option th:each="d : ${deductionTypes}" th:value="${d.deductionId}" th:text="${d.deductionName + ' (' + d.deductionType + ')'}"></option>
-                        <option value="ADD_TYPE">â”€â”€ Add new type â”€â”€</option>
+                        <option value="ADD_TYPE">&mdash; Add new type &mdash;</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -304,16 +315,12 @@
                     <input type="number" id="amount" name="amount" required min="0" step="0.01">
                 </div>
                 <div class="form-group">
-                    <label for="installmentMonths">Installment option</label>
-                    <select id="installmentMonths" name="installmentMonths">
-                        <option value="1">One-time payment</option>
-                        <option value="3">3 months to pay</option>
-                        <option value="6">6 months to pay</option>
-                        <option value="12">12 months to pay</option>
+                    <label for="deductionCutoff">Apply on cutoff *</label>
+                    <select id="deductionCutoff" name="deductionCutoff">
+                        <option value="SEMI_1">1st cutoff (1&ndash;15)</option>
+                        <option value="SEMI_2" selected>2nd cutoff (16&ndash;end)</option>
+                        <option value="BOTH">Both cutoffs</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label>Total to be paid (PHP): <span id="totalInstallmentAmount">0.00</span></label>
                 </div>
                 <div class="form-group">
                     <label><input type="checkbox" name="isRecurring" value="true" checked> Recurring (deduct every pay period)</label>
@@ -326,7 +333,7 @@
                     <label for="endDate">End date *</label>
                     <input type="date" id="endDate" name="endDate" required>
                 </div>
-                <p class="deduction-help">Start and End define when this deduction is active. If <strong>Recurring</strong>, the amount is deducted every pay period (e.g. every month) between Start and End. So a 6â€‘month loan would use Start = first month, End = 6 months later.</p>
+                <p class="deduction-help">For semi-monthly employees: choose which cutoff this deduction is applied on. Most loans are deducted on the 2nd cutoff.</p>
                 <div class="form-actions">
                     <button type="button" class="btn-reset" onclick="closeModal('modalAddDeduction')">Cancel</button>
                     <button type="submit" class="btn-apply"><i class="fa-solid fa-link"></i> Assign</button>
@@ -361,6 +368,17 @@
             document.getElementById('editDeductionType').value = btn.getAttribute('data-type') || 'Other';
             closeModal('modalManageTypes');
             openModal('modalEditType');
+        }
+        function openEditDeductionModal(btn) {
+            document.getElementById('editDeductionId').value = btn.getAttribute('data-id');
+            document.getElementById('editEmployeeId').value = btn.getAttribute('data-employee-id');
+            document.getElementById('editDeductionTypeId').value = btn.getAttribute('data-deduction-id');
+            document.getElementById('editAmount').value = btn.getAttribute('data-amount');
+            document.getElementById('editRecurring').checked = btn.getAttribute('data-recurring') === 'true';
+            document.getElementById('editStartDate').value = btn.getAttribute('data-start');
+            document.getElementById('editEndDate').value = btn.getAttribute('data-end');
+            document.getElementById('editDeductionCutoff').value = btn.getAttribute('data-cutoff') || 'SEMI_2';
+            openModal('modalEditDeduction');
         }
     </script>
     <script src="/js/nav.js"></script>

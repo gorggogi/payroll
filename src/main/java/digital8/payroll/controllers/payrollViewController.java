@@ -107,7 +107,7 @@ public class payrollViewController {
         }
         LocalDate[] bounds = payrollService.getPayrollPeriodBounds(selectedYear, monthEnum, effectivePeriod);
         List<DeductionBreakdownItem> deductionsBreakdown =
-                payrollService.getDeductionsBreakdown(empId, bounds[0], bounds[1]);
+                payrollService.getDeductionsBreakdown(empId, bounds[0], bounds[1], effectivePeriod);
         model.addAttribute("otherDeductionsBreakdown", deductionsBreakdown != null ? deductionsBreakdown : List.of());
 
         return "html/payroll";

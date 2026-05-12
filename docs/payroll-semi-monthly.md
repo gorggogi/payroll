@@ -1,5 +1,7 @@
 # Semi-monthly Payroll Logic (System Documentation)
 
+> **STATUS: SUPERSEDED** -- This document is outdated. See `PAYROLL_COMPUTATION.md` for the current implementation.
+
 This document describes **how semi-monthly payslips are computed** in this system, including:
 - **Where inputs come from** (UI, APIs, database tables/entities)
 - **Exact cutoff rules**

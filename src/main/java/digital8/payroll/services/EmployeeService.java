@@ -116,6 +116,7 @@ public class EmployeeService {
         dto.setBasicSalary(e.getBasicSalary());
         if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getDepartmentName());
         if (e.getPosition() != null) dto.setPositionName(e.getPosition().getPositionName());
+        dto.setOtMultiplier(e.getOtMultiplier());
         return dto;
     }
 
@@ -159,6 +160,9 @@ public class EmployeeService {
 
         if (emp.getFactorRate() == null || emp.getFactorRate().compareTo(BigDecimal.ZERO) <= 0) {
             emp.setFactorRate(new java.math.BigDecimal("20"));
+        }
+        if (emp.getOtMultiplier() == null || emp.getOtMultiplier().compareTo(BigDecimal.ZERO) <= 0) {
+            emp.setOtMultiplier(new java.math.BigDecimal("1.0"));
         }
         Employees saved = employeeRepository.save(emp);
 
@@ -232,6 +236,9 @@ public class EmployeeService {
         if (updated.getPagibigNumber() != null) existing.setPagibigNumber(updated.getPagibigNumber());
         if (updated.getBank_Account() != null) existing.setBank_Account(updated.getBank_Account());
         existing.setHolidayPayEligible(updated.isHolidayPayEligible());
+        if (updated.getOtMultiplier() != null && updated.getOtMultiplier().compareTo(BigDecimal.ZERO) > 0) {
+            existing.setOtMultiplier(updated.getOtMultiplier());
+        }
 
         // Update department if provided
         if (updated.getDepartment() != null && updated.getDepartment().getDepartmentId() != null) {
