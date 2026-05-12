@@ -18,7 +18,7 @@
 
         <section>
             <div class="head">
-                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}"><span th:text="${employeeName}">Name</span></span></h1>
+                <h1>Overtime of <span th:if="${employeeName != null and !employeeName.isEmpty()}"><span th:text="${employeeName}">Name</span></span></h1>
             </div>
 
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
