@@ -43,7 +43,7 @@
             </div>
 
             <!-- Tabs Navigation -->
-            <div style="margin-bottom: 25px;">
+            <div class="tabs-margin">
                 <div class="tabs">
                     <button class="tab-btn" th:classappend="${activeTab == 'sss'} ? 'active' : ''"
                         onclick="switchThemeTab('sss')">SSS</button>
@@ -54,20 +54,20 @@
                     <button class="tab-btn" th:classappend="${activeTab == 'pagibig'} ? 'active' : ''"
                         onclick="switchThemeTab('pagibig')">Pag-IBIG</button>
                 </div>
+
             </div>
 
             <div class="content-wrapper">
                 <!-- SSS TAB CONTENT -->
                 <div id="sss-tab" class="tab-content"
                     th:style="${activeTab == 'sss' ? 'display:block;' : 'display:none;'}">
-                    <div class="action-bar"
-                        style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                    <div class="action-bar">
                         <button type="button" class="btn btn-secondary" onclick="toggleSssEditMode()"
-                            id="sssEditBtn">Edit Brackets</button>
+                            id="sssEditBtn"><i class='bx bx-edit'></i>Edit Brackets</button>
                         <button type="button" class="btn btn-danger" onclick="toggleSssDeleteMode()"
-                            id="sssDeleteBtn">Delete Brackets</button>
-                        <button type="button" class="btn btn-primary" onclick="openSssModal()" id="sssAddBtn"><i
-                                class='bx bx-plus'></i> Add SSS Bracket</button>
+                            id="sssDeleteBtn"><i class='bx bx-trash'></i>Delete Brackets</button>
+                        <button type="button" class="btn btn-primary" onclick="openSssModal()" 
+                            id="sssAddBtn"><i class='bx bx-plus'></i> Add SSS Bracket</button>
                     </div>
                     <div class="table-wrapper" id="sssTableWrapper">
                         <table class="table premium-table" id="sssTable">
@@ -115,11 +115,11 @@
                 <div id="tax-tab" class="tab-content"
                     th:style="${activeTab == 'tax' ? 'display:block;' : 'display:none;'}">
                     <div class="action-bar"
-                        style="display: flex; justify-content: flex-end; gap: 10px; border-bottom: none; margin-bottom: 15px; padding-bottom: 0;">
+                        >
                         <button type="button" class="btn btn-secondary" onclick="toggleTaxEditMode()"
-                            id="taxEditBtn">Edit Brackets</button>
+                            id="taxEditBtn"><i class="bx bx-edit"></i>Edit Brackets</button>
                         <button type="button" class="btn btn-danger" onclick="toggleTaxDeleteMode()"
-                            id="taxDeleteBtn">Delete Brackets</button>
+                            id="taxDeleteBtn"><i class="bx bx-trash"></i>Delete Brackets</button>
                         <button type="button" class="btn btn-primary" onclick="openTaxModal()" id="taxAddBtn"><i
                                 class='bx bx-plus'></i> Add Tax Bracket</button>
                     </div>
@@ -218,10 +218,12 @@
                         <form th:action="@{/admin/tables/premium/philhealth/save}" method="post" class="rate-form">
                             <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
 
-                            <div class="form-group flex-row-center" style="gap: 15px;">
-                                <label for="philhealthRateVal">Rate (%):</label>
-                                <input type="number" id="philhealthRateVal" name="rate" step="0.01" min="0" required
-                                    th:value="${philhealthRate}" class="form-control" style="width: 150px;" />
+                            <div class="rate-group">
+                                <div class="rate-val">
+                                    <label for="philhealthRateVal">Rate (%):</label>
+                                    <input type="number" id="philhealthRateVal" name="rate" step="0.01" min="0"
+                                        required th:value="${philhealthRate}" class="form-control" />
+                                </div>
                                 <button type="submit" class="btn btn-primary">Save Rate</button>
                             </div>
                         </form>
@@ -239,10 +241,12 @@
                         <form th:action="@{/admin/tables/premium/pagibig/save}" method="post" class="rate-form">
                             <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
 
-                            <div class="form-group flex-row-center" style="gap: 15px;">
-                                <label for="pagibigRateVal">Rate (%):</label>
-                                <input type="number" id="pagibigRateVal" name="rate" step="0.01" min="0" required
-                                    th:value="${pagibigRate}" class="form-control" style="width: 150px;" />
+                            <div class="rate-group">
+                                <div class="rate-val">
+                                    <label for="pagibigRateVal">Rate (%):</label>
+                                    <input type="number" id="pagibigRateVal" name="rate" step="0.01" min="0" required
+                                        th:value="${pagibigRate}" class="form-control"/>
+                                </div>
                                 <button type="submit" class="btn btn-primary">Save Rate</button>
                             </div>
                         </form>

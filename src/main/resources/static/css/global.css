@@ -38,6 +38,7 @@ body {
   height: 100vh;
   background: url('../images/bg.jpg') no-repeat center center fixed;
   background-size: cover;
+  color: var(--secondary-color);
 }
 
 /* 6. Improve media defaults */
@@ -159,6 +160,7 @@ button {
     border-radius: .5rem;
     cursor: pointer;
     height: 2.5rem;
+    line-height: .9rem;
 }
 
 button:hover {
