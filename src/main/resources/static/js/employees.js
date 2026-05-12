@@ -187,6 +187,7 @@ function displayEmployees(employees) {
                 </div>
                 <div class="employee-details">
                     <p><strong>Employee #:</strong> ${emp.employeeNumber}</p>
+                    <p><strong>Biometric ID:</strong> ${emp.biometricId || 'N/A'}</p>
                     <p><strong>Email:</strong> ${emp.email || 'N/A'}</p>
                     <p><strong>Contact:</strong> ${emp.contactNumber || 'N/A'}</p>
                     <p><strong>Department:</strong> ${emp.departmentName || 'N/A'}</p>
@@ -288,6 +289,7 @@ function renderEmployeeDetail(emp) {
                     <label>Middle name: <input name="middleName" value="${emp.middleName || ''}" /></label>
                     <label>Last name: <input name="lastName" value="${emp.lastName || ''}" /></label>
                     <label>Email: <input type="email" name="email" value="${emp.email || ''}" /></label>
+                    <label>Biometric ID: <input name="biometricId" value="${emp.biometricId || ''}" /></label>
                     <label>Contact: <input name="contactNumber" value="${emp.contactNumber || ''}" /></label>
                     <label>Address: <input name="address" value="${emp.address || ''}" /></label>
                     <label>Employment Status: <select name="employmentStatus">
@@ -390,6 +392,7 @@ function saveEmployee(employeeId) {
         middleName: formData.get('middleName'),
         lastName: formData.get('lastName'),
         email: formData.get('email'),
+        biometricId: formData.get('biometricId'),
         contactNumber: formData.get('contactNumber'),
         address: formData.get('address'),
         employmentStatus: formData.get('employmentStatus'),
@@ -441,6 +444,7 @@ function saveEmployee(employeeId) {
                     middleName: saved.middleName,
                     lastName: saved.lastName,
                     email: saved.email,
+                    biometricId: saved.biometricId,
                     contactNumber: saved.contactNumber,
                     address: saved.address,
                     employmentStatus: saved.employmentStatus,

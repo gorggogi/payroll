@@ -23,6 +23,7 @@ import jakarta.persistence.Transient;
 @JsonPropertyOrder({
         "employeeId",
         "employeeNumber",
+        "biometricId",
         "lastName",
         "firstName",
         "middleName",
@@ -51,6 +52,9 @@ public class Employees {
 
     @Column(nullable = false, unique = true)
     private String employeeNumber;
+
+    @Column(name = "biometric_id", unique = true)
+    private String biometricId;
 
     @Column(nullable = false, unique = false)
     private String firstName;
@@ -151,6 +155,14 @@ public class Employees {
 
     public void setEmployeeNumber(String employeeNumber) {
         this.employeeNumber = employeeNumber;
+    }
+
+    public String getBiometricId() {
+        return biometricId;
+    }
+
+    public void setBiometricId(String biometricId) {
+        this.biometricId = biometricId;
     }
 
     public String getFirstName() {

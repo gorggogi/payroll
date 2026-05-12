@@ -104,6 +104,7 @@ public class EmployeeService {
         EmployeeListDto dto = new EmployeeListDto();
         dto.setEmployeeId(e.getEmployeeId());
         dto.setEmployeeNumber(e.getEmployeeNumber());
+        dto.setBiometricId(e.getBiometricId());
         dto.setFirstName(e.getFirstName());
         dto.setMiddleName(e.getMiddleName());
         dto.setLastName(e.getLastName());
@@ -149,6 +150,14 @@ public class EmployeeService {
             emp.setEmployeeNumber(generateEmployeeNumber());
         } else if (employeeRepository.existsByEmployeeNumber(emp.getEmployeeNumber())) {
             return Optional.empty();
+        }
+        if (emp.getBiometricId() != null && !emp.getBiometricId().isBlank()) {
+            emp.setBiometricId(emp.getBiometricId().trim());
+            if (employeeRepository.existsByBiometricId(emp.getBiometricId())) {
+                return Optional.empty();
+            }
+        } else {
+            emp.setBiometricId(null);
         }
         if (emp.getDepartment() != null && emp.getDepartment().getDepartmentId() != null) {
             departmentsRepository.findById(emp.getDepartment().getDepartmentId()).ifPresent(emp::setDepartment);
@@ -216,6 +225,18 @@ public class EmployeeService {
 
         }
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
+        if (updated.getBiometricId() != null) {
+            String candidate = updated.getBiometricId().trim();
+            if (candidate.isEmpty()) {
+                existing.setBiometricId(null);
+            } else if (!candidate.equals(existing.getBiometricId())) {
+                Optional<Employees> owner = employeeRepository.findByBiometricId(candidate);
+                if (owner.isPresent() && !owner.get().getEmployeeId().equals(id)) {
+                    return Optional.empty();
+                }
+                existing.setBiometricId(candidate);
+            }
+        }
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
         if (updated.getDateHired() != null) existing.setDateHired(updated.getDateHired());

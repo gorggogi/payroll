@@ -27,13 +27,31 @@
             <div class="adjust-panel">
                 <h2><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
                 <p class="adjust-panel-desc">
-                    Sample format to put here.
+                    Required format (tab-separated, 7 columns):
                 </p>
+                <pre class="adjust-import-summary-pre">22	2026-04-01	08:35:51	1	0	15	0
+
+Column guide:
+1) Employee biometric no. (example: 22)
+2) Date in YYYY-MM-DD (example: 2026-04-01)
+3) Time in HH:MM:SS (example: 08:35:51)
+4) Fixed value: 1
+5) Log type: 0=LOG IN, 2=BREAKOUT, 3=BREAKIN, 1=OUT
+6) Fixed value: 15
+7) Fixed value: 0</pre>
 
                 <form method="post"
                       th:action="@{/admin/attendance/time-adjustments/upload}"
                       enctype="multipart/form-data">
                     <div class="adjust-form-grid">
+                        <label>
+                            Start date filter
+                            <input type="date" name="startDate" />
+                        </label>
+                        <label>
+                            End date filter
+                            <input type="date" name="endDate" />
+                        </label>
                         <label class="input-file">
                             Biometrics file
                             <input type="file" name="file" accept=".csv,.txt,.dat" required />
@@ -57,11 +75,76 @@
                     <pre class="adjust-import-summary-pre" th:text="${uploadImportSummary}"></pre>
                 </div>
             </div>
+
+            <div class="adjust-panel" th:if="${previewRows != null}">
+                <h2><i class="fa-solid fa-list-check"></i> Unverified Time Logs (For Approval)</h2>
+                <p class="adjust-panel-desc">Choose IN/OUT (radio), edit time if needed, then approve.</p>
+                <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
+                    <div th:each="row : ${previewRows}" class="adjust-import-summary" style="margin-bottom:12px;">
+                        <div>
+                            <label style="margin-right:8px;">
+                                <input type="checkbox" th:name="${'verify_' + row.key}" value="true" checked />
+                                Verify
+                            </label>
+                            <strong th:text="${row.employeeNumber}">EMP</strong>
+                            <span> - </span>
+                            <span th:text="${row.employeeName}">Name</span>
+                            <span> | Biometric: </span>
+                            <span th:text="${row.biometricId}">Bio</span>
+                            <span> | Date: </span>
+                            <span th:text="${row.displayDate}">04/16/2026</span>
+                            <span> | Shift: </span>
+                            <span th:text="${row.shiftLabel}">08:00 AM - 05:00 PM</span>
+                        </div>
+                        <div style="margin-top:8px;">
+                            <div><strong>Time In choices</strong></div>
+                            <label th:each="v : ${row.inCandidates}" style="margin-right:10px;">
+                                <input type="radio"
+                                       th:name="${'inPick_' + row.key}"
+                                       th:value="${v}"
+                                       th:checked="${v == row.selectedIn}"
+                                       th:attr="data-target=${'timeInEdit_' + row.key}" />
+                                <span th:text="${row.format12h(v)}">08:00 AM</span>
+                            </label>
+                            <input type="text" th:name="${'timeInEdit_' + row.key}" th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
+                        </div>
+                        <div style="margin-top:8px;">
+                            <div><strong>Break (default)</strong></div>
+                            <input type="text" th:name="${'breakOutEdit_' + row.key}" th:value="${row.breakOut}" placeholder="hh:mm a" />
+                            <span>to</span>
+                            <input type="text" th:name="${'breakInEdit_' + row.key}" th:value="${row.breakIn}" placeholder="hh:mm a" />
+                        </div>
+                        <div style="margin-top:8px;">
+                            <div><strong>Time Out choices</strong></div>
+                            <label th:each="v : ${row.outCandidates}" style="margin-right:10px;">
+                                <input type="radio"
+                                       th:name="${'outPick_' + row.key}"
+                                       th:value="${v}"
+                                       th:checked="${v == row.selectedOut}"
+                                       th:attr="data-target=${'timeOutEdit_' + row.key}" />
+                                <span th:text="${row.format12h(v)}">05:00 PM</span>
+                            </label>
+                            <input type="text" th:name="${'timeOutEdit_' + row.key}" th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
+                        </div>
+                    </div>
+                    <div class="adjust-panel-btn">
+                        <button type="submit" class="btn-import">
+                            <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
+                        </button>
+                    </div>
+                </form>
+            </div>
         </section>
     </div>
     <script src="/js/nav.js"></script>
     <script>
-       
+       document.querySelectorAll('input[type="radio"][data-target]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var targetName = this.getAttribute('data-target');
+                var target = document.querySelector('input[name="' + targetName + '"]');
+                if (target) target.value = this.value;
+            });
+       });
     </script>
 </body>
 </html>

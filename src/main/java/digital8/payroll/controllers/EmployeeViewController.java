@@ -68,6 +68,7 @@ public class EmployeeViewController {
             @RequestParam String lastName,
             @RequestParam String email,
             @RequestParam String contactNumber,
+            @RequestParam(required = false) String biometricId,
             @RequestParam String address,
             @RequestParam String birthDate,
             @RequestParam String dateHired,
@@ -91,6 +92,7 @@ public class EmployeeViewController {
         emp.setMiddleName(middleName);
         emp.setLastName(lastName);
         emp.setContactNumber(contactNumber);
+        emp.setBiometricId(biometricId != null && !biometricId.trim().isEmpty() ? biometricId.trim() : null);
         emp.setAddress(address);
         emp.setBirthDate(LocalDate.parse(birthDate));
         emp.setDateHired(LocalDate.parse(dateHired));

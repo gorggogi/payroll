@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public class EmployeeListDto {
     private Integer employeeId;
     private String employeeNumber;
+    private String biometricId;
     private String firstName;
     private String middleName;
     private String lastName;
@@ -23,6 +24,8 @@ public class EmployeeListDto {
     public void setEmployeeId(Integer employeeId) { this.employeeId = employeeId; }
     public String getEmployeeNumber() { return employeeNumber; }
     public void setEmployeeNumber(String employeeNumber) { this.employeeNumber = employeeNumber; }
+    public String getBiometricId() { return biometricId; }
+    public void setBiometricId(String biometricId) { this.biometricId = biometricId; }
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public String getMiddleName() { return middleName; }
