@@ -18,7 +18,7 @@
 
         <section>
             <div class="head">
-                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}">â€” <span th:text="${employeeName}">Name</span></span></h1>
+                <h1>Overtime <span th:if="${employeeName != null and !employeeName.isEmpty()}"><span th:text="${employeeName}">Name</span></span></h1>
             </div>
 
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
@@ -106,7 +106,7 @@
             <form method="get" th:action="${overtimeFilterAction}" id="overtimeFilterForm" class="attendance-filter">
                 <label for="empId" sec:authorize="hasRole('ADMIN')">Employee</label>
                 <select sec:authorize="hasRole('ADMIN')" name="empId" id="empId" onchange="this.form.submit()">
-                    <option value="" th:selected="${viewingEmployeeId == null}">â€” Select â€”</option>
+                    <option value="" th:selected="${viewingEmployeeId == null}">Select</option>
                     <option th:each="e : ${allEmployees}" th:value="${e.employeeId}"
                             th:selected="${viewingEmployeeId != null and viewingEmployeeId == e.employeeId}"
                             th:text="${e.lastName + ', ' + e.firstName}">Doe, Jane</option>
