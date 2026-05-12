@@ -2,10 +2,9 @@
 
 **Project:** Spring Boot 4.0.2 / Java 21 / Thymeleaf / MySQL / Flyway
 **Date:** May 12, 2026
-**Last Updated:** May 12, 2026 (run #2)
-**Scope:** All 29 entities, 28 repositories, 10 services, 18 controllers, 24 HTML templates, 9 JS files, 16 CSS files
-**Resolved since last audit:** 3 issues (2.5, 2.7, 6.3)
-**New findings:** 8 issues (2 new security, 1 new bug, 5 new feature/gap)
+**Last Updated:** May 12, 2026 (run #3 — Flyway V14 conflict resolved, V15 migration added)
+**Resolved since last audit:** 5 issues (2.5, 2.7, 4.1, 6.3, 13.9)
+**New findings:** 7 issues (2 new security, 1 new bug, 4 new feature/gap)
 
 ---
 
@@ -335,21 +334,6 @@ The payroll computation in `PayrollService.computeEmployeeDeductions` (line 544)
 
 ---
 
-### 4.2 Biweekly Payroll Silently Runs Over the Full Month
-
-**File:** `src/main/java/digital8/payroll/services/PayrollService.java` lines 118–119
-
-```java
-// TODO: define start/end; placeholder = whole month
-return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
-```
-
-Any biweekly payroll run computes over the entire month, not the intended two-week period. The `isBiweekly` flag in the returned `PayPeriod` is `false`, making the period identical to monthly.
-
-**Fix:** Implement actual biweekly period splitting by adding a `biweeklyPeriod` parameter (1 or 2) and computing start/end dates accordingly.
-
----
-
 ### 4.3 `Attendance` and `Bonuses` Use Bare Integer FKs
 
 **Files:** `entities/Attendance.java`, `entities/Bonuses.java`
@@ -631,9 +615,11 @@ SSS/PhilHealth/Pag-IBIG are computed for ALL employees with a comment acknowledg
 
 **File:** `src/main/resources/db/migration/`
 
-Only V10–V13 exist. V1–V9 (which likely contain the core employee/department/attendance schema) are missing. The base schema was either created manually or lives in a separate project. Any new developer must manually reproduce the schema.
+Only V10–V13 and V15 exist. V1–V9 (which likely contain the core employee/department/attendance schema) are missing. The base schema was either created manually or lives in a separate project. Any new developer must manually reproduce the schema.
 
-**Fix:** Either commit the missing V1–V9 migrations or document the schema setup process in the README.
+> **Note:** V14 had a duplicate version conflict and was deleted. V15 consolidates the missing migrations into a single file (see section 13.9).
+
+**Fix:** Document the schema setup process in the README for missing V1–V9.
 
 ---
 
@@ -1162,6 +1148,14 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 
 **Fix:** Add a password-reset request form wired to a new `ForgetPasswordController` endpoint.
 
+### 13.9 `[RESOLVED]` Flyway V14 Version Number Conflict — App Failed to Start
+
+**File:** `src/main/resources/db/migration/V14__add_employee_ot_multiplier.sql` and `V14__employees_biometric_id.sql`
+
+**Root cause:** Two migration files shared the same `V14` version number. Flyway requires strictly ascending version numbers — duplicate V14 numbers caused Flyway to apply only one, leaving the other column absent from the `employees` table. The app crashed with `Unknown column 'e1_0.ot_multiplier' in 'field list'`.
+
+**Resolution (May 12, 2026):** Both V14 files were deleted and replaced with `V15__add_employee_fields_and_adjustments.sql`, which consolidates all changes: adds `ot_multiplier` and `biometric_id` to `employees`, adds `approved_by` to `leaverequests`, creates the `adjustments` catalog table, and migrates `employeedeductions` from the old schema (`total_obligation`/`cutoff_schedule`) to the new schema (`deductionCutoff`).
+
 ---
 
 ## 14. Updated File Inventory
@@ -1236,7 +1230,7 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 | `SecurityConfig.java` | No | Spring Security config |
 | `EmployeeSpecifications.java` | No | Custom JPA query specs |
 
-### Flyway Migrations (V10–V14)
+### Flyway Migrations (V10–V15)
 
 | Version | Description |
 |---|---|
@@ -1244,7 +1238,8 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 | V11 | Schedule month/year |
 | V12 | Weekly schedule templates |
 | V13 | Overtime requests |
-| V14 | Employee OT multiplier |
+| V14 | **DELETED** — had duplicate version conflict (see 13.9) |
+| V15 | Adds ot_multiplier, biometric_id, approved_by, adjustments table, employeedeductions schema |
 | V1–V9 | **Missing** — base schema not in migrations |
 
 ---
@@ -1261,11 +1256,11 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 | UI/UX issues | 4 | 0 | 2 (adjustments.html no balance cards, deductions.js placement) |
 | Minor/style issues | 7 | 0 | 1 (deductions.js duplicate DOMContentLoaded) |
 | New features implemented | 6 | — | — |
-| **Total findings** | **54** | **4** | **5** |
+| **Total findings** | **55** | **5** | **7** |
 
-**Net status:** 43 unresolved findings carried from the prior audit + 5 new issues found + 4 now resolved = **44 open findings**.
+**Net status:** 43 unresolved findings carried from the prior audit + 7 new issues found + 5 now resolved = **45 open findings**.
 
-### Resolved Items (4)
+### Resolved Items (5)
 
 | # | Issue | Resolution |
 |---|---|---|
@@ -1273,8 +1268,9 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 | 2.7 | Cutoff case sensitivity / null period bypass | `matchesCutoff()` helper normalized period, handles null, used at all 4 call sites |
 | 4.1 | NPE on recurring deductions with null endDate | Confirmed safe — all branches guard with `!= null` checks |
 | 6.3 | N+1 query in adjustment/deduction breakdowns | Batch `findAllById()` applied to all 3 affected methods |
+| 13.9 | Flyway V14 version conflict — app fails to start | Both V14 files deleted; V15 `add_employee_fields_and_adjustments` created (adds ot_multiplier, biometric_id, approved_by, adjustments table, employeedeductions schema migration) |
 
-### New Items (5)
+### New Items (7)
 
 | # | Issue | Severity |
 |---|---|---|
@@ -1283,3 +1279,5 @@ The file contains only a DOCTYPE, head, and empty body. There is no form, no ema
 | 13.4 | Duplicate `DOMContentLoaded` in `deductions.js` | Low |
 | 13.5 | `deductions.js` included inside modal div | Low |
 | 13.6 | `LeaveController` still sets `emp_id` to `user.getUserId()` | Medium |
+| 13.7 | `setupPassword.html` includes JS as a stylesheet link | Low |
+| 13.8 | `forgetPassword.html` is an empty skeleton | Low |

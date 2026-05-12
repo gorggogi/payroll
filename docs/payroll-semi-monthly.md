@@ -168,7 +168,6 @@ Specifically:
     - `semi_1` → Semi-monthly (1–15)
     - `semi_2` → Semi-monthly (16–end)
     - `monthly` → Monthly (full month)
-    - `biweekly` → present in UI; currently uses **full month** placeholder bounds in backend (not a true 14-day cycle yet)
 
 **Controller**: `src/main/java/digital8/payroll/controllers/payrollViewController.java`
 
@@ -502,7 +501,6 @@ Rendering:
 ## 14) Important assumptions and known limitations
 
 - **Holiday pay** is still a placeholder (0). If HR requires 2x pay on regular holidays when clocked in, that requires holiday-date data and additional earnings logic.
-- **Biweekly** is not a true biweekly window yet (needs a calendar/anchor date).
 - **Adjustment earnings** are not implemented (always 0).
 - **Recurring deductions** are applied at full amount per active period; if HR expects some deductions to be split per cutoff, implement a “frequency” rule for deductions.
 - **Overtime multiplier** currently depends on employment type; HR sample may assume different OT rules (some rows appear to use 1.0x).

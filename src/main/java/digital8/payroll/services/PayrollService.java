@@ -114,10 +114,6 @@ public class PayrollService {
         if ("semi_2".equals(p) || "semi-monthly-2".equals(p)) {
             return new PayPeriod(ym.atDay(16), ym.atEndOfMonth(), true);
         }
-        if ("biweekly".equals(p)) {
-            // TODO: define start/end; placeholder = whole month
-            return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
-        }
         // monthly, empty, or unknown → full calendar month, full statutory (no ÷2)
         return new PayPeriod(ym.atDay(1), ym.atEndOfMonth(), false);
     }
@@ -696,7 +692,7 @@ public class PayrollService {
     /**
      * Returns true if the given cutoff applies for the current period.
      * - BOTH always matches.
-     * - Monthly/biweekly periods always match (cutoff only applies to semi-monthly).
+     * - Monthly periods always match (cutoff only applies to semi-monthly).
      * - For semi-monthly periods, the cutoff must match the period (case-insensitive).
      * - null period falls back to monthly behavior (all cutoffs match).
      */
