@@ -24,15 +24,22 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.LocalTime;
+import java.time.format.TextStyle;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -42,10 +49,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Controller
 public class attendanceController {
+    private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
 
     @Autowired
     private AttendanceRepository attendanceRepository;
@@ -497,7 +507,428 @@ public class attendanceController {
             HttpServletRequest request,
             Model model,
             Authentication authentication) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            Object previewRows = session.getAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
+            if (previewRows != null) {
+                model.addAttribute("previewRows", previewRows);
+            }
+        }
         return "html/time-adjustments";
+    }
+
+    @PostMapping("/admin/attendance/time-adjustments/upload")
+    public String uploadTimeAdjustments(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "startDate", required = false) String startDateRaw,
+            @RequestParam(value = "endDate", required = false) String endDateRaw,
+            @RequestParam(value = "overwrite", required = false) Boolean overwrite,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Upload failed: file is empty.");
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+
+        final boolean shouldOverwrite = Boolean.TRUE.equals(overwrite);
+        final LocalDate startDate = parseDateFlexible(startDateRaw);
+        final LocalDate endDate = parseDateFlexible(endDateRaw);
+        if ((startDateRaw != null && !startDateRaw.trim().isEmpty() && startDate == null)
+                || (endDateRaw != null && !endDateRaw.trim().isEmpty() && endDate == null)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Invalid start/end date filter.");
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "End date must be after or equal to start date.");
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+
+        // key: biometricId|date
+        Map<String, ImportAccumulator> aggregated = new TreeMap<>();
+        int lineNo = 0;
+        int parsedRows = 0;
+        int skippedRows = 0;
+        List<String> errors = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lineNo++;
+                String raw = line == null ? "" : line.trim();
+                if (raw.isEmpty()) {
+                    continue;
+                }
+
+                String[] parts = raw.split("\\s+");
+                if (parts.length != 7) {
+                    skippedRows++;
+                    errors.add("Line " + lineNo + ": expected 7 columns, found " + parts.length + ".");
+                    continue;
+                }
+
+                String biometricId;
+                LocalDate logDate;
+                LocalTime logTime;
+                Integer logType;
+                try {
+                    biometricId = parts[0].trim();
+                    if (biometricId.isEmpty()) {
+                        throw new IllegalArgumentException("empty biometric id");
+                    }
+                    logDate = parseDateFlexible(parts[1]);
+                    logTime = parseTimeFlexible(parts[2]);
+                    logType = Integer.parseInt(parts[4]);
+                    if (logDate == null || logTime == null) {
+                        throw new IllegalArgumentException("invalid date/time");
+                    }
+                } catch (Exception ex) {
+                    skippedRows++;
+                    errors.add("Line " + lineNo + ": invalid biometricId/date/time/logType.");
+                    continue;
+                }
+                if (startDate != null && logDate.isBefore(startDate)) {
+                    continue;
+                }
+                if (endDate != null && logDate.isAfter(endDate)) {
+                    continue;
+                }
+
+                if (!"1".equals(parts[3]) || !"15".equals(parts[5]) || !"0".equals(parts[6])) {
+                    skippedRows++;
+                    errors.add("Line " + lineNo + ": expected fixed values [1, 15, 0] in columns 4, 6, 7.");
+                    continue;
+                }
+
+                if (!(logType == 0 || logType == 1 || logType == 2 || logType == 3)) {
+                    skippedRows++;
+                    errors.add("Line " + lineNo + ": log type must be 0, 1, 2, or 3.");
+                    continue;
+                }
+
+                String key = biometricId + "|" + logDate;
+                ImportAccumulator acc = aggregated.computeIfAbsent(key, k -> new ImportAccumulator(biometricId, logDate));
+                acc.accept(logType, logTime);
+                parsedRows++;
+            }
+        } catch (IOException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Upload failed: " + e.getMessage());
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+
+        List<TimeAdjustmentPreviewRow> previewRows = new ArrayList<>();
+        int readyForApproval = 0;
+        int skippedUnknownBiometric = 0;
+
+        for (ImportAccumulator acc : aggregated.values()) {
+            Optional<Employees> empOpt = employeeRepository.findByBiometricId(acc.biometricId);
+            if (empOpt.isEmpty()) {
+                skippedUnknownBiometric++;
+                continue;
+            }
+            Employees emp = empOpt.get();
+            ShiftMatchResult shiftMatch = validateAgainstShift(emp.getEmployeeId(), acc.logDate);
+            if (!shiftMatch.allowed) {
+                skippedRows++;
+                errors.add("Biometric " + acc.biometricId + " on " + acc.logDate + ": " + shiftMatch.reason);
+                continue;
+            }
+            String employeeName = (emp.getLastName() != null ? emp.getLastName() : "")
+                    + ", " + (emp.getFirstName() != null ? emp.getFirstName() : "");
+            String key = emp.getEmployeeId() + "|" + acc.logDate;
+            previewRows.add(new TimeAdjustmentPreviewRow(
+                    key,
+                    emp.getEmployeeId(),
+                    emp.getEmployeeNumber(),
+                    acc.biometricId,
+                    employeeName,
+                    acc.logDate.toString(),
+                    new ArrayList<>(acc.inCandidates),
+                    new ArrayList<>(acc.outCandidates),
+                    acc.defaultIn(),
+                    acc.defaultOut(),
+                    "12:00 PM",
+                    "1:00 PM",
+                    shiftMatch.shiftLabel,
+                    shouldOverwrite
+            ));
+            readyForApproval++;
+        }
+        request.getSession(true).setAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY, previewRows);
+
+        StringBuilder summary = new StringBuilder();
+        summary.append("Parsed rows: ").append(parsedRows)
+                .append("\nRows ready for approval: ").append(readyForApproval)
+                .append("\nSkipped unknown biometric IDs: ").append(skippedUnknownBiometric)
+                .append("\nSkipped invalid rows: ").append(skippedRows);
+        if (!errors.isEmpty()) {
+            summary.append("\n\nValidation issues:\n");
+            int maxErr = Math.min(20, errors.size());
+            for (int i = 0; i < maxErr; i++) {
+                summary.append("- ").append(errors.get(i)).append("\n");
+            }
+            if (errors.size() > maxErr) {
+                summary.append("- ... ").append(errors.size() - maxErr).append(" more");
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("uploadImportSummary", summary.toString());
+        if (readyForApproval > 0) {
+            redirectAttributes.addFlashAttribute("successMessage", "Biometric logs loaded. Review and approve below.");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage", "No logs available for approval.");
+        }
+        return "redirect:/admin/attendance/time-adjustments";
+    }
+
+    @PostMapping("/admin/attendance/time-adjustments/approve")
+    public String approveTimeAdjustments(
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No unverified logs to approve.");
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+        Object data = session.getAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
+        if (!(data instanceof List<?> rowsRaw) || rowsRaw.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No unverified logs to approve.");
+            return "redirect:/admin/attendance/time-adjustments";
+        }
+
+        int inserted = 0;
+        int updated = 0;
+        int skipped = 0;
+        for (Object o : rowsRaw) {
+            if (!(o instanceof TimeAdjustmentPreviewRow row)) {
+                continue;
+            }
+            String approvedFlag = request.getParameter("verify_" + row.key);
+            if (!"true".equalsIgnoreCase(approvedFlag)) {
+                skipped++;
+                continue;
+            }
+            String inRaw = request.getParameter("timeInEdit_" + row.key);
+            String outRaw = request.getParameter("timeOutEdit_" + row.key);
+            LocalTime in = parseTimeFlexible(inRaw);
+            LocalTime out = parseTimeFlexible(outRaw);
+            LocalDate date = parseDateFlexible(row.logDate);
+            if (in == null || out == null || date == null) {
+                skipped++;
+                continue;
+            }
+            Optional<Attendance> existingOpt = attendanceRepository.findAttendanceOnDate(row.employeeId, date);
+            if (existingOpt.isPresent() && !row.overwrite) {
+                skipped++;
+                continue;
+            }
+            Attendance attendance = existingOpt.orElseGet(Attendance::new);
+            attendance.setEmployeeId(row.employeeId);
+            attendance.setAttendance_date(date);
+            attendance.setTime_in(in);
+            attendance.setTime_out(out);
+            attendance.setWork_hours(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            attendance.setLate_minutes(0);
+            attendance.setOvertime_hours(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            attendance.setUndertime_minutes(0);
+            attendance.setStatus("Present");
+            attendanceRepository.save(attendance);
+            if (existingOpt.isPresent()) {
+                updated++;
+            } else {
+                inserted++;
+            }
+        }
+        session.removeAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Approved logs saved. Inserted: " + inserted + ", updated: " + updated + ", skipped: " + skipped + ".");
+        return "redirect:/admin/attendance/time-adjustments";
+    }
+
+    private LocalDate parseDateFlexible(String raw) {
+        if (raw == null) return null;
+        String v = raw.trim();
+        if (v.isEmpty()) return null;
+        List<DateTimeFormatter> formatters = List.of(
+                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
+                DateTimeFormatter.ofPattern("dd/MM/yyyy"),
+                DateTimeFormatter.ofPattern("MM/dd/yyyy")
+        );
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalDate.parse(v, f);
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private LocalTime parseTimeFlexible(String raw) {
+        if (raw == null) return null;
+        String v = raw.trim();
+        if (v.isEmpty()) return null;
+        List<DateTimeFormatter> formatters = List.of(
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("hh:mm:ss a"),
+                DateTimeFormatter.ofPattern("hh:mm a")
+        );
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalTime.parse(v.toUpperCase(), f);
+            } catch (DateTimeParseException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static final class ImportAccumulator {
+        private final String biometricId;
+        private final LocalDate logDate;
+        private final TreeSet<String> inCandidates = new TreeSet<>();
+        private final TreeSet<String> outCandidates = new TreeSet<>();
+
+        private ImportAccumulator(String biometricId, LocalDate logDate) {
+            this.biometricId = biometricId;
+            this.logDate = logDate;
+        }
+
+        private void accept(Integer logType, LocalTime logTime) {
+            // 0=IN, 3=BREAKIN (fallback IN), 1=OUT, 2=BREAKOUT (fallback OUT)
+            if (logType == 0 || logType == 3) {
+                inCandidates.add(logTime.toString());
+            }
+            if (logType == 1 || logType == 2) {
+                outCandidates.add(logTime.toString());
+            }
+        }
+
+        private String defaultIn() {
+            return inCandidates.isEmpty() ? "" : inCandidates.first();
+        }
+
+        private String defaultOut() {
+            return outCandidates.isEmpty() ? "" : outCandidates.last();
+        }
+    }
+
+    private static final class TimeAdjustmentPreviewRow {
+        private final String key;
+        private final Integer employeeId;
+        private final String employeeNumber;
+        private final String biometricId;
+        private final String employeeName;
+        private final String logDate;
+        private final List<String> inCandidates;
+        private final List<String> outCandidates;
+        private final String selectedIn;
+        private final String selectedOut;
+        private final String breakOut;
+        private final String breakIn;
+        private final String shiftLabel;
+        private final boolean overwrite;
+
+        private TimeAdjustmentPreviewRow(String key,
+                                         Integer employeeId,
+                                         String employeeNumber,
+                                         String biometricId,
+                                         String employeeName,
+                                         String logDate,
+                                         List<String> inCandidates,
+                                         List<String> outCandidates,
+                                         String selectedIn,
+                                         String selectedOut,
+                                         String breakOut,
+                                         String breakIn,
+                                         String shiftLabel,
+                                         boolean overwrite) {
+            this.key = key;
+            this.employeeId = employeeId;
+            this.employeeNumber = employeeNumber;
+            this.biometricId = biometricId;
+            this.employeeName = employeeName;
+            this.logDate = logDate;
+            this.inCandidates = inCandidates;
+            this.outCandidates = outCandidates;
+            this.selectedIn = selectedIn;
+            this.selectedOut = selectedOut;
+            this.breakOut = breakOut;
+            this.breakIn = breakIn;
+            this.shiftLabel = shiftLabel;
+            this.overwrite = overwrite;
+        }
+
+        public String getKey() { return key; }
+        public Integer getEmployeeId() { return employeeId; }
+        public String getEmployeeNumber() { return employeeNumber; }
+        public String getBiometricId() { return biometricId; }
+        public String getEmployeeName() { return employeeName; }
+        public String getLogDate() { return logDate; }
+        public List<String> getInCandidates() { return inCandidates; }
+        public List<String> getOutCandidates() { return outCandidates; }
+        public String getSelectedIn() { return selectedIn; }
+        public String getSelectedOut() { return selectedOut; }
+        public String getBreakOut() { return breakOut; }
+        public String getBreakIn() { return breakIn; }
+        public String getShiftLabel() { return shiftLabel; }
+        public boolean isOverwrite() { return overwrite; }
+        public String getDisplayDate() {
+            LocalDate d = LocalDate.parse(logDate);
+            return d.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"));
+        }
+        public String format12h(String raw) {
+            LocalTime t = LocalTime.parse(raw);
+            return t.format(DateTimeFormatter.ofPattern("hh:mm a"));
+        }
+        public String getSelectedIn12h() { return format12h(selectedIn); }
+        public String getSelectedOut12h() { return format12h(selectedOut); }
+    }
+
+    private ShiftMatchResult validateAgainstShift(Integer employeeId, LocalDate date) {
+        Optional<EmployeeScheduleAssignment> assignmentOpt =
+                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
+                        employeeId, date.getYear(), date.getMonthValue());
+        if (assignmentOpt.isEmpty()) {
+            return ShiftMatchResult.denied("employee has no shift assignment for this month");
+        }
+        EmployeeScheduleAssignment assignment = assignmentOpt.get();
+        int dow = date.getDayOfWeek().getValue();
+        Optional<WeeklyScheduleTemplateDay> dayOpt =
+                weeklyScheduleTemplateDayRepository.findByTemplateIdAndDayOfWeek(assignment.getTemplateId(), dow);
+        if (dayOpt.isEmpty()) {
+            return ShiftMatchResult.denied("no shift day setup for " + date.getDayOfWeek().getDisplayName(TextStyle.SHORT, java.util.Locale.ENGLISH));
+        }
+        WeeklyScheduleTemplateDay day = dayOpt.get();
+        if (day.isRestDay()) {
+            return ShiftMatchResult.denied("day is marked as rest day");
+        }
+        if (day.getTimeIn() == null || day.getTimeOut() == null) {
+            return ShiftMatchResult.denied("shift has no time in/out setup");
+        }
+        String label = day.getTimeIn().format(DateTimeFormatter.ofPattern("hh:mm a"))
+                + " - " + day.getTimeOut().format(DateTimeFormatter.ofPattern("hh:mm a"));
+        return ShiftMatchResult.allowed(label);
+    }
+
+    private static final class ShiftMatchResult {
+        private final boolean allowed;
+        private final String reason;
+        private final String shiftLabel;
+
+        private ShiftMatchResult(boolean allowed, String reason, String shiftLabel) {
+            this.allowed = allowed;
+            this.reason = reason;
+            this.shiftLabel = shiftLabel;
+        }
+
+        private static ShiftMatchResult allowed(String shiftLabel) {
+            return new ShiftMatchResult(true, "", shiftLabel);
+        }
+
+        private static ShiftMatchResult denied(String reason) {
+            return new ShiftMatchResult(false, reason, "N/A");
+        }
     }
 
     @PostMapping("/employee/attendance/overtime/request")

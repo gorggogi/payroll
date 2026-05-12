@@ -18,6 +18,8 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>, J
     Optional<Employees> findFirstByOrderByEmployeeIdDesc();
     Employees findByEmployeeNumber(String employeeNumber);
     boolean existsByEmployeeNumber(String employeeNumber);
+    boolean existsByBiometricId(String biometricId);
+    Optional<Employees> findByBiometricId(String biometricId);
 
     // Optional: 
     List<Employees> findByDepartment(Departments department);

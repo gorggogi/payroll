@@ -71,10 +71,11 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
                         html += `<tr class="service-fee-row"><td><strong>Service Fee</strong></td><td>${fmt(item.serviceFee)}</td></tr>`;
 
                         html += '<tr><td colspan="2" class="table-section-header"><strong>Statutory Contributions</strong></td></tr>';
-                        html += `<tr><td>SSS</td><td>${fmt(item.sss)}</td></tr>`;
-                        html += `<tr><td>Philhealth</td><td>${fmt(item.philhealth)}</td></tr>`;
-                        html += `<tr><td>Pag-ibig</td><td>${fmt(item.pagibig)}</td></tr>`;
-                        html += `<tr><td>Withholding Tax</td><td>${fmt(item.tax)}</td></tr>`;
+                        const isSemiMonthly = period === 'semi_1' || period === 'semi_2';
+                        html += `<tr><td>SSS</td><td>${fmt(isSemiMonthly ? item.sss / 2 : item.sss)}</td></tr>`;
+                        html += `<tr><td>Philhealth</td><td>${fmt(isSemiMonthly ? item.philhealth / 2 : item.philhealth)}</td></tr>`;
+                        html += `<tr><td>Pag-ibig</td><td>${fmt(isSemiMonthly ? item.pagibig / 2 : item.pagibig)}</td></tr>`;
+                        html += `<tr><td>Withholding Tax</td><td>${fmt(isSemiMonthly ? item.tax / 2 : item.tax)}</td></tr>`;
                         
                         if (item.semiMonthlyContributions != null) {
                             html += `<tr class="deduct-row"><td><strong>Total Semi-monthly Contributions</strong></td><td>${fmt(item.semiMonthlyContributions)}</td></tr>`;

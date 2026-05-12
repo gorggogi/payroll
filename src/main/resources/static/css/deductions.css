@@ -50,20 +50,6 @@
     font-weight: 600;
 }
 /* Deduction modal and header styling moved from HTML */
-.deduction-modal {
-    display: none;
-    z-index: 1000;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    align-items: center;
-    justify-content: center;
-}
-.deduction-modal[style*="display: block"] {
-    display: flex !important;
-}
 .deduction-modal-content--types {
     max-height: 85vh;
     overflow-y: auto;
@@ -323,11 +309,11 @@ button:active,
 
 }
 
-.deduction-modal { 
+.deduction-modal {
+    display: none;
     position: fixed; 
     inset: 0; 
-    background: rgba(0, 0, 0, 0.5); 
-    display: flex; 
+    background: rgba(0, 0, 0, 0.5);
     align-items: center; 
     justify-content: center; 
     z-index: 1000; 

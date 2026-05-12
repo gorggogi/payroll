@@ -23,6 +23,7 @@ import jakarta.persistence.Transient;
 @JsonPropertyOrder({
         "employeeId",
         "employeeNumber",
+        "biometricId",
         "lastName",
         "firstName",
         "middleName",
@@ -51,6 +52,9 @@ public class Employees {
 
     @Column(nullable = false, unique = true)
     private String employeeNumber;
+
+    @Column(name = "biometric_id", unique = true)
+    private String biometricId;
 
     @Column(nullable = false, unique = false)
     private String firstName;
@@ -121,6 +125,9 @@ public class Employees {
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
+    @Column(name = "ot_multiplier", precision = 5, scale = 2)
+    private BigDecimal otMultiplier = BigDecimal.ONE;
+
     public Users getUser() {
         return user;
     }
@@ -151,6 +158,14 @@ public class Employees {
 
     public void setEmployeeNumber(String employeeNumber) {
         this.employeeNumber = employeeNumber;
+    }
+
+    public String getBiometricId() {
+        return biometricId;
+    }
+
+    public void setBiometricId(String biometricId) {
+        this.biometricId = biometricId;
     }
 
     public String getFirstName() {
@@ -314,6 +329,14 @@ public class Employees {
 
     public void setHolidayPayEligible(boolean holidayPayEligible) {
         this.holidayPayEligible = holidayPayEligible;
+    }
+
+    public BigDecimal getOtMultiplier() {
+        return otMultiplier;
+    }
+
+    public void setOtMultiplier(BigDecimal otMultiplier) {
+        this.otMultiplier = otMultiplier;
     }
 
 }

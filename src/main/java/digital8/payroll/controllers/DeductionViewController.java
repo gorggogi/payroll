@@ -96,6 +96,7 @@ public class DeductionViewController {
             dto.setRecurring(ed.getIsRecurring());
             dto.setStartDate(ed.getStartDate());
             dto.setEndDate(ed.getEndDate());
+            dto.setDeductionCutoff(ed.getDeductionCutoff());
             rows.add(dto);
         }
 
@@ -113,11 +114,45 @@ public class DeductionViewController {
             boolean recurring = "yes".equalsIgnoreCase(filterRecurring.trim());
             stream = stream.filter(r -> Boolean.valueOf(recurring).equals(r.getRecurring()));
         }
-        if (filterMonth != null && filterMonth >= 1 && filterMonth <= 12) {
-            stream = stream.filter(r -> r.getStartDate() != null && r.getStartDate().getMonthValue() == filterMonth);
-        }
-        if (filterYear != null) {
-            stream = stream.filter(r -> r.getStartDate() != null && r.getStartDate().getYear() == filterYear);
+        // Month/Year filter: for recurring deductions, check if the filter period
+        // overlaps the deduction's [startDate, endDate] window. For one-time deductions,
+        // match only the exact start month/year (the single date the deduction applies).
+        if (filterMonth != null && filterMonth >= 1 && filterMonth <= 12 && filterYear != null) {
+            LocalDate filterPeriodStart = LocalDate.of(filterYear, filterMonth, 1);
+            LocalDate filterPeriodEnd   = filterPeriodStart.withDayOfMonth(filterPeriodStart.lengthOfMonth());
+            stream = stream.filter(r -> {
+                if (Boolean.TRUE.equals(r.getRecurring())) {
+                    // Active if the filter period overlaps [startDate, endDate]
+                    return r.getStartDate() != null && r.getEndDate() != null
+                            && !r.getStartDate().isAfter(filterPeriodEnd)
+                            && !r.getEndDate().isBefore(filterPeriodStart);
+                }
+                // One-time: match if startDate falls exactly in that month/year
+                return r.getStartDate() != null
+                        && r.getStartDate().getMonthValue() == filterMonth
+                        && r.getStartDate().getYear() == filterYear;
+            });
+        } else if (filterMonth != null && filterMonth >= 1 && filterMonth <= 12) {
+            // Month only (no year selected) — same overlap/exact logic without year constraint
+            stream = stream.filter(r -> {
+                if (Boolean.TRUE.equals(r.getRecurring())) {
+                    return r.getStartDate() != null && r.getStartDate().getMonthValue() <= filterMonth
+                            && r.getEndDate() != null && r.getEndDate().getMonthValue() >= filterMonth;
+                }
+                return r.getStartDate() != null && r.getStartDate().getMonthValue() == filterMonth;
+            });
+        } else if (filterYear != null) {
+            // Year only — recurring: active any time within that year; one-time: started that year
+            stream = stream.filter(r -> {
+                if (Boolean.TRUE.equals(r.getRecurring())) {
+                    LocalDate yearStart = LocalDate.of(filterYear, 1, 1);
+                    LocalDate yearEnd   = LocalDate.of(filterYear, 12, 31);
+                    return r.getStartDate() != null && r.getEndDate() != null
+                            && !r.getStartDate().isAfter(yearEnd)
+                            && !r.getEndDate().isBefore(yearStart);
+                }
+                return r.getStartDate() != null && r.getStartDate().getYear() == filterYear;
+            });
         }
         rows = stream.collect(Collectors.toList());
 
@@ -179,14 +214,16 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
+            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
             RedirectAttributes ra) {
         EmployeeDeductions ed = new EmployeeDeductions();
         ed.setEmployeeId(employeeId);
         ed.setDeductionId(deductionId);
         ed.setAmount(amount);
-        ed.setIsRecurring(isRecurring == null || Boolean.TRUE.equals(isRecurring));
+        ed.setIsRecurring(Boolean.TRUE.equals(isRecurring));
         ed.setStartDate(LocalDate.parse(startDate));
         ed.setEndDate(LocalDate.parse(endDate));
+        ed.setDeductionCutoff(deductionCutoff);
         employeeDeductionsRepository.save(ed);
         ra.addFlashAttribute("message", "Deduction assigned to employee.");
         return "redirect:/admin/deductions";
@@ -210,14 +247,16 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
+            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
             RedirectAttributes ra) {
         employeeDeductionsRepository.findById(id).ifPresent(ed -> {
             ed.setEmployeeId(employeeId);
             ed.setDeductionId(deductionId);
             ed.setAmount(amount);
-            ed.setIsRecurring(isRecurring == null || Boolean.TRUE.equals(isRecurring));
+            ed.setIsRecurring(Boolean.TRUE.equals(isRecurring));
             ed.setStartDate(java.time.LocalDate.parse(startDate));
             ed.setEndDate(java.time.LocalDate.parse(endDate));
+            ed.setDeductionCutoff(deductionCutoff);
             employeeDeductionsRepository.save(ed);
         });
         ra.addFlashAttribute("message", "Deduction assignment updated.");

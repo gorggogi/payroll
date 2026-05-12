@@ -35,4 +35,8 @@ public class EmployeeDeductionRowDto {
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    private String deductionCutoff;
+    public String getDeductionCutoff() { return deductionCutoff; }
+    public void setDeductionCutoff(String deductionCutoff) { this.deductionCutoff = deductionCutoff; }
 }

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 public class EmployeeListDto {
     private Integer employeeId;
     private String employeeNumber;
+    private String biometricId;
     private String firstName;
     private String middleName;
     private String lastName;
@@ -18,11 +19,14 @@ public class EmployeeListDto {
     private BigDecimal basicSalary;
     private String departmentName;
     private String positionName;
+    private BigDecimal otMultiplier;
 
     public Integer getEmployeeId() { return employeeId; }
     public void setEmployeeId(Integer employeeId) { this.employeeId = employeeId; }
     public String getEmployeeNumber() { return employeeNumber; }
     public void setEmployeeNumber(String employeeNumber) { this.employeeNumber = employeeNumber; }
+    public String getBiometricId() { return biometricId; }
+    public void setBiometricId(String biometricId) { this.biometricId = biometricId; }
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
     public String getMiddleName() { return middleName; }
@@ -47,4 +51,6 @@ public class EmployeeListDto {
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
     public String getPositionName() { return positionName; }
     public void setPositionName(String positionName) { this.positionName = positionName; }
+    public BigDecimal getOtMultiplier() { return otMultiplier; }
+    public void setOtMultiplier(BigDecimal otMultiplier) { this.otMultiplier = otMultiplier; }
 }

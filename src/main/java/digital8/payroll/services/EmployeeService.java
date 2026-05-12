@@ -104,6 +104,7 @@ public class EmployeeService {
         EmployeeListDto dto = new EmployeeListDto();
         dto.setEmployeeId(e.getEmployeeId());
         dto.setEmployeeNumber(e.getEmployeeNumber());
+        dto.setBiometricId(e.getBiometricId());
         dto.setFirstName(e.getFirstName());
         dto.setMiddleName(e.getMiddleName());
         dto.setLastName(e.getLastName());
@@ -116,6 +117,7 @@ public class EmployeeService {
         dto.setBasicSalary(e.getBasicSalary());
         if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getDepartmentName());
         if (e.getPosition() != null) dto.setPositionName(e.getPosition().getPositionName());
+        dto.setOtMultiplier(e.getOtMultiplier());
         return dto;
     }
 
@@ -150,6 +152,14 @@ public class EmployeeService {
         } else if (employeeRepository.existsByEmployeeNumber(emp.getEmployeeNumber())) {
             return Optional.empty();
         }
+        if (emp.getBiometricId() != null && !emp.getBiometricId().isBlank()) {
+            emp.setBiometricId(emp.getBiometricId().trim());
+            if (employeeRepository.existsByBiometricId(emp.getBiometricId())) {
+                return Optional.empty();
+            }
+        } else {
+            emp.setBiometricId(null);
+        }
         if (emp.getDepartment() != null && emp.getDepartment().getDepartmentId() != null) {
             departmentsRepository.findById(emp.getDepartment().getDepartmentId()).ifPresent(emp::setDepartment);
         }
@@ -159,6 +169,9 @@ public class EmployeeService {
 
         if (emp.getFactorRate() == null || emp.getFactorRate().compareTo(BigDecimal.ZERO) <= 0) {
             emp.setFactorRate(new java.math.BigDecimal("20"));
+        }
+        if (emp.getOtMultiplier() == null || emp.getOtMultiplier().compareTo(BigDecimal.ZERO) <= 0) {
+            emp.setOtMultiplier(new java.math.BigDecimal("1.0"));
         }
         Employees saved = employeeRepository.save(emp);
 
@@ -216,6 +229,18 @@ public class EmployeeService {
 
         }
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
+        if (updated.getBiometricId() != null) {
+            String candidate = updated.getBiometricId().trim();
+            if (candidate.isEmpty()) {
+                existing.setBiometricId(null);
+            } else if (!candidate.equals(existing.getBiometricId())) {
+                Optional<Employees> owner = employeeRepository.findByBiometricId(candidate);
+                if (owner.isPresent() && !owner.get().getEmployeeId().equals(id)) {
+                    return Optional.empty();
+                }
+                existing.setBiometricId(candidate);
+            }
+        }
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
         if (updated.getDateHired() != null) existing.setDateHired(updated.getDateHired());
@@ -232,6 +257,9 @@ public class EmployeeService {
         if (updated.getPagibigNumber() != null) existing.setPagibigNumber(updated.getPagibigNumber());
         if (updated.getBank_Account() != null) existing.setBank_Account(updated.getBank_Account());
         existing.setHolidayPayEligible(updated.isHolidayPayEligible());
+        if (updated.getOtMultiplier() != null && updated.getOtMultiplier().compareTo(BigDecimal.ZERO) > 0) {
+            existing.setOtMultiplier(updated.getOtMultiplier());
+        }
 
         // Update department if provided
         if (updated.getDepartment() != null && updated.getDepartment().getDepartmentId() != null) {

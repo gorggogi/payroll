@@ -8,9 +8,13 @@ import digital8.payroll.repositories.SssTableRepository;
 import digital8.payroll.repositories.PhilhealthTableRepository;
 import digital8.payroll.repositories.TaxTableRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
+import digital8.payroll.repositories.EmployeeAdjustmentsRepository;
+import digital8.payroll.repositories.AdjustmentsRepository;
 import digital8.payroll.repositories.PagibigTableRepository;
 import digital8.payroll.repositories.DeductionsRepository;
 import digital8.payroll.dto.DeductionBreakdownItem;
+import digital8.payroll.entities.Adjustments;
+import digital8.payroll.entities.EmployeeAdjustments;
 import digital8.payroll.entities.Deductions;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.Employees;
@@ -27,8 +31,12 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import digital8.payroll.entities.Holiday;
 import java.util.HashSet;
@@ -45,9 +53,8 @@ public class PayrollService {
     private static final BigDecimal HOURS_PER_DAY = new BigDecimal("8");
     private static final BigDecimal MINUTES_PER_HOUR = new BigDecimal("60");
 
-    // OT multipliers by employment type
-    private static final BigDecimal OT_MULTIPLIER_JOB_ORDER = new BigDecimal("1.0");
-    private static final BigDecimal OT_MULTIPLIER_REGULAR = new BigDecimal("1.0");
+    // Default OT multiplier used when an employee has no per-employee override
+    private static final BigDecimal OT_MULTIPLIER_DEFAULT = new BigDecimal("1.0");
 
     // Statutory deduction constants
     private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
@@ -60,9 +67,6 @@ public class PayrollService {
     // Simplified withholding tax formula constants
     private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
     private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
-
-    // Job Order EWT rate
-    private static final BigDecimal JOB_ORDER_EWT_RATE = new BigDecimal("0.05");
 
     // Semi-monthly divisor
     private static final BigDecimal SEMI_MONTHLY_DIVISOR = new BigDecimal("2");
@@ -81,6 +85,10 @@ public class PayrollService {
     private TaxTableRepository taxTableRepository;
     @Autowired
     private EmployeeDeductionsRepository employeeDeductionsRepository;
+    @Autowired
+    private EmployeeAdjustmentsRepository employeeAdjustmentsRepository;
+    @Autowired
+    private AdjustmentsRepository adjustmentsRepository;
     @Autowired
     private DeductionsRepository deductionsRepository;
     @Autowired
@@ -137,8 +145,6 @@ public class PayrollService {
 
         Employees emp = empOpt.get();
         BigDecimal monthlyRate = emp.getBasicSalary() != null ? emp.getBasicSalary() : BigDecimal.ZERO;
-        String empType = emp.getEmploymentType() != null ? emp.getEmploymentType().trim() : "Regular";
-        boolean isJobOrder = "Job Order".equalsIgnoreCase(empType) || "JobOrder".equalsIgnoreCase(empType);
 
         // --- 1. Rate Derivation ---
         // Daily Rate = Monthly Rate / Factor
@@ -267,12 +273,17 @@ public class PayrollService {
         BigDecimal basicPay = hourlyRate.multiply(totalWorkedHours).setScale(SCALE, ROUND);
 
         // Overtime Pay = Hourly Rate × Total OT Hours × OT Multiplier
-        BigDecimal otMultiplier = isJobOrder ? OT_MULTIPLIER_JOB_ORDER : OT_MULTIPLIER_REGULAR;
+        // Use per-employee override if set; fall back to system defaults by employment type
+        BigDecimal employeeOtMultiplier = emp.getOtMultiplier();
+        BigDecimal otMultiplier = (employeeOtMultiplier != null && employeeOtMultiplier.compareTo(BigDecimal.ZERO) > 0)
+            ? employeeOtMultiplier
+            : OT_MULTIPLIER_DEFAULT;
         BigDecimal overtimePay = hourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
 
-        // Adjustment Earnings (from EmployeeDeductions marked as earnings-type)
-
-        BigDecimal adjustmentEarnings = BigDecimal.ZERO; // placeholder for future earnings adjustments
+        // Adjustment Earnings — from employee_adjustments where adjustmentType = 'EARNINGS'
+        BigDecimal[] adjSplit = computeAdjustmentsSplit(empId, periodStart, periodEnd, period);
+        BigDecimal adjustmentEarnings = adjSplit[0];
+        BigDecimal adjustmentDeductions = adjSplit[1];
 
         // Total Earnings = Basic Pay + Overtime + Adjustment Earnings
         BigDecimal totalEarnings = basicPay
@@ -291,11 +302,13 @@ public class PayrollService {
                 .multiply(new BigDecimal(totalLateUndertimeMinutes))
                 .setScale(SCALE, ROUND);
 
-        // Employee deductions active for this pay cutoff (same window as attendance)
-        BigDecimal adjustmentDeductions = computeEmployeeDeductions(empId, periodStart, periodEnd);
+        // Employee deductions active for this pay cutoff
+        BigDecimal employeeDeductions = computeEmployeeDeductions(empId, periodStart, periodEnd, period);
+        // adjustmentDeductions already computed above from employee_adjustments
+        BigDecimal combinedDeductions = employeeDeductions.add(adjustmentDeductions);
 
-        // Total Deductions (non-statutory) = Employee Deductions + Late/Undertime
-        BigDecimal totalNonStatutoryDeductions = adjustmentDeductions
+        // Total Deductions (non-statutory) = Employee Deductions + Adjustment Deductions + Late/Undertime
+        BigDecimal totalNonStatutoryDeductions = combinedDeductions
                 .add(lateUndertimeDeduction)
                 .setScale(SCALE, ROUND);
 
@@ -324,20 +337,23 @@ public class PayrollService {
         philhealth = computePhilhealth(premiumBase, year);
         pagibig = computePagibig(premiumBase, year);
 
-        // HR policy: withholding tax follows bracket tables (not 5% EWT), even for Job
-        // Order.
-        // Semi-monthly payslips use the SEMI_MONTHLY table on J31 (= monthly salary /
-        // 2).
-        // Monthly payslips use the MONTHLY table on monthly salary.
+        // WHT: for semi-monthly, use SEMI_MONTHLY table on premiumBase/2.
+        // For monthly, use MONTHLY table on premiumBase.
+        // Using premiumBase (not monthlyRate) ensures sub-30k employees (capped at ₱20k)
+        // stay in the 0% bracket → WHT = 0, matching HR's sample computation.
         if (semiMonthly) {
-            BigDecimal semiMonthlyBase = monthlyRate.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
-            tax = computeWithholdingTaxFromTable(semiMonthlyBase, year, "SEMI_MONTHLY"); // they call this "semi"
+            BigDecimal semiBase = premiumBase.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
+            tax = computeWithholdingTaxFromTable(semiBase, year, "SEMI_MONTHLY");
         } else {
-            tax = computeWithholdingTaxFromTable(monthlyRate, year, "MONTHLY");
+            tax = computeWithholdingTaxFromTable(premiumBase, year, "MONTHLY");
         }
-        
+
+        // Total statutory deducted this slip:
+        // Semi-monthly: (SSS + PhilHealth + Pag-IBIG + SEMI_WHT) / 2
+        //   → WHT is the semi-monthly bracket value; the entire sum is divided by 2
+        //   → matches HR's spreadsheet: all four columns summed then halved
+        // Monthly: SSS + PhilHealth + Pag-IBIG + MONTHLY_WHT
         BigDecimal statutoryTotal = sss.add(philhealth).add(pagibig).add(tax);
-        
         BigDecimal statutoryDeductedThisSlip;
         if (semiMonthly) {
             statutoryDeductedThisSlip = statutoryTotal.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
@@ -379,7 +395,7 @@ public class PayrollService {
         item.setLateUndertimeMinutes(totalLateUndertimeMinutes);
         item.setLateUndertimeDeduction(lateUndertimeDeduction);
         item.setCashAdvance(BigDecimal.ZERO); // deprecated: kept for backward compat
-        item.setAdjustmentDeductions(adjustmentDeductions.setScale(SCALE, ROUND));
+        item.setAdjustmentDeductions(combinedDeductions.setScale(SCALE, ROUND));
         item.setOtherDeductions(totalNonStatutoryDeductions);
 
         // Service fee
@@ -397,6 +413,7 @@ public class PayrollService {
         item.setNetPay(netPay);
 
         // Employment type
+        String empType = emp.getEmploymentType() != null ? emp.getEmploymentType().trim() : "Regular";
         item.setEmploymentType(empType);
 
         List<PayrollItems> out = new ArrayList<>();
@@ -508,9 +525,14 @@ public class PayrollService {
 
     /**
      * Computes the total of ALL employee deductions for the given period.
-     * No type filtering — every deduction assigned to an employee is included.
+     * For recurring deductions, also checks deductionCutoff vs the current pay period:
+     *   SEMI_1 = only on first cutoff (semi_1)
+     *   SEMI_2 = only on second cutoff (semi_2)  [default]
+     *   BOTH   = every cutoff
+     * One-time deductions are not affected by deductionCutoff.
      */
-    private BigDecimal computeEmployeeDeductions(Integer employeeId, LocalDate periodStart, LocalDate periodEnd) {
+    // Visible for unit-testing subclass — do not call from outside PayrollService
+    BigDecimal computeEmployeeDeductions(Integer employeeId, LocalDate periodStart, LocalDate periodEnd, String period) {
         List<EmployeeDeductions> list = employeeDeductionsRepository.findByEmployeeId(employeeId);
         if (list == null)
             return BigDecimal.ZERO;
@@ -525,6 +547,7 @@ public class PayrollService {
                     continue;
                 if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
                         || ed.getStartDate().isBefore(periodStart))
@@ -536,16 +559,109 @@ public class PayrollService {
     }
 
     /**
+     * Splits EmployeeAdjustments for the given period into [earningsSum, deductionsSum].
+     * Applies the same cutoff + date-range filtering as computeEmployeeDeductions.
+     */
+    // Visible for unit-testing subclass — do not call from outside PayrollService
+    BigDecimal[] computeAdjustmentsSplit(Integer employeeId, LocalDate periodStart, LocalDate periodEnd, String period) {
+        List<EmployeeAdjustments> list = employeeAdjustmentsRepository.findByEmployeeId(employeeId);
+        BigDecimal earnings = BigDecimal.ZERO;
+        BigDecimal deductions = BigDecimal.ZERO;
+        if (list == null) return new BigDecimal[]{ earnings, deductions };
+        Set<Integer> adjIds = list.stream()
+            .map(EmployeeAdjustments::getAdjustmentId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        Map<Integer, Adjustments> adjMap = adjIds.isEmpty() ? Collections.emptyMap()
+            : adjustmentsRepository.findAllById(adjIds).stream()
+                .collect(Collectors.toMap(Adjustments::getAdjustmentId, a -> a));
+        for (EmployeeAdjustments ea : list) {
+            if (ea.getAmount() == null) continue;
+            boolean recurring = Boolean.TRUE.equals(ea.getIsRecurring());
+            if (recurring) {
+                if (ea.getStartDate() != null && ea.getStartDate().isAfter(periodEnd)) continue;
+                if (ea.getEndDate() != null && ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
+            } else {
+                if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
+                        || ea.getStartDate().isBefore(periodStart)) continue;
+            }
+            // Resolve type from catalog
+            String adjType = "Earnings";
+            if (ea.getAdjustmentId() != null) {
+                Adjustments a = adjMap.get(ea.getAdjustmentId());
+                if (a != null && a.getAdjustmentType() != null) {
+                    adjType = a.getAdjustmentType();
+                }
+            }
+            if ("Deduction".equalsIgnoreCase(adjType)) {
+                deductions = deductions.add(ea.getAmount());
+            } else {
+                earnings = earnings.add(ea.getAmount());
+            }
+        }
+        return new BigDecimal[]{ earnings.setScale(SCALE, ROUND), deductions.setScale(SCALE, ROUND) };
+    }
+
+    /**
+     * Returns a named breakdown of ALL adjustments for the given period (for payslip display).
+     */
+    public List<DeductionBreakdownItem> getAdjustmentsBreakdown(Integer employeeId, LocalDate periodStart,
+            LocalDate periodEnd, String period) {
+        List<EmployeeAdjustments> list = employeeAdjustmentsRepository.findByEmployeeId(employeeId);
+        List<DeductionBreakdownItem> result = new ArrayList<>();
+        if (list == null) return result;
+        Set<Integer> adjIds = list.stream()
+            .map(EmployeeAdjustments::getAdjustmentId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        Map<Integer, Adjustments> adjMap = adjIds.isEmpty() ? Collections.emptyMap()
+            : adjustmentsRepository.findAllById(adjIds).stream()
+                .collect(Collectors.toMap(Adjustments::getAdjustmentId, a -> a));
+        for (EmployeeAdjustments ea : list) {
+            if (ea.getAmount() == null) continue;
+            boolean recurring = Boolean.TRUE.equals(ea.getIsRecurring());
+            if (recurring) {
+                if (ea.getStartDate() != null && ea.getStartDate().isAfter(periodEnd)) continue;
+                if (ea.getEndDate() != null && ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
+            } else {
+                if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
+                        || ea.getStartDate().isBefore(periodStart)) continue;
+            }
+            DeductionBreakdownItem item = new DeductionBreakdownItem();
+            // Resolve name from type catalog (mirrors getDeductionsBreakdown)
+            String name = "Other";
+            if (ea.getAdjustmentId() != null) {
+                Adjustments a = adjMap.get(ea.getAdjustmentId());
+                if (a != null && a.getAdjustmentName() != null) {
+                    name = a.getAdjustmentName();
+                }
+            }
+            item.setDeductionName(name);
+            item.setAmount(ea.getAmount().setScale(SCALE, ROUND));
+            result.add(item);
+        }
+        return result;
+    }
+
+    /**
      * Returns a named breakdown of ALL employee deductions for the given period.
-     * Each deduction is listed individually by its name from the Deductions
-     * catalog.
+     * Applies the same cutoff filtering as computeEmployeeDeductions.
      */
     public List<DeductionBreakdownItem> getDeductionsBreakdown(Integer employeeId, LocalDate periodStart,
-            LocalDate periodEnd) {
+            LocalDate periodEnd, String period) {
         List<EmployeeDeductions> list = employeeDeductionsRepository.findByEmployeeId(employeeId);
         List<DeductionBreakdownItem> result = new ArrayList<>();
         if (list == null)
             return result;
+        Set<Integer> dedIds = list.stream()
+            .map(EmployeeDeductions::getDeductionId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+        Map<Integer, Deductions> dedMap = dedIds.isEmpty() ? Collections.emptyMap()
+            : deductionsRepository.findAllById(dedIds).stream()
+                .collect(Collectors.toMap(Deductions::getDeductionId, d -> d));
         for (EmployeeDeductions ed : list) {
             if (ed.getAmount() == null)
                 continue;
@@ -555,6 +671,7 @@ public class PayrollService {
                     continue;
                 if (ed.getEndDate() != null && ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
                         || ed.getStartDate().isBefore(periodStart))
@@ -562,9 +679,9 @@ public class PayrollService {
             }
             String name = "Other";
             if (ed.getDeductionId() != null) {
-                Optional<Deductions> d = deductionsRepository.findById(ed.getDeductionId());
-                if (d.isPresent() && d.get().getDeductionName() != null) {
-                    name = d.get().getDeductionName();
+                Deductions d = dedMap.get(ed.getDeductionId());
+                if (d != null && d.getDeductionName() != null) {
+                    name = d.getDeductionName();
                 }
             }
 
@@ -574,5 +691,29 @@ public class PayrollService {
             result.add(item);
         }
         return result;
+    }
+
+    /**
+     * Returns true if the given cutoff applies for the current period.
+     * - BOTH always matches.
+     * - Monthly/biweekly periods always match (cutoff only applies to semi-monthly).
+     * - For semi-monthly periods, the cutoff must match the period (case-insensitive).
+     * - null period falls back to monthly behavior (all cutoffs match).
+     */
+    private boolean matchesCutoff(String period, String cutoff, String defaultCutoff) {
+        if (cutoff == null) cutoff = defaultCutoff;
+        if ("BOTH".equalsIgnoreCase(cutoff)) return true;
+        String p = period == null ? "" : period.trim().toLowerCase();
+        if (!("semi_1".equals(p) || "semi-monthly-1".equals(p)
+            || "semi_2".equals(p) || "semi-monthly-2".equals(p))) {
+            return true;
+        }
+        if ("semi_1".equals(p) || "semi-monthly-1".equals(p)) {
+            return "SEMI_1".equalsIgnoreCase(cutoff);
+        }
+        if ("semi_2".equals(p) || "semi-monthly-2".equals(p)) {
+            return "SEMI_2".equalsIgnoreCase(cutoff);
+        }
+        return true;
     }
 }

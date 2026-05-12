@@ -68,6 +68,7 @@ public class EmployeeViewController {
             @RequestParam String lastName,
             @RequestParam String email,
             @RequestParam String contactNumber,
+            @RequestParam(required = false) String biometricId,
             @RequestParam String address,
             @RequestParam String birthDate,
             @RequestParam String dateHired,
@@ -77,7 +78,8 @@ public class EmployeeViewController {
             @RequestParam String employmentType,
             @RequestParam String payType,
             @RequestParam java.math.BigDecimal basicSalary,
-            @RequestParam(required = false)java.math.BigDecimal factorRate,
+            @RequestParam(required = false) java.math.BigDecimal factorRate,
+            @RequestParam(required = false) java.math.BigDecimal otMultiplier,
             @RequestParam String bank_Account,
             @RequestParam String tin,
             @RequestParam String sssNumber,
@@ -91,6 +93,7 @@ public class EmployeeViewController {
         emp.setMiddleName(middleName);
         emp.setLastName(lastName);
         emp.setContactNumber(contactNumber);
+        emp.setBiometricId(biometricId != null && !biometricId.trim().isEmpty() ? biometricId.trim() : null);
         emp.setAddress(address);
         emp.setBirthDate(LocalDate.parse(birthDate));
         emp.setDateHired(LocalDate.parse(dateHired));
@@ -109,6 +112,9 @@ public class EmployeeViewController {
         emp.setPhilhealthNumber(philhealthNumber);
         emp.setPagibigNumber(pagibigNumber);
         emp.setHolidayPayEligible(Boolean.TRUE.equals(holidayPayEligible));
+        if (otMultiplier != null && otMultiplier.compareTo(BigDecimal.ZERO) > 0) {
+            emp.setOtMultiplier(otMultiplier);
+        }
 
         Departments dept = new Departments();
         dept.setDepartmentId(departmentId);

@@ -12,6 +12,40 @@
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
     <style>
+        :root {
+            --shift-primary: var(--primary-color, #706fd6);
+            --shift-bg: #f7f8fc;
+            --shift-card-bg: #ffffff;
+            --shift-border: #e8e9f1;
+            --shift-text: #1f2937;
+            --shift-muted: #6b7280;
+            --shift-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+        }
+        section {
+            background: var(--shift-bg);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+        }
+        .attendance-filter {
+            padding: 0.8rem;
+            border: 1px solid var(--shift-border);
+            border-radius: 0.75rem;
+            background: var(--shift-card-bg);
+        }
+        .attendance-filter label {
+            font-size: 0.82rem;
+            color: var(--shift-muted);
+            font-weight: 600;
+        }
+        .attendance-filter select,
+        .attendance-filter input {
+            min-width: 9rem;
+            border: 1px solid #d8dbe8;
+            border-radius: 0.55rem;
+            padding: 0.45rem 0.55rem;
+            background: #fff;
+            color: var(--shift-text);
+        }
         .shift-modal {
             display: none;
             position: fixed;
@@ -62,6 +96,85 @@
             align-items: center;
             margin: 0 0 1rem 0;
         }
+        .shift-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .shift-card {
+            border: 1px solid var(--shift-border);
+            border-radius: 0.9rem;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+            padding: 1rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+        }
+        .shift-card:hover {
+            border-color: var(--shift-primary);
+            box-shadow: var(--shift-shadow);
+            transform: translateY(-2px);
+        }
+        .shift-card.selected {
+            border-color: var(--shift-primary);
+            box-shadow: 0 0 0 2px rgba(112,111,214,0.15), var(--shift-shadow);
+        }
+        .shift-card h3 {
+            margin: 0 0 0.35rem 0;
+            font-size: 1rem;
+            color: var(--shift-text);
+        }
+        .shift-card p {
+            margin: 0.2rem 0;
+            font-size: 0.88rem;
+            color: var(--shift-muted);
+        }
+        .shift-card-actions {
+            display: flex;
+            gap: 0.45rem;
+            margin-top: 0.65rem;
+            flex-wrap: wrap;
+        }
+        .shift-card-actions button {
+            font-size: 0.82rem;
+            padding: 0.35rem 0.6rem;
+        }
+        .shift-details {
+            border: 1px solid var(--shift-border);
+            border-radius: 0.9rem;
+            padding: 1rem;
+            background: var(--shift-card-bg);
+            box-shadow: var(--shift-shadow);
+            margin-bottom: 1rem;
+        }
+        .shift-employee-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.65rem;
+        }
+        .shift-employee-item {
+            border: 1px solid var(--shift-border);
+            border-radius: 0.65rem;
+            background: #fcfcff;
+            padding: 0.7rem;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+        }
+        .shift-employee-item:hover {
+            border-color: var(--shift-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .shift-employee-item.active {
+            border-color: var(--shift-primary);
+            background: #f3f2ff;
+            box-shadow: 0 0 0 2px rgba(112,111,214,0.12);
+        }
+        .shift-remaining {
+            margin-top: 0.85rem;
+            padding-top: 0.85rem;
+            border-top: 1px dashed #d6d9e8;
+        }
         .schedule-toolbar form { margin: 0; display: inline; }
         .employee-assign-search {
             width: 100%;
@@ -85,13 +198,13 @@
             gap: 0.5rem;
             padding: 0.5rem 0.65rem;
             background: #fff;
-            border: 1px solid #ddd;
+            border: 1px solid var(--shift-border);
             border-radius: 0.5rem;
             cursor: pointer;
             transition: border-color 0.15s, box-shadow 0.15s;
         }
         .employee-assign-chip:hover {
-            border-color: var(--primary-color, #706fd6);
+            border-color: var(--shift-primary);
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
         .employee-assign-chip input { flex-shrink: 0; margin: 0; cursor: pointer; }
@@ -104,6 +217,34 @@
             white-space: nowrap;
         }
         .employee-assign-row.hidden { display: none !important; }
+        @media (max-width: 900px) {
+            .shift-card-grid,
+            .shift-employee-list,
+            .employee-assign-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 640px) {
+            section {
+                padding: 0.45rem;
+                border-radius: 0.5rem;
+            }
+            .shift-card-grid,
+            .shift-employee-list,
+            .employee-assign-grid {
+                grid-template-columns: 1fr;
+            }
+            .shift-card {
+                padding: 0.85rem;
+            }
+            .shift-card-actions {
+                gap: 0.35rem;
+            }
+            .shift-modal-content {
+                margin: 3vh auto;
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -154,21 +295,37 @@
             </div>
         </form>
 
-        <table class="attendanceTable no-print" th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}" style="margin-bottom: 1rem;">
-            <caption>Classes this month (employee count)</caption>
-            <thead>
-                <tr class="attendanceHeader">
-                    <th>Name</th>
-                    <th>Employees</th>
-                </tr>
-            </thead>
-            <tbody class="attendanceBody">
-                <tr th:each="t : ${scheduleTemplates}">
-                    <td th:text="${t.templateName}">A</td>
-                    <td th:text="${assignmentCountByTemplateId != null ? assignmentCountByTemplateId.get(t.templateId) : 0}">0</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="shift-card-grid no-print" th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}">
+            <div class="shift-card"
+                 th:each="t : ${scheduleTemplates}"
+                 th:classappend="${selectedTemplateId != null and selectedTemplateId == t.templateId} ? ' selected' : ''"
+                 th:attr="data-template-id=${t.templateId}"
+                 th:onclick="|selectTemplate('${t.templateId}')|">
+                <h3 th:text="${t.templateName}">Shift Class</h3>
+                <p>
+                    <b>Employees:</b>
+                    <span th:text="${assignmentCountByTemplateId != null ? assignmentCountByTemplateId.get(t.templateId) : 0}">0</span>
+                </p>
+                <p>
+                    <b>Month:</b>
+                    <span th:text="${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')}">January</span>
+                    <span th:text="${scheduleYear}">2026</span>
+                </p>
+                <p>
+                    <b>Start:</b>
+                    <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}">2026-01-01</span>
+                </p>
+                <p>
+                    <b>End:</b>
+                    <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}">2026-01-31</span>
+                </p>
+                <div class="shift-card-actions">
+                    <button type="button" class="btn-print" th:onclick="|event.stopPropagation();selectTemplate('${t.templateId}');openEditScheduleModal();|">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit days
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <button type="button" class="btn-print no-print" style="margin-bottom: 1rem;" onclick="openNewTemplateModal()">
             <i class="fa-solid fa-plus"></i> New schedule class
@@ -183,6 +340,12 @@
                     <input type="hidden" name="scheduleMonth" th:value="${scheduleMonth}" />
                     <label for="newTemplateName">Name</label>
                     <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director â€” March" />
+                    <label for="newTemplateStartDate">Start date</label>
+                    <input type="date" id="newTemplateStartDate" name="startDate"
+                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}" />
+                    <label for="newTemplateEndDate">End date</label>
+                    <input type="date" id="newTemplateEndDate" name="endDate"
+                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}" />
                     <button type="submit" class="btn-print no-print" style="margin-top: 1rem;">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
@@ -210,6 +373,50 @@
             </form>
         </div>
 
+        <div class="shift-details no-print" th:if="${selectedTemplateId != null}">
+            <h3 style="margin: 0 0 0.4rem 0;">Shift details</h3>
+            <p class="no-payroll" style="margin: 0;">
+                <b th:text="${selectedTemplateName}">Class A</b>
+                for
+                <span th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear}|"></span>
+            </p>
+            <p class="no-payroll" style="margin: 0.35rem 0 0 0;">
+                <b>Date range:</b>
+                <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}">2026-01-01</span>
+                to
+                <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}">2026-01-31</span>
+            </p>
+
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.7rem;">
+                <button type="button" class="btn-print" onclick="openAssignEmployeesModal()">
+                    <i class="fa-solid fa-user-plus"></i> Assign employee
+                </button>
+                <button type="button" class="btn-print" onclick="openEditScheduleModal()">
+                    <i class="fa-solid fa-calendar-days"></i> Edit shift per day
+                </button>
+            </div>
+
+            <div class="shift-employee-list"
+                 th:if="${employees != null and assignedEmployeeIds != null and #lists.size(assignedEmployeeIds) > 0}">
+                <div class="shift-employee-item"
+                     th:each="e : ${employees}"
+                     th:if="${#lists.contains(assignedEmployeeIds, e.employeeId)}"
+                     th:attr="data-employee-id=${e.employeeId},data-employee-name=${e.lastName + ', ' + e.firstName}"
+                     onclick="showEmployeeRemaining(this)">
+                    <b th:text="${e.lastName + ', ' + e.firstName}">Employee</b>
+                    <p style="margin:0.2rem 0 0 0; font-size:0.82rem; color:#555;"
+                       th:text="${e.employeeNumber}">EMP-001</p>
+                </div>
+            </div>
+            <p th:if="${assignedEmployeeIds == null or #lists.size(assignedEmployeeIds) == 0}" class="no-payroll" style="margin-top: 0.6rem;">
+                No employees assigned yet.
+            </p>
+
+            <div class="shift-remaining" id="shiftRemainingPanel">
+                <p class="no-payroll" style="margin:0;">Click an employee to view remaining schedule days in this shift.</p>
+            </div>
+        </div>
+
         <!-- Edit weekly pattern (modal) -->
         <div id="editScheduleModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
             <div class="shift-modal-content shift-modal-content--wide">
@@ -228,6 +435,7 @@
                                 <th>REST</th>
                                 <th>Time in</th>
                                 <th>Time out</th>
+                                <th>12-hour preview</th>
                             </tr>
                         </thead>
                         <tbody class="attendanceBody">
@@ -254,6 +462,11 @@
                                            th:id="${'weekly_out_' + row.dayOfWeek}"
                                            th:value="${row.timeOut != null ? #temporals.format(row.timeOut, 'HH:mm') : ''}"
                                            th:disabled="${row.restDay}" />
+                                </td>
+                                <td>
+                                    <span th:if="${row.timeIn != null and row.timeOut != null}"
+                                          th:text="${#temporals.format(row.timeIn, 'hh:mm a') + ' - ' + #temporals.format(row.timeOut, 'hh:mm a')}">08:00 AM - 05:00 PM</span>
+                                    <span th:if="${row.timeIn == null or row.timeOut == null}">N/A</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -309,6 +522,18 @@
     </div>
     <script src="/js/nav.js"></script>
     <script>
+        function selectTemplate(templateId) {
+            if (!templateId) return;
+            var monthInput = document.getElementById('scheduleMonthPicker');
+            var yearInput = document.getElementById('scheduleYearPicker');
+            var monthVal = monthInput ? monthInput.value : '';
+            var yearVal = yearInput ? yearInput.value : '';
+            var qs = '?scheduleMonth=' + encodeURIComponent(monthVal) +
+                     '&scheduleYear=' + encodeURIComponent(yearVal) +
+                     '&templateId=' + encodeURIComponent(templateId);
+            window.location.href = '/admin/attendance/shifts' + qs;
+        }
+
         function openEditScheduleModal() {
             var m = document.getElementById('editScheduleModal');
             if (!m) return;
@@ -399,7 +624,83 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('input[data-weekly-rest][data-dow]').forEach(applyWeeklyRestDisabled);
+            initRemainingScheduleData();
         });
+
+        var remainingScheduleMeta = {
+            scheduleYear: 0,
+            scheduleMonth: 0,
+            restDays: {},
+            selectedEmployeeId: ''
+        };
+
+        function initRemainingScheduleData() {
+            remainingScheduleMeta.scheduleYear = parseInt('[[${scheduleYear}]]', 10) || 0;
+            remainingScheduleMeta.scheduleMonth = parseInt('[[${scheduleMonth}]]', 10) || 0;
+            remainingScheduleMeta.restDays = {};
+            document.querySelectorAll('input[data-weekly-rest][data-dow]').forEach(function (cb) {
+                var dow = parseInt(cb.getAttribute('data-dow'), 10);
+                if (!isNaN(dow)) remainingScheduleMeta.restDays[dow] = !!cb.checked;
+            });
+        }
+
+        function showEmployeeRemaining(el) {
+            if (!el) return;
+            document.querySelectorAll('.shift-employee-item').forEach(function (item) {
+                item.classList.remove('active');
+            });
+            el.classList.add('active');
+            var empName = el.getAttribute('data-employee-name') || 'Employee';
+            var panel = document.getElementById('shiftRemainingPanel');
+            if (!panel) return;
+
+            var year = remainingScheduleMeta.scheduleYear;
+            var month = remainingScheduleMeta.scheduleMonth;
+            if (!year || !month) {
+                panel.innerHTML = '<p class="no-payroll" style="margin:0;">No schedule data.</p>';
+                return;
+            }
+
+            var today = new Date();
+            var start = new Date(year, month - 1, 1);
+            var end = new Date(year, month, 0);
+            var cursor = new Date(start);
+
+            if (today.getFullYear() > year || (today.getFullYear() === year && (today.getMonth() + 1) > month)) {
+                panel.innerHTML = '<p class="no-payroll" style="margin:0;"><b>' + escapeHtml(empName) + '</b>: 0 remaining day(s). Month already ended.</p>';
+                return;
+            }
+
+            if (today.getFullYear() === year && (today.getMonth() + 1) === month && today.getDate() > 1) {
+                cursor = new Date(year, month - 1, today.getDate());
+            }
+
+            var totalRemaining = 0;
+            var workRemaining = 0;
+            while (cursor <= end) {
+                totalRemaining++;
+                var jsDay = cursor.getDay(); // 0=Sun
+                var mappedDow = jsDay === 0 ? 7 : jsDay; // 1=Mon..7=Sun
+                if (!remainingScheduleMeta.restDays[mappedDow]) {
+                    workRemaining++;
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+
+            panel.innerHTML =
+                '<p class="no-payroll" style="margin:0;"><b>' + escapeHtml(empName) + '</b></p>' +
+                '<p class="no-payroll" style="margin:0.3rem 0 0 0;">Remaining calendar days in this shift: <b>' + totalRemaining + '</b></p>' +
+                '<p class="no-payroll" style="margin:0.2rem 0 0 0;">Remaining scheduled work days: <b>' + workRemaining + '</b></p>';
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
     </script>
 </body>
 </html>
