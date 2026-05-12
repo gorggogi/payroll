@@ -4,7 +4,7 @@
 **Last Updated:** May 2026
 **Applies to:** `PayrollService.java`
 
-This document describes how payroll is computed in this system for semi-monthly and monthly pay periods. It is the single source of truth for the current implementation. Biweekly is not yet implemented (see [Known Issues](#known-issues)).
+This document describes how payroll is computed in this system for semi-monthly and monthly pay periods. It is the single source of truth for the current implementation.
 
 ---
 
@@ -59,7 +59,6 @@ All monetary outputs are ultimately rounded to **2 decimal places (HALF_UP)**.
 semi_1  → start = YYYY-MM-01,   end = YYYY-MM-15,   semiMonthly = true
 semi_2  → start = YYYY-MM-16,   end = YYYY-MM-lastDay, semiMonthly = true
 monthly → start = YYYY-MM-01,   end = YYYY-MM-lastDay, semiMonthly = false
-biweekly → (placeholder: currently uses full month bounds, semiMonthly = false)
 ```
 
 Attendance records and employee deductions are filtered to `start <= attendance_date <= end`.
@@ -550,8 +549,7 @@ This table shows the statutory contribution amounts for common salary levels on 
 | # | Item | Status |
 |---|---|---|
 | 1 | OT multiplier is **1.0x** for both Regular and Job Order employees. Philippine DOLE rules specify 1.25x for regular employees. | Pending fix |
-| 2 | Biweekly pay period is a **placeholder** -- currently uses full month bounds | Not implemented |
-| 3 | Special Non-Working Holiday pay is **not** compensated (only REGULAR holidays trigger pay) | Not implemented |
+| 2 | Special Non-Working Holiday pay is **not** compensated (only REGULAR holidays trigger pay) | Not implemented |
 | 4 | Attendance query loads **all historical records** then filters in-memory (N+1 / unbounded query risk) | Pending fix |
 | 5 | `compensationTo` column in tax table is not used in bracket selection | By design |
 | 6 | Employer shares of SSS/PhilHealth/Pag-IBIG are not computed | Not implemented |

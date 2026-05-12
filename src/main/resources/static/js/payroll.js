@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function(){
     try {
         if (typeof empPayType !== 'undefined' && empPayType) {
             var v = empPayType.toString().toLowerCase();
-            if (v === 'monthly' || v === 'biweekly') {
+            if (v === 'monthly') {
                 var sel = document.getElementById('period');
                 if (sel) sel.value = v;
             }

@@ -312,7 +312,6 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Pay Type: <select name="payType">
                         <option value="monthly" ${(emp.payType || '').toLowerCase() === 'monthly' ? 'selected' : ''}>Monthly</option>
-                        <option value="biweekly" ${(emp.payType || '').toLowerCase() === 'biweekly' ? 'selected' : ''}>Biweekly</option>
                         <option value="daily" ${(emp.payType || '').toLowerCase() === 'daily' ? 'selected' : ''}>Daily</option>
                         <option value="hourly" ${(emp.payType || '').toLowerCase() === 'hourly' ? 'selected' : ''}>Hourly</option>
                     </select></label>
