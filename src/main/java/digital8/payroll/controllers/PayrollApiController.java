@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import digital8.payroll.exceptions.TaxTableNotFoundException;
 import java.util.List;
 
 @RestController
@@ -51,4 +52,10 @@ public class PayrollApiController {
         }
         return ResponseEntity.ok(items);
     }
+    @ExceptionHandler(TaxTableNotFoundException.class)
+        public ResponseEntity<String> handleTaxTableNotFound(TaxTableNotFoundException ex) {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ex.getMessage());
+        }
 }
