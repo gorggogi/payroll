@@ -42,6 +42,7 @@ import java.time.LocalTime;
 import java.time.format.TextStyle;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,6 +57,8 @@ import java.util.stream.Collectors;
 @Controller
 public class attendanceController {
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
+    private static final LocalTime DEFAULT_BREAK_OUT = LocalTime.NOON;
+    private static final LocalTime DEFAULT_BREAK_IN = LocalTime.of(13, 0);
 
     @Autowired
     private AttendanceRepository attendanceRepository;
@@ -440,6 +443,7 @@ public class attendanceController {
                             && a.getAttendance_date().getMonthValue() == selectedMonth
                             && a.getAttendance_date().getYear() == selectedYear)
                     .collect(Collectors.toList());
+            populateComputedWorkHours(filtered);
             model.addAttribute("attendances", filtered);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
             model.addAttribute("emp_id", targetEmpId);
@@ -711,10 +715,19 @@ public class attendanceController {
             }
             String inRaw = request.getParameter("timeInEdit_" + row.key);
             String outRaw = request.getParameter("timeOutEdit_" + row.key);
+            String breakOutRaw = request.getParameter("breakOutEdit_" + row.key);
+            String breakInRaw = request.getParameter("breakInEdit_" + row.key);
             LocalTime in = parseTimeFlexible(inRaw);
             LocalTime out = parseTimeFlexible(outRaw);
+            LocalTime breakOut = parseTimeFlexible(breakOutRaw);
+            LocalTime breakIn = parseTimeFlexible(breakInRaw);
             LocalDate date = parseDateFlexible(row.logDate);
             if (in == null || out == null || date == null) {
+                skipped++;
+                continue;
+            }
+            ShiftMatchResult shiftMatch = validateAgainstShift(row.employeeId, date);
+            if (!shiftMatch.allowed || shiftMatch.shiftIn == null || shiftMatch.shiftOut == null) {
                 skipped++;
                 continue;
             }
@@ -728,9 +741,18 @@ public class attendanceController {
             attendance.setAttendance_date(date);
             attendance.setTime_in(in);
             attendance.setTime_out(out);
-            attendance.setWork_hours(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            attendance.setWork_hours(computeRegularWorkHours(
+                    in,
+                    out,
+                    shiftMatch.shiftIn,
+                    shiftMatch.shiftOut,
+                    breakOut,
+                    breakIn));
             attendance.setLate_minutes(0);
-            attendance.setOvertime_hours(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            BigDecimal overtimeHours = attendance.getOvertime_hours() != null
+                    ? attendance.getOvertime_hours().setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            attendance.setOvertime_hours(overtimeHours);
             attendance.setUndertime_minutes(0);
             attendance.setStatus("Present");
             attendanceRepository.save(attendance);
@@ -908,26 +930,135 @@ public class attendanceController {
         }
         String label = day.getTimeIn().format(DateTimeFormatter.ofPattern("hh:mm a"))
                 + " - " + day.getTimeOut().format(DateTimeFormatter.ofPattern("hh:mm a"));
-        return ShiftMatchResult.allowed(label);
+        return ShiftMatchResult.allowed(label, day.getTimeIn(), day.getTimeOut());
+    }
+
+    private BigDecimal computeRegularWorkHours(
+            LocalTime actualIn,
+            LocalTime actualOut,
+            LocalTime shiftIn,
+            LocalTime shiftOut,
+            LocalTime breakOut,
+            LocalTime breakIn) {
+        if (actualIn == null || actualOut == null || shiftIn == null || shiftOut == null) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+
+        long shiftStart = shiftIn.toSecondOfDay() / 60L;
+        long shiftDuration = clockMinutesBetween(shiftIn, shiftOut);
+        if (shiftDuration <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        long shiftEnd = shiftStart + shiftDuration;
+
+        long actualStart = normalizeMinuteToTarget(actualIn, shiftStart);
+        long actualDuration = clockMinutesBetween(actualIn, actualOut);
+        if (actualDuration <= 0) {
+            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        }
+        long actualEnd = actualStart + actualDuration;
+
+        long regularStart = Math.max(actualStart, shiftStart);
+        long regularEnd = Math.min(actualEnd, shiftEnd);
+        long paidMinutes = Math.max(0L, regularEnd - regularStart);
+
+        if (paidMinutes == 0L || breakOut == null || breakIn == null) {
+            return minutesToHours(paidMinutes);
+        }
+
+        long breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
+        long breakDuration = clockMinutesBetween(breakOut, breakIn);
+        if (breakDuration <= 0) {
+            return minutesToHours(paidMinutes);
+        }
+        long breakEnd = breakStart + breakDuration;
+        long breakOverlap = overlapMinutes(regularStart, regularEnd, breakStart, breakEnd);
+        return minutesToHours(Math.max(0L, paidMinutes - breakOverlap));
+    }
+
+    private void populateComputedWorkHours(List<Attendance> attendances) {
+        for (Attendance attendance : attendances) {
+            if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
+                continue;
+            }
+            if (attendance.getWork_hours() != null && attendance.getWork_hours().compareTo(BigDecimal.ZERO) > 0) {
+                continue;
+            }
+
+            BigDecimal computedHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+            if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
+                ShiftMatchResult shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
+                    computedHours = computeRegularWorkHours(
+                            attendance.getTime_in(),
+                            attendance.getTime_out(),
+                            shiftMatch.shiftIn,
+                            shiftMatch.shiftOut,
+                            DEFAULT_BREAK_OUT,
+                            DEFAULT_BREAK_IN);
+                }
+            }
+
+            attendance.setWork_hours(computedHours);
+        }
+    }
+
+    private long clockMinutesBetween(LocalTime start, LocalTime end) {
+        long minutes = ChronoUnit.MINUTES.between(start, end);
+        if (minutes < 0) {
+            minutes += 24L * 60L;
+        }
+        return minutes;
+    }
+
+    private long normalizeMinuteToTarget(LocalTime time, long targetMinute) {
+        long baseMinute = time.toSecondOfDay() / 60L;
+        long best = baseMinute;
+        long bestDistance = Math.abs(baseMinute - targetMinute);
+        long[] offsets = new long[] { -24L * 60L, 24L * 60L };
+        for (long offset : offsets) {
+            long candidate = baseMinute + offset;
+            long distance = Math.abs(candidate - targetMinute);
+            if (distance < bestDistance) {
+                best = candidate;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private long overlapMinutes(long startA, long endA, long startB, long endB) {
+        long start = Math.max(startA, startB);
+        long end = Math.min(endA, endB);
+        return Math.max(0L, end - start);
+    }
+
+    private BigDecimal minutesToHours(long minutes) {
+        return BigDecimal.valueOf(minutes)
+                .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
     }
 
     private static final class ShiftMatchResult {
         private final boolean allowed;
         private final String reason;
         private final String shiftLabel;
+        private final LocalTime shiftIn;
+        private final LocalTime shiftOut;
 
-        private ShiftMatchResult(boolean allowed, String reason, String shiftLabel) {
+        private ShiftMatchResult(boolean allowed, String reason, String shiftLabel, LocalTime shiftIn, LocalTime shiftOut) {
             this.allowed = allowed;
             this.reason = reason;
             this.shiftLabel = shiftLabel;
+            this.shiftIn = shiftIn;
+            this.shiftOut = shiftOut;
         }
 
-        private static ShiftMatchResult allowed(String shiftLabel) {
-            return new ShiftMatchResult(true, "", shiftLabel);
+        private static ShiftMatchResult allowed(String shiftLabel, LocalTime shiftIn, LocalTime shiftOut) {
+            return new ShiftMatchResult(true, "", shiftLabel, shiftIn, shiftOut);
         }
 
         private static ShiftMatchResult denied(String reason) {
-            return new ShiftMatchResult(false, reason, "N/A");
+            return new ShiftMatchResult(false, reason, "N/A", null, null);
         }
     }
 
@@ -1169,6 +1300,7 @@ public class attendanceController {
                             && a.getAttendance_date().getMonthValue() == selectedMonth
                             && a.getAttendance_date().getYear() == selectedYear)
                     .collect(Collectors.toList());
+            populateComputedWorkHours(filtered);
             model.addAttribute("attendances", filtered);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
             model.addAttribute("emp_id", targetEmpId); // currently viewed employee

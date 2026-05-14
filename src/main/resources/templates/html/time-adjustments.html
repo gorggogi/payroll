@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -24,12 +24,24 @@
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
+
             <div class="adjust-panel">
-                <h2><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <h2 style="margin-bottom: 0;"><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
+                    <button type="button" id="infoBtn" class="info-btn" title="Show import format info" style="background: none; border: none; cursor: pointer; margin-left: 0.5rem;">
+                        <i class="fa-solid fa-circle-info" style="color: #706fd6; font-size: 1.5rem;"></i>
+                    </button>
+                </div>
                 <p class="adjust-panel-desc">
-                    Required format (tab-separated, 7 columns):
+                    Required format: tab-separated, 7 columns. <span style="color:#706fd6; cursor:pointer; text-decoration:underline;" onclick="document.getElementById('importInfoModal').style.display='block'">See details</span>
                 </p>
-                <pre class="adjust-import-summary-pre">22	2026-04-01	08:35:51	1	0	15	0
+
+                <!-- Modal for import info -->
+                <div id="importInfoModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; overflow:auto; background:rgba(0,0,0,0.3);">
+                  <div class="modal-content" style="background:#fff; margin:5% auto; padding:2rem; border-radius:10px; max-width:500px; position:relative; box-shadow:0 2px 16px rgba(0,0,0,0.2);">
+                    <span class="close" id="closeModalBtn" style="position:absolute; top:1rem; right:1rem; font-size:2rem; color:#888; cursor:pointer;">&times;</span>
+                    <h3 style="margin-top:0;">Import Format Guide</h3>
+                    <pre class="adjust-import-summary-pre" style="margin-bottom:1rem;">22	2026-04-01	08:35:51	1	0	15	0
 
 Column guide:
 1) Employee biometric no. (example: 22)
@@ -39,34 +51,36 @@ Column guide:
 5) Log type: 0=LOG IN, 2=BREAKOUT, 3=BREAKIN, 1=OUT
 6) Fixed value: 15
 7) Fixed value: 0</pre>
+                    <button id="closeModalBtn2" style="background:#706fd6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.5rem; font-size:1rem; cursor:pointer;">Close</button>
+                  </div>
+                </div>
+
 
                 <form method="post"
                       th:action="@{/admin/attendance/time-adjustments/upload}"
                       enctype="multipart/form-data">
-                    <div class="adjust-form-grid">
-                        <label>
+                    <div class="adjust-form-row">
+                        <label style="margin-right:1rem;">
                             Start date filter
                             <input type="date" name="startDate" />
                         </label>
-                        <label>
+                        <label style="margin-right:1rem;">
                             End date filter
                             <input type="date" name="endDate" />
                         </label>
-                        <label class="input-file">
+                        <label class="input-file" style="margin-right:1rem;">
                             Biometrics file
                             <input type="file" name="file" accept=".csv,.txt,.dat" required />
                         </label>
-                        <label class="overwrite-checkbox">
+                        <label class="overwrite-checkbox" style="margin-right:1rem; display:flex; align-items:center; gap:0.5rem;">
                             <span>Overwrite existing attendance</span>
                             <input type="checkbox" name="overwrite" value="true" checked />
                         </label>
-                            <div class="adjust-form-grid-row">
-                                <div class="adjust-panel-btn">
-                                    <button type="submit" class="btn-import">
-                                        <i class="fa-solid fa-file-import"></i> Import DTR
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="adjust-panel-btn" style="margin:0;">
+                            <button type="submit" class="btn-import">
+                                <i class="fa-solid fa-file-import"></i> Import DTR
+                            </button>
+                        </div>
                     </div>
                 </form>
 
@@ -80,51 +94,60 @@ Column guide:
                 <h2><i class="fa-solid fa-list-check"></i> Unverified Time Logs (For Approval)</h2>
                 <p class="adjust-panel-desc">Choose IN/OUT (radio), edit time if needed, then approve.</p>
                 <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
-                    <div th:each="row : ${previewRows}" class="adjust-import-summary" style="margin-bottom:12px;">
-                        <div>
-                            <label style="margin-right:8px;">
+                    <div th:each="row : ${previewRows}" class="log-card">
+                        <div class="log-card-header">
+                            <label class="log-verify-label">
                                 <input type="checkbox" th:name="${'verify_' + row.key}" value="true" checked />
                                 Verify
                             </label>
-                            <strong th:text="${row.employeeNumber}">EMP</strong>
-                            <span> - </span>
-                            <span th:text="${row.employeeName}">Name</span>
-                            <span> | Biometric: </span>
-                            <span th:text="${row.biometricId}">Bio</span>
-                            <span> | Date: </span>
-                            <span th:text="${row.displayDate}">04/16/2026</span>
-                            <span> | Shift: </span>
-                            <span th:text="${row.shiftLabel}">08:00 AM - 05:00 PM</span>
+                            <span class="log-emp-num" th:text="${row.employeeNumber}">EMP</span>
+                            <span class="log-emp-name" th:text="${row.employeeName}">Name</span>
+                            <span class="log-meta"><i class="fa-solid fa-fingerprint"></i> <span th:text="${row.biometricId}">Bio</span></span>
+                            <span class="log-meta"><i class="fa-solid fa-calendar"></i> <span th:text="${row.displayDate}">Date</span></span>
+                            <span class="log-meta"><i class="fa-solid fa-clock"></i> <span th:text="${row.shiftLabel}">Shift</span></span>
                         </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Time In choices</strong></div>
-                            <label th:each="v : ${row.inCandidates}" style="margin-right:10px;">
-                                <input type="radio"
-                                       th:name="${'inPick_' + row.key}"
-                                       th:value="${v}"
-                                       th:checked="${v == row.selectedIn}"
-                                       th:attr="data-target=${'timeInEdit_' + row.key}" />
-                                <span th:text="${row.format12h(v)}">08:00 AM</span>
-                            </label>
-                            <input type="text" th:name="${'timeInEdit_' + row.key}" th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
-                        </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Break (default)</strong></div>
-                            <input type="text" th:name="${'breakOutEdit_' + row.key}" th:value="${row.breakOut}" placeholder="hh:mm a" />
-                            <span>to</span>
-                            <input type="text" th:name="${'breakInEdit_' + row.key}" th:value="${row.breakIn}" placeholder="hh:mm a" />
-                        </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Time Out choices</strong></div>
-                            <label th:each="v : ${row.outCandidates}" style="margin-right:10px;">
-                                <input type="radio"
-                                       th:name="${'outPick_' + row.key}"
-                                       th:value="${v}"
-                                       th:checked="${v == row.selectedOut}"
-                                       th:attr="data-target=${'timeOutEdit_' + row.key}" />
-                                <span th:text="${row.format12h(v)}">05:00 PM</span>
-                            </label>
-                            <input type="text" th:name="${'timeOutEdit_' + row.key}" th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
+                        <div class="log-card-body">
+                            <div class="time-section">
+                                <div class="time-section-label">Time In</div>
+                                <div class="time-options">
+                                    <label th:each="v : ${row.inCandidates}" class="time-option">
+                                        <input type="radio" th:name="${'inPick_' + row.key}" th:value="${v}"
+                                               th:checked="${v == row.selectedIn}"
+                                               th:attr="data-target=${'timeInEdit_' + row.key}" />
+                                        <span th:text="${row.format12h(v)}">08:00 AM</span>
+                                    </label>
+                                </div>
+                                <input type="text" class="time-direct-input" th:name="${'timeInEdit_' + row.key}"
+                                       th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
+                            </div>
+                            <div class="break-section">
+                                <div class="time-section-label">Break</div>
+                                <div class="break-inputs">
+                                    <div class="break-input-row">
+                                        <label class="break-input-label">START</label>
+                                        <input type="text" th:name="${'breakOutEdit_' + row.key}"
+                                               th:value="${row.breakOut}" placeholder="12:00 PM" />
+                                    </div>
+                                    <div class="break-input-row">
+                                        <label class="break-input-label">END</label>
+                                        <input type="text" th:name="${'breakInEdit_' + row.key}"
+                                               th:value="${row.breakIn}" placeholder="1:00 PM" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="time-section">
+                                <div class="time-section-label">Time Out</div>
+                                <div class="time-options">
+                                    <label th:each="v : ${row.outCandidates}" class="time-option">
+                                        <input type="radio" th:name="${'outPick_' + row.key}" th:value="${v}"
+                                               th:checked="${v == row.selectedOut}"
+                                               th:attr="data-target=${'timeOutEdit_' + row.key}" />
+                                        <span th:text="${row.format12h(v)}">05:00 PM</span>
+                                    </label>
+                                </div>
+                                <input type="text" class="time-direct-input" th:name="${'timeOutEdit_' + row.key}"
+                                       th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
+                            </div>
                         </div>
                     </div>
                     <div class="adjust-panel-btn">
@@ -138,6 +161,7 @@ Column guide:
     </div>
     <script src="/js/nav.js"></script>
     <script>
+       // Radio button time sync
        document.querySelectorAll('input[type="radio"][data-target]').forEach(function (radio) {
             radio.addEventListener('change', function () {
                 var targetName = this.getAttribute('data-target');
@@ -145,6 +169,20 @@ Column guide:
                 if (target) target.value = this.value;
             });
        });
+
+       // Modal logic
+       var infoBtn = document.getElementById('infoBtn');
+       var modal = document.getElementById('importInfoModal');
+       var closeModalBtn = document.getElementById('closeModalBtn');
+       var closeModalBtn2 = document.getElementById('closeModalBtn2');
+       if (infoBtn && modal && closeModalBtn && closeModalBtn2) {
+           infoBtn.onclick = function() { modal.style.display = 'block'; };
+           closeModalBtn.onclick = function() { modal.style.display = 'none'; };
+           closeModalBtn2.onclick = function() { modal.style.display = 'none'; };
+           window.onclick = function(event) {
+               if (event.target === modal) { modal.style.display = 'none'; }
+           };
+       }
     </script>
 </body>
 </html>

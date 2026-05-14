@@ -12,6 +12,8 @@ import digital8.payroll.repositories.EmployeeAdjustmentsRepository;
 import digital8.payroll.repositories.AdjustmentsRepository;
 import digital8.payroll.repositories.PagibigTableRepository;
 import digital8.payroll.repositories.DeductionsRepository;
+import digital8.payroll.repositories.EmployeeScheduleAssignmentRepository;
+import digital8.payroll.repositories.WeeklyScheduleTemplateDayRepository;
 import digital8.payroll.dto.DeductionBreakdownItem;
 import digital8.payroll.entities.Adjustments;
 import digital8.payroll.entities.EmployeeAdjustments;
@@ -19,18 +21,22 @@ import digital8.payroll.entities.Deductions;
 import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.Attendance;
+import digital8.payroll.entities.EmployeeScheduleAssignment;
 import digital8.payroll.entities.SssTable;
 import digital8.payroll.entities.TaxTable;
 import digital8.payroll.entities.EmployeeDeductions;
 import digital8.payroll.entities.PagibigTable;
 import digital8.payroll.entities.PhilhealthTable;
+import digital8.payroll.entities.WeeklyScheduleTemplateDay;
 import digital8.payroll.exceptions.TaxTableNotFoundException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.Month;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,6 +73,8 @@ public class PayrollService {
     
     // Semi-monthly divisor
     private static final BigDecimal SEMI_MONTHLY_DIVISOR = new BigDecimal("2");
+    private static final LocalTime DEFAULT_BREAK_OUT = LocalTime.NOON;
+    private static final LocalTime DEFAULT_BREAK_IN = LocalTime.of(13, 0);
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -88,6 +96,10 @@ public class PayrollService {
     private AdjustmentsRepository adjustmentsRepository;
     @Autowired
     private DeductionsRepository deductionsRepository;
+    @Autowired
+    private EmployeeScheduleAssignmentRepository employeeScheduleAssignmentRepository;
+    @Autowired
+    private WeeklyScheduleTemplateDayRepository weeklyScheduleTemplateDayRepository;
     @Autowired
     private HolidayCalendarService holidayCalendarService;
 
@@ -184,8 +196,7 @@ public class PayrollService {
             if (d.isBefore(periodStart) || d.isAfter(periodEnd))
                 continue;
 
-            if (a.getWork_hours() != null)
-                totalWorkedHours = totalWorkedHours.add(a.getWork_hours());
+            totalWorkedHours = totalWorkedHours.add(resolveWorkedHours(a));
             if (a.getOvertime_hours() != null)
                 totalOtHours = totalOtHours.add(a.getOvertime_hours());
             if (a.getLate_minutes() != null)
@@ -239,7 +250,7 @@ public class PayrollService {
                 if (!regularHolidayDates.contains(d))
                     continue;
 
-                BigDecimal wh = a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO;
+                BigDecimal wh = resolveWorkedHours(a);
                 BigDecimal ot = a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO;
 
                 // Optional safety: only count if there are positive hours
@@ -412,6 +423,145 @@ public class PayrollService {
         List<PayrollItems> out = new ArrayList<>();
         out.add(item);
         return out;
+    }
+
+    private BigDecimal resolveWorkedHours(Attendance attendance) {
+        if (attendance == null) {
+            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+        }
+
+        BigDecimal stored = attendance.getWork_hours();
+        if (stored != null && stored.compareTo(BigDecimal.ZERO) > 0) {
+            return stored.setScale(SCALE, ROUND);
+        }
+
+        LocalTime timeIn = attendance.getTime_in();
+        LocalTime timeOut = attendance.getTime_out();
+        if (timeIn == null || timeOut == null) {
+            return stored != null ? stored.setScale(SCALE, ROUND) : BigDecimal.ZERO.setScale(SCALE, ROUND);
+        }
+
+        Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
+                attendance.getEmployeeId(),
+                attendance.getAttendance_date());
+        if (shiftDayOpt.isPresent()) {
+            WeeklyScheduleTemplateDay shiftDay = shiftDayOpt.get();
+            return computeRegularWorkHours(
+                    timeIn,
+                    timeOut,
+                    shiftDay.getTimeIn(),
+                    shiftDay.getTimeOut(),
+                    DEFAULT_BREAK_OUT,
+                    DEFAULT_BREAK_IN);
+        }
+
+        return minutesToHours(clockMinutesBetween(timeIn, timeOut));
+    }
+
+    private Optional<WeeklyScheduleTemplateDay> findAssignedShiftDay(Integer employeeId, LocalDate date) {
+        if (employeeId == null || date == null) {
+            return Optional.empty();
+        }
+
+        Optional<EmployeeScheduleAssignment> assignmentOpt =
+                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
+                        employeeId, date.getYear(), date.getMonthValue());
+        if (assignmentOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<WeeklyScheduleTemplateDay> dayOpt =
+                weeklyScheduleTemplateDayRepository.findByTemplateIdAndDayOfWeek(
+                        assignmentOpt.get().getTemplateId(),
+                        date.getDayOfWeek().getValue());
+        if (dayOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        WeeklyScheduleTemplateDay day = dayOpt.get();
+        if (day.isRestDay() || day.getTimeIn() == null || day.getTimeOut() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(day);
+    }
+
+    private BigDecimal computeRegularWorkHours(
+            LocalTime actualIn,
+            LocalTime actualOut,
+            LocalTime shiftIn,
+            LocalTime shiftOut,
+            LocalTime breakOut,
+            LocalTime breakIn) {
+        if (actualIn == null || actualOut == null || shiftIn == null || shiftOut == null) {
+            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+        }
+
+        long shiftStart = shiftIn.toSecondOfDay() / 60L;
+        long shiftDuration = clockMinutesBetween(shiftIn, shiftOut);
+        if (shiftDuration <= 0) {
+            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+        }
+        long shiftEnd = shiftStart + shiftDuration;
+
+        long actualStart = normalizeMinuteToTarget(actualIn, shiftStart);
+        long actualDuration = clockMinutesBetween(actualIn, actualOut);
+        if (actualDuration <= 0) {
+            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+        }
+        long actualEnd = actualStart + actualDuration;
+
+        long regularStart = Math.max(actualStart, shiftStart);
+        long regularEnd = Math.min(actualEnd, shiftEnd);
+        long paidMinutes = Math.max(0L, regularEnd - regularStart);
+
+        if (paidMinutes == 0L || breakOut == null || breakIn == null) {
+            return minutesToHours(paidMinutes);
+        }
+
+        long breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
+        long breakDuration = clockMinutesBetween(breakOut, breakIn);
+        if (breakDuration <= 0) {
+            return minutesToHours(paidMinutes);
+        }
+
+        long breakEnd = breakStart + breakDuration;
+        long breakOverlap = overlapMinutes(regularStart, regularEnd, breakStart, breakEnd);
+        return minutesToHours(Math.max(0L, paidMinutes - breakOverlap));
+    }
+
+    private long clockMinutesBetween(LocalTime start, LocalTime end) {
+        long minutes = ChronoUnit.MINUTES.between(start, end);
+        if (minutes < 0) {
+            minutes += 24L * 60L;
+        }
+        return minutes;
+    }
+
+    private long normalizeMinuteToTarget(LocalTime time, long targetMinute) {
+        long baseMinute = time.toSecondOfDay() / 60L;
+        long best = baseMinute;
+        long bestDistance = Math.abs(baseMinute - targetMinute);
+        long[] offsets = new long[] { -24L * 60L, 24L * 60L };
+        for (long offset : offsets) {
+            long candidate = baseMinute + offset;
+            long distance = Math.abs(candidate - targetMinute);
+            if (distance < bestDistance) {
+                best = candidate;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private long overlapMinutes(long startA, long endA, long startB, long endB) {
+        long start = Math.max(startA, startB);
+        long end = Math.min(endA, endB);
+        return Math.max(0L, end - start);
+    }
+
+    private BigDecimal minutesToHours(long minutes) {
+        return BigDecimal.valueOf(minutes)
+                .divide(BigDecimal.valueOf(60), SCALE, ROUND);
     }
 
     /**
