@@ -28,6 +28,7 @@ import digital8.payroll.entities.EmployeeDeductions;
 import digital8.payroll.entities.PagibigTable;
 import digital8.payroll.entities.PhilhealthTable;
 import digital8.payroll.entities.WeeklyScheduleTemplateDay;
+import digital8.payroll.exceptions.TaxTableNotFoundException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -69,11 +70,7 @@ public class PayrollService {
     // Salary splitting for below-30k employees
     private static final BigDecimal SALARY_THRESHOLD = new BigDecimal("30000");
     private static final BigDecimal PREMIUM_BASE_CAP = new BigDecimal("20000");
-
-    // Simplified withholding tax formula constants
-    private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
-    private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
-
+    
     // Semi-monthly divisor
     private static final BigDecimal SEMI_MONTHLY_DIVISOR = new BigDecimal("2");
     private static final LocalTime DEFAULT_BREAK_OUT = LocalTime.NOON;
@@ -739,13 +736,15 @@ public class PayrollService {
                 return withholdingTaxFromBracketRows(impliedMonthly, m)
                         .divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
             }
-            return BigDecimal.ZERO;
+            throw new TaxTableNotFoundException(
+                "No SEMI_MONTHLY or MONTHLY tax table found for year=" + year
+                    + ". Cannot compute withholding tax for semi-monthly employee.");
         }
         if (rows == null || rows.isEmpty()) {
-            BigDecimal tax = taxablePay.multiply(TAX_RATE_SIMPLIFIED)
-                    .subtract(TAX_CONSTANT)
-                    .setScale(SCALE, ROUND);
-            return tax.max(BigDecimal.ZERO);
+            throw new TaxTableNotFoundException(
+                "No tax table entries found for year=" + year
+                    + ", payFrequency=" + payFrequency
+                    + ". Please populate the TaxTable table before processing payroll.");
         }
         return withholdingTaxFromBracketRows(taxablePay, rows);
     }

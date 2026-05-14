@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -94,51 +94,60 @@ Column guide:
                 <h2><i class="fa-solid fa-list-check"></i> Unverified Time Logs (For Approval)</h2>
                 <p class="adjust-panel-desc">Choose IN/OUT (radio), edit time if needed, then approve.</p>
                 <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
-                    <div th:each="row : ${previewRows}" class="adjust-import-summary" style="margin-bottom:12px;">
-                        <div>
-                            <label style="margin-right:8px;">
+                    <div th:each="row : ${previewRows}" class="log-card">
+                        <div class="log-card-header">
+                            <label class="log-verify-label">
                                 <input type="checkbox" th:name="${'verify_' + row.key}" value="true" checked />
                                 Verify
                             </label>
-                            <strong th:text="${row.employeeNumber}">EMP</strong>
-                            <span> - </span>
-                            <span th:text="${row.employeeName}">Name</span>
-                            <span> | Biometric: </span>
-                            <span th:text="${row.biometricId}">Bio</span>
-                            <span> | Date: </span>
-                            <span th:text="${row.displayDate}">04/16/2026</span>
-                            <span> | Shift: </span>
-                            <span th:text="${row.shiftLabel}">08:00 AM - 05:00 PM</span>
+                            <span class="log-emp-num" th:text="${row.employeeNumber}">EMP</span>
+                            <span class="log-emp-name" th:text="${row.employeeName}">Name</span>
+                            <span class="log-meta"><i class="fa-solid fa-fingerprint"></i> <span th:text="${row.biometricId}">Bio</span></span>
+                            <span class="log-meta"><i class="fa-solid fa-calendar"></i> <span th:text="${row.displayDate}">Date</span></span>
+                            <span class="log-meta"><i class="fa-solid fa-clock"></i> <span th:text="${row.shiftLabel}">Shift</span></span>
                         </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Time In choices</strong></div>
-                            <label th:each="v : ${row.inCandidates}" style="margin-right:10px;">
-                                <input type="radio"
-                                       th:name="${'inPick_' + row.key}"
-                                       th:value="${v}"
-                                       th:checked="${v == row.selectedIn}"
-                                       th:attr="data-target=${'timeInEdit_' + row.key}" />
-                                <span th:text="${row.format12h(v)}">08:00 AM</span>
-                            </label>
-                            <input type="text" th:name="${'timeInEdit_' + row.key}" th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
-                        </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Break (default)</strong></div>
-                            <input type="text" th:name="${'breakOutEdit_' + row.key}" th:value="${row.breakOut}" placeholder="hh:mm a" />
-                            <span>to</span>
-                            <input type="text" th:name="${'breakInEdit_' + row.key}" th:value="${row.breakIn}" placeholder="hh:mm a" />
-                        </div>
-                        <div style="margin-top:8px;">
-                            <div><strong>Time Out choices</strong></div>
-                            <label th:each="v : ${row.outCandidates}" style="margin-right:10px;">
-                                <input type="radio"
-                                       th:name="${'outPick_' + row.key}"
-                                       th:value="${v}"
-                                       th:checked="${v == row.selectedOut}"
-                                       th:attr="data-target=${'timeOutEdit_' + row.key}" />
-                                <span th:text="${row.format12h(v)}">05:00 PM</span>
-                            </label>
-                            <input type="text" th:name="${'timeOutEdit_' + row.key}" th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
+                        <div class="log-card-body">
+                            <div class="time-section">
+                                <div class="time-section-label">Time In</div>
+                                <div class="time-options">
+                                    <label th:each="v : ${row.inCandidates}" class="time-option">
+                                        <input type="radio" th:name="${'inPick_' + row.key}" th:value="${v}"
+                                               th:checked="${v == row.selectedIn}"
+                                               th:attr="data-target=${'timeInEdit_' + row.key}" />
+                                        <span th:text="${row.format12h(v)}">08:00 AM</span>
+                                    </label>
+                                </div>
+                                <input type="text" class="time-direct-input" th:name="${'timeInEdit_' + row.key}"
+                                       th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
+                            </div>
+                            <div class="break-section">
+                                <div class="time-section-label">Break</div>
+                                <div class="break-inputs">
+                                    <div class="break-input-row">
+                                        <label class="break-input-label">START</label>
+                                        <input type="text" th:name="${'breakOutEdit_' + row.key}"
+                                               th:value="${row.breakOut}" placeholder="12:00 PM" />
+                                    </div>
+                                    <div class="break-input-row">
+                                        <label class="break-input-label">END</label>
+                                        <input type="text" th:name="${'breakInEdit_' + row.key}"
+                                               th:value="${row.breakIn}" placeholder="1:00 PM" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="time-section">
+                                <div class="time-section-label">Time Out</div>
+                                <div class="time-options">
+                                    <label th:each="v : ${row.outCandidates}" class="time-option">
+                                        <input type="radio" th:name="${'outPick_' + row.key}" th:value="${v}"
+                                               th:checked="${v == row.selectedOut}"
+                                               th:attr="data-target=${'timeOutEdit_' + row.key}" />
+                                        <span th:text="${row.format12h(v)}">05:00 PM</span>
+                                    </label>
+                                </div>
+                                <input type="text" class="time-direct-input" th:name="${'timeOutEdit_' + row.key}"
+                                       th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
+                            </div>
                         </div>
                     </div>
                     <div class="adjust-panel-btn">
@@ -175,66 +184,6 @@ Column guide:
            };
        }
     </script>
-        <style>
-            .info-btn:hover i { color: #31315c; }
-            .modal::-webkit-scrollbar { width: 8px; background: #eee; }
-            .modal::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
-            .adjust-form-row {
-                display: flex;
-                flex-wrap: nowrap;
-                align-items: flex-end;
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-                width: 100%;
-            }
-            .adjust-form-row label,
-            .adjust-form-row .adjust-panel-btn {
-                flex: 1 1 0;
-                min-width: 0;
-                display: flex;
-                flex-direction: column;
-                font-size: 1rem;
-            }
-            .adjust-form-row input[type="date"],
-            .adjust-form-row input[type="file"] {
-                width: 100%;
-                box-sizing: border-box;
-            }
-            .adjust-form-row .btn-import {
-                width: 100%;
-                min-width: 120px;
-            }
-            .adjust-form-row .overwrite-checkbox {
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-                gap: 0.25rem;
-                min-width: 180px;
-                max-width: 220px;
-                margin: 0 auto;
-            }
-            @media (max-width: 900px) {
-                .adjust-form-row {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-                .adjust-form-row label, .adjust-form-row .adjust-panel-btn {
-                    width: 100%;
-                }
-            }
-            @media (max-width: 900px) {
-                .adjust-form-row {
-                    flex-direction: column;
-                    align-items: stretch;
-                }
-                .adjust-form-row label, .adjust-form-row .adjust-panel-btn {
-                    width: 100%;
-                }
-            }
-            @media (max-width: 600px) {
-                .modal-content { width: 95vw !important; padding: 1rem !important; }
-            }
-        </style>
 </body>
 </html>
 

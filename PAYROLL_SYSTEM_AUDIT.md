@@ -2,8 +2,8 @@
 
 **Project:** Spring Boot 4.0.2 / Java 21 / Thymeleaf / MySQL / Flyway
 **Date:** May 12, 2026
-**Last Updated:** May 12, 2026 (run #3 — Flyway V14 conflict resolved, V15 migration added)
-**Resolved since last audit:** 5 issues (2.5, 2.7, 4.1, 6.3, 13.9)
+**Last Updated:** May 13, 2026 (run #4 — hardcoded tax fallback removed, TaxTableNotFoundException added to PayrollApiController)
+**Resolved since last audit:** 7 issues (2.5, 2.7, 4.1, 6.3, 13.9, 8.7, 3.5)
 **New findings:** 7 issues (2 new security, 1 new bug, 4 new feature/gap)
 
 ---
@@ -744,18 +744,20 @@ ALTER TABLE employeedeductions
 
 ---
 
-### 8.7 `[UNRESOLVED]` Hardcoded Tax Fallback Formula
+### 8.7 `[RESOLVED]` Hardcoded Tax Fallback Formula Silently Returned Zero
 
-**File:** `src/main/java/digital8/payroll/services/PayrollService.java` lines 65–66
+**File:** `src/main/java/digital8/payroll/services/PayrollService.java` lines 65–66, 488–518, `src/main/java/digital8/payroll/controllers/PayrollApiController.java`, `src/main/java/digital8/payroll/exceptions/TaxTableNotFoundException.java`
 
-```java
-private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
-private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
-```
+**Original concern:** The simplified withholding tax formula was hardcoded as a last-resort fallback. When no tax table existed in the database, `computeWithholdingTax()` silently returned `BigDecimal.ZERO` instead of alerting the caller, producing incorrect payroll.
 
-The simplified withholding tax formula (`gross × 10% − 2395.90`) is hardcoded as a last-resort fallback. The constant looks like a specific BIR bracket's "withholding constant" but hardcoding it means it won't track law changes automatically.
+**Fix applied:**
 
-**Fix:** Document this as a known fixed fallback. Ideally, the constant should come from a configuration table.
+- `PayrollService.java` — The `TAX_RATE_SIMPLIFIED` and `TAX_CONSTANT` constants were removed entirely. `computeWithholdingTax()` now throws `TaxTableNotFoundException` in all three cases where no matching tax table is found:
+  1. No table for the given year + pay frequency (line 512–516)
+  2. No table for the prior year as fallback (same path)
+  3. For `SEMI_MONTHLY`: no `SEMI_MONTHLY` or `MONTHLY` table to derive implied monthly income (line 508–510)
+- `TaxTableNotFoundException.java` — new exception class
+- `PayrollApiController.java` — added `@ExceptionHandler(TaxTableNotFoundException.class)` returning `400 BAD_REQUEST` with the exception message in the response body
 
 ---
 
