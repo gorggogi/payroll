@@ -28,7 +28,6 @@ import digital8.payroll.entities.EmployeeDeductions;
 import digital8.payroll.entities.PagibigTable;
 import digital8.payroll.entities.PhilhealthTable;
 import digital8.payroll.entities.WeeklyScheduleTemplateDay;
-import digital8.payroll.exceptions.TaxTableNotFoundException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -70,11 +69,13 @@ public class PayrollService {
     // Salary splitting for below-30k employees
     private static final BigDecimal SALARY_THRESHOLD = new BigDecimal("30000");
     private static final BigDecimal PREMIUM_BASE_CAP = new BigDecimal("20000");
-    
+
+    // Simplified withholding tax formula constants
+    private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
+    private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
+
     // Semi-monthly divisor
     private static final BigDecimal SEMI_MONTHLY_DIVISOR = new BigDecimal("2");
-    private static final LocalTime DEFAULT_BREAK_OUT = LocalTime.NOON;
-    private static final LocalTime DEFAULT_BREAK_IN = LocalTime.of(13, 0);
 
     @Autowired
     private EmployeeRepository employeeRepository;
@@ -429,36 +430,62 @@ public class PayrollService {
             return AttendanceMetrics.zero();
         }
 
-        AttendanceMetrics computed = AttendanceMetrics.zero();
+        AttendanceMetrics fallback = AttendanceMetrics.zero();
         LocalTime timeIn = attendance.getTime_in();
         LocalTime timeOut = attendance.getTime_out();
         if (timeIn != null && timeOut != null) {
-            computed = new AttendanceMetrics(
-                    minutesToHours(clockMinutesBetween(timeIn, timeOut)),
-                    BigDecimal.ZERO.setScale(SCALE, ROUND),
-                    0,
-                    0);
+            BigDecimal rawWorkedHours = minutesToHours(clockMinutesBetween(timeIn, timeOut));
+            BigDecimal storedOvertime = preferStoredDecimal(
+                    attendance.getOvertime_hours(),
+                    BigDecimal.ZERO.setScale(SCALE, ROUND));
+            fallback = new AttendanceMetrics(
+                    preferStoredDecimal(attendance.getWork_hours(), rawWorkedHours),
+                    storedOvertime,
+                    preferStoredInt(attendance.getLate_minutes(), 0),
+                    preferStoredInt(attendance.getUndertime_minutes(), 0));
+
+            if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date())) {
+                return new AttendanceMetrics(
+                        BigDecimal.ZERO.setScale(SCALE, ROUND),
+                        storedOvertime,
+                        0,
+                        0);
+            }
 
             Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
                     attendance.getEmployeeId(),
                     attendance.getAttendance_date());
             if (shiftDayOpt.isPresent()) {
                 WeeklyScheduleTemplateDay shiftDay = shiftDayOpt.get();
-                computed = computeAttendanceMetrics(
+                AttendanceMetrics computed = computeAttendanceMetrics(
                         timeIn,
                         timeOut,
                         shiftDay.getTimeIn(),
-                        shiftDay.getTimeOut(),
-                        DEFAULT_BREAK_OUT,
-                        DEFAULT_BREAK_IN);
+                        shiftDay.getTimeOut());
+                return new AttendanceMetrics(
+                        computed.workHours,
+                        resolveOvertimeHours(attendance.getOvertime_hours(), computed.overtimeHours),
+                        computed.lateMinutes,
+                        computed.undertimeMinutes);
             }
         }
 
-        return new AttendanceMetrics(
-                preferStoredDecimal(attendance.getWork_hours(), computed.workHours),
-                preferStoredDecimal(attendance.getOvertime_hours(), computed.overtimeHours),
-                preferStoredInt(attendance.getLate_minutes(), computed.lateMinutes),
-                preferStoredInt(attendance.getUndertime_minutes(), computed.undertimeMinutes));
+        return fallback;
+    }
+
+    private boolean isRestDay(Integer employeeId, LocalDate date) {
+        if (employeeId == null || date == null) {
+            return false;
+        }
+        Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, date);
+        if (assignmentOpt.isEmpty()) {
+            return false;
+        }
+        return weeklyScheduleTemplateDayRepository.findByTemplateIdAndDayOfWeek(
+                assignmentOpt.get().getTemplateId(),
+                date.getDayOfWeek().getValue())
+                .map(WeeklyScheduleTemplateDay::isRestDay)
+                .orElse(false);
     }
 
     private Optional<WeeklyScheduleTemplateDay> findAssignedShiftDay(Integer employeeId, LocalDate date) {
@@ -466,9 +493,7 @@ public class PayrollService {
             return Optional.empty();
         }
 
-        Optional<EmployeeScheduleAssignment> assignmentOpt =
-                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
-                        employeeId, date.getYear(), date.getMonthValue());
+        Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, date);
         if (assignmentOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -488,13 +513,25 @@ public class PayrollService {
         return Optional.of(day);
     }
 
+    private Optional<EmployeeScheduleAssignment> resolveShiftAssignment(Integer employeeId, LocalDate date) {
+        if (employeeId == null || date == null) {
+            return Optional.empty();
+        }
+        Optional<EmployeeScheduleAssignment> exact =
+                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
+                        employeeId, date.getYear(), date.getMonthValue());
+        if (exact.isPresent()) {
+            return exact;
+        }
+        return employeeScheduleAssignmentRepository.findLatestAssignmentOnOrBefore(
+                employeeId, date.getYear(), date.getMonthValue());
+    }
+
     private AttendanceMetrics computeAttendanceMetrics(
             LocalTime actualIn,
             LocalTime actualOut,
             LocalTime shiftIn,
-            LocalTime shiftOut,
-            LocalTime breakOut,
-            LocalTime breakIn) {
+            LocalTime shiftOut) {
         if (actualIn == null || actualOut == null || shiftIn == null || shiftOut == null) {
             return AttendanceMetrics.zero();
         }
@@ -513,37 +550,9 @@ public class PayrollService {
         }
         long actualEnd = actualStart + actualDuration;
 
-        boolean hasBreak = breakOut != null && breakIn != null;
-        long breakStart = 0L;
-        long breakEnd = 0L;
-        if (hasBreak) {
-            breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
-            long breakDuration = clockMinutesBetween(breakOut, breakIn);
-            if (breakDuration > 0) {
-                breakEnd = breakStart + breakDuration;
-            } else {
-                hasBreak = false;
-            }
-        }
-
-        long regularMinutes = paidMinutesBetween(
-                Math.max(actualStart, shiftStart),
-                Math.min(actualEnd, shiftEnd),
-                hasBreak,
-                breakStart,
-                breakEnd);
-        long lateMinutes = paidMinutesBetween(
-                shiftStart,
-                Math.min(actualStart, shiftEnd),
-                hasBreak,
-                breakStart,
-                breakEnd);
-        long undertimeMinutes = paidMinutesBetween(
-                Math.max(actualEnd, shiftStart),
-                shiftEnd,
-                hasBreak,
-                breakStart,
-                breakEnd);
+        long regularMinutes = Math.max(0L, Math.min(actualEnd, shiftEnd) - Math.max(actualStart, shiftStart));
+        long lateMinutes = Math.max(0L, Math.min(actualStart, shiftEnd) - shiftStart);
+        long undertimeMinutes = Math.max(0L, shiftEnd - Math.max(actualEnd, shiftStart));
         long overtimeMinutes = Math.max(0L, actualEnd - Math.max(shiftEnd, actualStart));
 
         return new AttendanceMetrics(
@@ -567,17 +576,18 @@ public class PayrollService {
         return Math.max(0, computed);
     }
 
-    private long paidMinutesBetween(long start, long end, boolean hasBreak, long breakStart, long breakEnd) {
-        long minutes = Math.max(0L, end - start);
-        if (!hasBreak || minutes == 0L) {
-            return minutes;
-        }
-        long breakOverlap = overlapMinutes(start, end, breakStart, breakEnd);
-        return Math.max(0L, minutes - breakOverlap);
-    }
-
     private int safeIntMinutes(long minutes) {
         return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, minutes));
+    }
+
+    private BigDecimal resolveOvertimeHours(BigDecimal storedOvertime, BigDecimal computedOvertime) {
+        BigDecimal stored = storedOvertime != null
+                ? storedOvertime.setScale(SCALE, ROUND)
+                : BigDecimal.ZERO.setScale(SCALE, ROUND);
+        BigDecimal computed = computedOvertime != null
+                ? computedOvertime.setScale(SCALE, ROUND)
+                : BigDecimal.ZERO.setScale(SCALE, ROUND);
+        return stored.max(computed);
     }
 
     private long clockMinutesBetween(LocalTime start, LocalTime end) {
@@ -602,12 +612,6 @@ public class PayrollService {
             }
         }
         return best;
-    }
-
-    private long overlapMinutes(long startA, long endA, long startB, long endB) {
-        long start = Math.max(startA, startB);
-        long end = Math.min(endA, endB);
-        return Math.max(0L, end - start);
     }
 
     private BigDecimal minutesToHours(long minutes) {
@@ -736,15 +740,13 @@ public class PayrollService {
                 return withholdingTaxFromBracketRows(impliedMonthly, m)
                         .divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
             }
-            throw new TaxTableNotFoundException(
-                "No SEMI_MONTHLY or MONTHLY tax table found for year=" + year
-                    + ". Cannot compute withholding tax for semi-monthly employee.");
+            return BigDecimal.ZERO;
         }
         if (rows == null || rows.isEmpty()) {
-            throw new TaxTableNotFoundException(
-                "No tax table entries found for year=" + year
-                    + ", payFrequency=" + payFrequency
-                    + ". Please populate the TaxTable table before processing payroll.");
+            BigDecimal tax = taxablePay.multiply(TAX_RATE_SIMPLIFIED)
+                    .subtract(TAX_CONSTANT)
+                    .setScale(SCALE, ROUND);
+            return tax.max(BigDecimal.ZERO);
         }
         return withholdingTaxFromBracketRows(taxablePay, rows);
     }

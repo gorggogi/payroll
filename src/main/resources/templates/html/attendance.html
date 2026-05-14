@@ -56,6 +56,7 @@
                 <thead>
                     <tr class="attendanceHeader">
                         <th>Date</th>
+                        <th>Shift Used</th>
                         <th>Time in</th>
                         <th>Time out</th>
                         <th>Work Hours</th>
@@ -67,22 +68,19 @@
                 <tbody class="attendanceBody" th:if="${attendances}">
                     <tr th:each="a : ${attendances}">
                         <td th:text="${a.attendance_date}"></td>
+                        <td th:text="${shiftLabelByDate != null and shiftLabelByDate.get(a.attendance_date) != null ? shiftLabelByDate.get(a.attendance_date) : 'No shift'}"></td>
                         <td th:text="${a.time_in}"></td>
                         <td th:text="${a.time_out}"></td>
-                        <td
-                            th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}">
-                        </td>
+                        <td th:text="${a.workHoursDisplay}"></td>
                         <td th:text="${a.late_minutes}"></td>
-                        <td th:text="${a.undertime_minutes}"></td>
-                        <td
-                            th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'COMMA', 2, 'POINT') : ''}">
-                        </td>
+                        <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
+                        <td th:text="${a.overtimeHoursDisplay}"></td>
                     </tr>
                 </tbody>
             </table>
 
             <p class="total-hours">Total Hours Rendered: <strong
-                    th:text="${totalHoursRendered != null ? #numbers.formatDecimal(totalHoursRendered, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong>
+                    th:text="${totalHoursRenderedDisplay != null ? totalHoursRenderedDisplay : '0:00'}">0:00</strong>
             </p>
             <p class="total-hours">Total Undertime: <strong
                     th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins

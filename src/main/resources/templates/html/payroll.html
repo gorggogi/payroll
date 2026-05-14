@@ -61,12 +61,12 @@
     <tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>
     <tr><td>Daily Rate</td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Hourly Rate</td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHours != null ? #numbers.formatDecimal(item.totalWorkedHours, 1, 'COMMA', 2, 'POINT') + ' hrs' : '0.00 hrs'}">0.00 hrs</td></tr>
-    <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHours != null ? #numbers.formatDecimal(item.totalOtHours, 1, 'COMMA', 2, 'POINT') + ' hrs' : '0.00 hrs'}">0.00 hrs</td></tr>
+    <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHoursDisplay}">0:00</td></tr>
+    <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHoursDisplay}">0:00</td></tr>
     
     <tr><td colspan="2" class="table-section-header"><strong>Earnings</strong></td></tr>
-    <tr><td>Basic Pay <span class="rate-note" th:text="${item.totalWorkedHours != null ? '(' + #numbers.formatDecimal(item.totalWorkedHours, 1, 'COMMA', 2, 'POINT') + ' hrs)' : ''}"></span></td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Overtime Pay <span class="rate-note" th:text="${item.totalOtHours != null ? '(' + #numbers.formatDecimal(item.totalOtHours, 1, 'COMMA', 2, 'POINT') + ' hrs)' : ''}"></span></td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Basic Pay <span class="rate-note" th:text="${'(' + item.totalWorkedHoursDisplay + ')'}"></span></td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Overtime Pay <span class="rate-note" th:text="${'(' + item.totalOtHoursDisplay + ')'}"></span></td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Holiday Pay</td><td th:text="${item.holidayPay != null ? #numbers.formatDecimal(item.holidayPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Allowances</td><td th:text="${item.allowances != null ? #numbers.formatDecimal(item.allowances, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Adjustment (Earnings)</td><td th:text="${item.adjustmentEarnings != null ? #numbers.formatDecimal(item.adjustmentEarnings, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>

@@ -17,6 +17,17 @@ public interface EmployeeScheduleAssignmentRepository extends JpaRepository<Empl
     Optional<EmployeeScheduleAssignment> findByEmployeeIdAndScheduleYearAndScheduleMonth(
             Integer employeeId, int scheduleYear, int scheduleMonth);
 
+    @Query(value = """
+            SELECT *
+            FROM employee_schedule_assignment a
+            WHERE a.employeeId = :eid
+              AND (a.schedule_year < :y OR (a.schedule_year = :y AND a.schedule_month <= :m))
+            ORDER BY a.schedule_year DESC, a.schedule_month DESC
+            LIMIT 1
+            """, nativeQuery = true)
+    Optional<EmployeeScheduleAssignment> findLatestAssignmentOnOrBefore(
+            @Param("eid") Integer employeeId, @Param("y") int scheduleYear, @Param("m") int scheduleMonth);
+
     void deleteByEmployeeIdAndScheduleYearAndScheduleMonth(Integer employeeId, int scheduleYear, int scheduleMonth);
 
     @Query("SELECT a.employeeId FROM EmployeeScheduleAssignment a WHERE a.templateId = :tid AND a.scheduleYear = :y AND a.scheduleMonth = :m")

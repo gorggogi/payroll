@@ -1,4 +1,6 @@
 package digital8.payroll.entities;
+
+import digital8.payroll.HourFormatUtils;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -236,8 +238,12 @@ public class PayrollItems{
     public BigDecimal getTotalWorkedHours() { return totalWorkedHours; }
     public void setTotalWorkedHours(BigDecimal totalWorkedHours) { this.totalWorkedHours = totalWorkedHours; }
 
+    public String getTotalWorkedHoursDisplay() { return HourFormatUtils.formatHours(totalWorkedHours); }
+
     public BigDecimal getTotalOtHours() { return totalOtHours; }
     public void setTotalOtHours(BigDecimal totalOtHours) { this.totalOtHours = totalOtHours; }
+
+    public String getTotalOtHoursDisplay() { return HourFormatUtils.formatHours(totalOtHours); }
 
     public Integer getLateUndertimeMinutes() { return lateUndertimeMinutes; }
     public void setLateUndertimeMinutes(Integer lateUndertimeMinutes) { this.lateUndertimeMinutes = lateUndertimeMinutes; }
