@@ -178,6 +178,7 @@
                             <th>Time in</th>
                             <th>Time out</th>
                             <th>Work hours</th>
+                            <th>Undertime mins</th>
                             <th>Total hours w/ OT</th>
                             <th>Overtime time in</th>
                             <th>Overtime time out</th>
@@ -192,6 +193,7 @@
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
                             <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
@@ -209,6 +211,7 @@
                 </table>
 
                 <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total undertime this month: <strong th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins</p>
                 <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
                 <p>
                     <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save DTR overtime</button>
@@ -224,6 +227,7 @@
                             <th>Time in</th>
                             <th>Time out</th>
                             <th>Work hours</th>
+                            <th>Undertime mins</th>
                             <th>Total hours w/ OT</th>
                             <th>Overtime time in</th>
                             <th>Overtime time out</th>
@@ -238,6 +242,7 @@
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
                             <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
@@ -248,6 +253,7 @@
                     </tbody>
                 </table>
                 <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total undertime this month: <strong th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins</p>
                 <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
             </div>
 

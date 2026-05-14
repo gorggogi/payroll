@@ -199,13 +199,11 @@ public class PayrollService {
             if (d.isBefore(periodStart) || d.isAfter(periodEnd))
                 continue;
 
-            totalWorkedHours = totalWorkedHours.add(resolveWorkedHours(a));
-            if (a.getOvertime_hours() != null)
-                totalOtHours = totalOtHours.add(a.getOvertime_hours());
-            if (a.getLate_minutes() != null)
-                totalLateUndertimeMinutes += a.getLate_minutes();
-            if (a.getUndertime_minutes() != null)
-                totalLateUndertimeMinutes += a.getUndertime_minutes();
+            AttendanceMetrics metrics = resolveAttendanceMetrics(a);
+            totalWorkedHours = totalWorkedHours.add(metrics.workHours);
+            totalOtHours = totalOtHours.add(metrics.overtimeHours);
+            totalLateUndertimeMinutes += metrics.lateMinutes;
+            totalLateUndertimeMinutes += metrics.undertimeMinutes;
         }
 
         // --- 3b. Regular holiday pay (temporary rule) ---
@@ -253,8 +251,9 @@ public class PayrollService {
                 if (!regularHolidayDates.contains(d))
                     continue;
 
-                BigDecimal wh = resolveWorkedHours(a);
-                BigDecimal ot = a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO;
+                AttendanceMetrics metrics = resolveAttendanceMetrics(a);
+                BigDecimal wh = metrics.workHours;
+                BigDecimal ot = metrics.overtimeHours;
 
                 // Optional safety: only count if there are positive hours
                 // if (wh.add(ot).compareTo(BigDecimal.ZERO) <= 0) continue;
@@ -428,37 +427,41 @@ public class PayrollService {
         return out;
     }
 
-    private BigDecimal resolveWorkedHours(Attendance attendance) {
+    private AttendanceMetrics resolveAttendanceMetrics(Attendance attendance) {
         if (attendance == null) {
-            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+            return AttendanceMetrics.zero();
         }
 
-        BigDecimal stored = attendance.getWork_hours();
-        if (stored != null && stored.compareTo(BigDecimal.ZERO) > 0) {
-            return stored.setScale(SCALE, ROUND);
-        }
-
+        AttendanceMetrics computed = AttendanceMetrics.zero();
         LocalTime timeIn = attendance.getTime_in();
         LocalTime timeOut = attendance.getTime_out();
-        if (timeIn == null || timeOut == null) {
-            return stored != null ? stored.setScale(SCALE, ROUND) : BigDecimal.ZERO.setScale(SCALE, ROUND);
+        if (timeIn != null && timeOut != null) {
+            computed = new AttendanceMetrics(
+                    minutesToHours(clockMinutesBetween(timeIn, timeOut)),
+                    BigDecimal.ZERO.setScale(SCALE, ROUND),
+                    0,
+                    0);
+
+            Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
+                    attendance.getEmployeeId(),
+                    attendance.getAttendance_date());
+            if (shiftDayOpt.isPresent()) {
+                WeeklyScheduleTemplateDay shiftDay = shiftDayOpt.get();
+                computed = computeAttendanceMetrics(
+                        timeIn,
+                        timeOut,
+                        shiftDay.getTimeIn(),
+                        shiftDay.getTimeOut(),
+                        DEFAULT_BREAK_OUT,
+                        DEFAULT_BREAK_IN);
+            }
         }
 
-        Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
-                attendance.getEmployeeId(),
-                attendance.getAttendance_date());
-        if (shiftDayOpt.isPresent()) {
-            WeeklyScheduleTemplateDay shiftDay = shiftDayOpt.get();
-            return computeRegularWorkHours(
-                    timeIn,
-                    timeOut,
-                    shiftDay.getTimeIn(),
-                    shiftDay.getTimeOut(),
-                    DEFAULT_BREAK_OUT,
-                    DEFAULT_BREAK_IN);
-        }
-
-        return minutesToHours(clockMinutesBetween(timeIn, timeOut));
+        return new AttendanceMetrics(
+                preferStoredDecimal(attendance.getWork_hours(), computed.workHours),
+                preferStoredDecimal(attendance.getOvertime_hours(), computed.overtimeHours),
+                preferStoredInt(attendance.getLate_minutes(), computed.lateMinutes),
+                preferStoredInt(attendance.getUndertime_minutes(), computed.undertimeMinutes));
     }
 
     private Optional<WeeklyScheduleTemplateDay> findAssignedShiftDay(Integer employeeId, LocalDate date) {
@@ -488,7 +491,7 @@ public class PayrollService {
         return Optional.of(day);
     }
 
-    private BigDecimal computeRegularWorkHours(
+    private AttendanceMetrics computeAttendanceMetrics(
             LocalTime actualIn,
             LocalTime actualOut,
             LocalTime shiftIn,
@@ -496,40 +499,88 @@ public class PayrollService {
             LocalTime breakOut,
             LocalTime breakIn) {
         if (actualIn == null || actualOut == null || shiftIn == null || shiftOut == null) {
-            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+            return AttendanceMetrics.zero();
         }
 
         long shiftStart = shiftIn.toSecondOfDay() / 60L;
         long shiftDuration = clockMinutesBetween(shiftIn, shiftOut);
         if (shiftDuration <= 0) {
-            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+            return AttendanceMetrics.zero();
         }
         long shiftEnd = shiftStart + shiftDuration;
 
         long actualStart = normalizeMinuteToTarget(actualIn, shiftStart);
         long actualDuration = clockMinutesBetween(actualIn, actualOut);
         if (actualDuration <= 0) {
-            return BigDecimal.ZERO.setScale(SCALE, ROUND);
+            return AttendanceMetrics.zero();
         }
         long actualEnd = actualStart + actualDuration;
 
-        long regularStart = Math.max(actualStart, shiftStart);
-        long regularEnd = Math.min(actualEnd, shiftEnd);
-        long paidMinutes = Math.max(0L, regularEnd - regularStart);
-
-        if (paidMinutes == 0L || breakOut == null || breakIn == null) {
-            return minutesToHours(paidMinutes);
+        boolean hasBreak = breakOut != null && breakIn != null;
+        long breakStart = 0L;
+        long breakEnd = 0L;
+        if (hasBreak) {
+            breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
+            long breakDuration = clockMinutesBetween(breakOut, breakIn);
+            if (breakDuration > 0) {
+                breakEnd = breakStart + breakDuration;
+            } else {
+                hasBreak = false;
+            }
         }
 
-        long breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
-        long breakDuration = clockMinutesBetween(breakOut, breakIn);
-        if (breakDuration <= 0) {
-            return minutesToHours(paidMinutes);
-        }
+        long regularMinutes = paidMinutesBetween(
+                Math.max(actualStart, shiftStart),
+                Math.min(actualEnd, shiftEnd),
+                hasBreak,
+                breakStart,
+                breakEnd);
+        long lateMinutes = paidMinutesBetween(
+                shiftStart,
+                Math.min(actualStart, shiftEnd),
+                hasBreak,
+                breakStart,
+                breakEnd);
+        long undertimeMinutes = paidMinutesBetween(
+                Math.max(actualEnd, shiftStart),
+                shiftEnd,
+                hasBreak,
+                breakStart,
+                breakEnd);
+        long overtimeMinutes = Math.max(0L, actualEnd - Math.max(shiftEnd, actualStart));
 
-        long breakEnd = breakStart + breakDuration;
-        long breakOverlap = overlapMinutes(regularStart, regularEnd, breakStart, breakEnd);
-        return minutesToHours(Math.max(0L, paidMinutes - breakOverlap));
+        return new AttendanceMetrics(
+                minutesToHours(regularMinutes),
+                minutesToHours(overtimeMinutes),
+                safeIntMinutes(lateMinutes),
+                safeIntMinutes(undertimeMinutes));
+    }
+
+    private BigDecimal preferStoredDecimal(BigDecimal stored, BigDecimal computed) {
+        if (stored != null && stored.compareTo(BigDecimal.ZERO) > 0) {
+            return stored.setScale(SCALE, ROUND);
+        }
+        return computed != null ? computed.setScale(SCALE, ROUND) : BigDecimal.ZERO.setScale(SCALE, ROUND);
+    }
+
+    private int preferStoredInt(Integer stored, int computed) {
+        if (stored != null && stored > 0) {
+            return stored;
+        }
+        return Math.max(0, computed);
+    }
+
+    private long paidMinutesBetween(long start, long end, boolean hasBreak, long breakStart, long breakEnd) {
+        long minutes = Math.max(0L, end - start);
+        if (!hasBreak || minutes == 0L) {
+            return minutes;
+        }
+        long breakOverlap = overlapMinutes(start, end, breakStart, breakEnd);
+        return Math.max(0L, minutes - breakOverlap);
+    }
+
+    private int safeIntMinutes(long minutes) {
+        return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, minutes));
     }
 
     private long clockMinutesBetween(LocalTime start, LocalTime end) {
@@ -565,6 +616,36 @@ public class PayrollService {
     private BigDecimal minutesToHours(long minutes) {
         return BigDecimal.valueOf(minutes)
                 .divide(BigDecimal.valueOf(60), SCALE, ROUND);
+    }
+
+    private static final class AttendanceMetrics {
+        private final BigDecimal workHours;
+        private final BigDecimal overtimeHours;
+        private final int lateMinutes;
+        private final int undertimeMinutes;
+
+        private AttendanceMetrics(
+                BigDecimal workHours,
+                BigDecimal overtimeHours,
+                int lateMinutes,
+                int undertimeMinutes) {
+            this.workHours = workHours != null
+                    ? workHours.setScale(SCALE, ROUND)
+                    : BigDecimal.ZERO.setScale(SCALE, ROUND);
+            this.overtimeHours = overtimeHours != null
+                    ? overtimeHours.setScale(SCALE, ROUND)
+                    : BigDecimal.ZERO.setScale(SCALE, ROUND);
+            this.lateMinutes = Math.max(0, lateMinutes);
+            this.undertimeMinutes = Math.max(0, undertimeMinutes);
+        }
+
+        private static AttendanceMetrics zero() {
+            return new AttendanceMetrics(
+                    BigDecimal.ZERO.setScale(SCALE, ROUND),
+                    BigDecimal.ZERO.setScale(SCALE, ROUND),
+                    0,
+                    0);
+        }
     }
 
     /**

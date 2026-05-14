@@ -60,6 +60,7 @@
                         <th>Time out</th>
                         <th>Work Hours</th>
                         <th>Late Minutes</th>
+                        <th>Undertime Minutes</th>
                         <th>Overtime Hours</th>
                     </tr>
                 </thead>
@@ -72,6 +73,7 @@
                             th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}">
                         </td>
                         <td th:text="${a.late_minutes}"></td>
+                        <td th:text="${a.undertime_minutes}"></td>
                         <td
                             th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'COMMA', 2, 'POINT') : ''}">
                         </td>
@@ -81,6 +83,9 @@
 
             <p class="total-hours">Total Hours Rendered: <strong
                     th:text="${totalHoursRendered != null ? #numbers.formatDecimal(totalHoursRendered, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong>
+            </p>
+            <p class="total-hours">Total Undertime: <strong
+                    th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins
             </p>
             <!-- Contextual link: go to the payroll of the employee currently being viewed -->
             <a th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link no-print">View Payroll &rarr;</a>
