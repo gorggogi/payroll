@@ -24,12 +24,24 @@
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
+
             <div class="adjust-panel">
-                <h2><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <h2 style="margin-bottom: 0;"><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
+                    <button type="button" id="infoBtn" class="info-btn" title="Show import format info" style="background: none; border: none; cursor: pointer; margin-left: 0.5rem;">
+                        <i class="fa-solid fa-circle-info" style="color: #706fd6; font-size: 1.5rem;"></i>
+                    </button>
+                </div>
                 <p class="adjust-panel-desc">
-                    Required format (tab-separated, 7 columns):
+                    Required format: tab-separated, 7 columns. <span style="color:#706fd6; cursor:pointer; text-decoration:underline;" onclick="document.getElementById('importInfoModal').style.display='block'">See details</span>
                 </p>
-                <pre class="adjust-import-summary-pre">22	2026-04-01	08:35:51	1	0	15	0
+
+                <!-- Modal for import info -->
+                <div id="importInfoModal" class="modal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; overflow:auto; background:rgba(0,0,0,0.3);">
+                  <div class="modal-content" style="background:#fff; margin:5% auto; padding:2rem; border-radius:10px; max-width:500px; position:relative; box-shadow:0 2px 16px rgba(0,0,0,0.2);">
+                    <span class="close" id="closeModalBtn" style="position:absolute; top:1rem; right:1rem; font-size:2rem; color:#888; cursor:pointer;">&times;</span>
+                    <h3 style="margin-top:0;">Import Format Guide</h3>
+                    <pre class="adjust-import-summary-pre" style="margin-bottom:1rem;">22	2026-04-01	08:35:51	1	0	15	0
 
 Column guide:
 1) Employee biometric no. (example: 22)
@@ -39,34 +51,36 @@ Column guide:
 5) Log type: 0=LOG IN, 2=BREAKOUT, 3=BREAKIN, 1=OUT
 6) Fixed value: 15
 7) Fixed value: 0</pre>
+                    <button id="closeModalBtn2" style="background:#706fd6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.5rem; font-size:1rem; cursor:pointer;">Close</button>
+                  </div>
+                </div>
+
 
                 <form method="post"
                       th:action="@{/admin/attendance/time-adjustments/upload}"
                       enctype="multipart/form-data">
-                    <div class="adjust-form-grid">
-                        <label>
+                    <div class="adjust-form-row">
+                        <label style="margin-right:1rem;">
                             Start date filter
                             <input type="date" name="startDate" />
                         </label>
-                        <label>
+                        <label style="margin-right:1rem;">
                             End date filter
                             <input type="date" name="endDate" />
                         </label>
-                        <label class="input-file">
+                        <label class="input-file" style="margin-right:1rem;">
                             Biometrics file
                             <input type="file" name="file" accept=".csv,.txt,.dat" required />
                         </label>
-                        <label class="overwrite-checkbox">
+                        <label class="overwrite-checkbox" style="margin-right:1rem; display:flex; align-items:center; gap:0.5rem;">
                             <span>Overwrite existing attendance</span>
                             <input type="checkbox" name="overwrite" value="true" checked />
                         </label>
-                            <div class="adjust-form-grid-row">
-                                <div class="adjust-panel-btn">
-                                    <button type="submit" class="btn-import">
-                                        <i class="fa-solid fa-file-import"></i> Import DTR
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="adjust-panel-btn" style="margin:0;">
+                            <button type="submit" class="btn-import">
+                                <i class="fa-solid fa-file-import"></i> Import DTR
+                            </button>
+                        </div>
                     </div>
                 </form>
 
@@ -138,6 +152,7 @@ Column guide:
     </div>
     <script src="/js/nav.js"></script>
     <script>
+       // Radio button time sync
        document.querySelectorAll('input[type="radio"][data-target]').forEach(function (radio) {
             radio.addEventListener('change', function () {
                 var targetName = this.getAttribute('data-target');
@@ -145,7 +160,81 @@ Column guide:
                 if (target) target.value = this.value;
             });
        });
+
+       // Modal logic
+       var infoBtn = document.getElementById('infoBtn');
+       var modal = document.getElementById('importInfoModal');
+       var closeModalBtn = document.getElementById('closeModalBtn');
+       var closeModalBtn2 = document.getElementById('closeModalBtn2');
+       if (infoBtn && modal && closeModalBtn && closeModalBtn2) {
+           infoBtn.onclick = function() { modal.style.display = 'block'; };
+           closeModalBtn.onclick = function() { modal.style.display = 'none'; };
+           closeModalBtn2.onclick = function() { modal.style.display = 'none'; };
+           window.onclick = function(event) {
+               if (event.target === modal) { modal.style.display = 'none'; }
+           };
+       }
     </script>
+        <style>
+            .info-btn:hover i { color: #31315c; }
+            .modal::-webkit-scrollbar { width: 8px; background: #eee; }
+            .modal::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+            .adjust-form-row {
+                display: flex;
+                flex-wrap: nowrap;
+                align-items: flex-end;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
+                width: 100%;
+            }
+            .adjust-form-row label,
+            .adjust-form-row .adjust-panel-btn {
+                flex: 1 1 0;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                font-size: 1rem;
+            }
+            .adjust-form-row input[type="date"],
+            .adjust-form-row input[type="file"] {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .adjust-form-row .btn-import {
+                width: 100%;
+                min-width: 120px;
+            }
+            .adjust-form-row .overwrite-checkbox {
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 0.25rem;
+                min-width: 180px;
+                max-width: 220px;
+                margin: 0 auto;
+            }
+            @media (max-width: 900px) {
+                .adjust-form-row {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .adjust-form-row label, .adjust-form-row .adjust-panel-btn {
+                    width: 100%;
+                }
+            }
+            @media (max-width: 900px) {
+                .adjust-form-row {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .adjust-form-row label, .adjust-form-row .adjust-panel-btn {
+                    width: 100%;
+                }
+            }
+            @media (max-width: 600px) {
+                .modal-content { width: 95vw !important; padding: 1rem !important; }
+            }
+        </style>
 </body>
 </html>
 
