@@ -92,8 +92,18 @@ Column guide:
 
             <div class="adjust-panel" th:if="${previewRows != null}">
                 <h2><i class="fa-solid fa-list-check"></i> Unverified Time Logs (For Approval)</h2>
-                <p class="adjust-panel-desc">Choose IN/OUT (radio), edit time if needed, then approve.</p>
+                <p class="adjust-panel-desc">
+                    Biometric lines are grouped into one card per employee per date. Choose the correct IN/OUT from that day's detected logs, edit if needed, then approve.
+                </p>
                 <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
+                    <div class="preview-action-bar">
+                        <div class="preview-action-copy">
+                            <strong th:text="${#lists.size(previewRows)}">0</strong> grouped day record(s) ready for review
+                        </div>
+                        <button type="submit" class="btn-import preview-approve-btn">
+                            <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
+                        </button>
+                    </div>
                     <div th:each="row : ${previewRows}" class="log-card">
                         <div class="log-card-header">
                             <label class="log-verify-label">
@@ -150,8 +160,11 @@ Column guide:
                             </div>
                         </div>
                     </div>
-                    <div class="adjust-panel-btn">
-                        <button type="submit" class="btn-import">
+                    <div class="preview-action-bar preview-action-bar-bottom">
+                        <div class="preview-action-copy">
+                            Review complete? Approve the checked rows.
+                        </div>
+                        <button type="submit" class="btn-import preview-approve-btn">
                             <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
                         </button>
                     </div>

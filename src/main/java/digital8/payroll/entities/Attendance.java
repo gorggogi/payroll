@@ -1,7 +1,9 @@
 package digital8.payroll.entities;
+
+import digital8.payroll.HourFormatUtils;
 import jakarta.persistence.Entity;
-    import jakarta.persistence.GeneratedValue;
-    import jakarta.persistence.GenerationType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
@@ -127,6 +129,18 @@ public class Attendance{
         this.overtime_hours = overtime_hours;
     }
 
- 
+    public String getWorkHoursDisplay() {
+        return HourFormatUtils.formatHours(work_hours);
+    }
+
+    public String getOvertimeHoursDisplay() {
+        return HourFormatUtils.formatHours(overtime_hours);
+    }
+
+    public String getTotalHoursWithOvertimeDisplay() {
+        BigDecimal work = work_hours != null ? work_hours : BigDecimal.ZERO;
+        BigDecimal overtime = overtime_hours != null ? overtime_hours : BigDecimal.ZERO;
+        return HourFormatUtils.formatHours(work.add(overtime));
+    }
 
 }

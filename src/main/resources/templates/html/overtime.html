@@ -46,7 +46,7 @@
                             <td th:text="${r.workDate}"></td>
                             <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
                             <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.totalHours != null ? #numbers.formatDecimal(r.totalHours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${r.totalHoursDisplay}"></td>
                             <td th:text="${r.status}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
                             <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
@@ -153,7 +153,7 @@
                             <td th:text="${r.workDate}"></td>
                             <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
                             <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.totalHours != null ? #numbers.formatDecimal(r.totalHours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
+                            <td th:text="${r.totalHoursDisplay}"></td>
                             <td th:text="${r.status}"></td>
                             <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : 'â€”'}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
@@ -178,7 +178,6 @@
                             <th>Time in</th>
                             <th>Time out</th>
                             <th>Work hours</th>
-                            <th>Undertime mins</th>
                             <th>Total hours w/ OT</th>
                             <th>Overtime time in</th>
                             <th>Overtime time out</th>
@@ -192,12 +191,11 @@
                             <td th:text="${a.attendance_date}"></td>
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
-                            <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
-                            <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
-                            <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td th:text="${a.workHoursDisplay}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : 'â€”'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
                             <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
                             <td>
                                 <label th:for="|ot_${a.attendanceId}|" class="visually-hidden">Overtime on DTR</label>
@@ -210,9 +208,8 @@
                     </tbody>
                 </table>
 
-                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
-                <p class="total-hours">Total undertime this month: <strong th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins</p>
-                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
                 <p>
                     <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save DTR overtime</button>
                 </p>
@@ -227,7 +224,6 @@
                             <th>Time in</th>
                             <th>Time out</th>
                             <th>Work hours</th>
-                            <th>Undertime mins</th>
                             <th>Total hours w/ OT</th>
                             <th>Overtime time in</th>
                             <th>Overtime time out</th>
@@ -241,20 +237,18 @@
                             <td th:text="${a.attendance_date}"></td>
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
-                            <td th:text="${a.work_hours != null ? #numbers.formatDecimal(a.work_hours, 1, 'COMMA', 2, 'POINT') : ''}"></td>
-                            <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
-                            <td th:text="${#numbers.formatDecimal((a.work_hours != null ? a.work_hours : 0) + (a.overtime_hours != null ? a.overtime_hours : 0), 1, 'COMMA', 2, 'POINT')}"></td>
+                            <td th:text="${a.workHoursDisplay}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.totalHours != null ? #numbers.formatDecimal(otReq.totalHours, 1, 'COMMA', 2, 'POINT') : 'â€”'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
                             <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
-                            <td th:text="${a.overtime_hours != null ? #numbers.formatDecimal(a.overtime_hours, 1, 'COMMA', 2, 'POINT') : '0.00'}"></td>
+                            <td th:text="${a.overtimeHoursDisplay}"></td>
                         </tr>
                     </tbody>
                 </table>
-                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHours != null ? #numbers.formatDecimal(totalOvertimeHours, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
-                <p class="total-hours">Total undertime this month: <strong th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins</p>
-                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertime != null ? #numbers.formatDecimal(totalHoursWithOvertime, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</strong> hrs</p>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
             </div>
 
             <p th:if="${attendances.isEmpty()}" class="total-hours" sec:authorize="hasRole('ADMIN')">No attendance rows for this month. Record daily time first, or pick another employee / period.</p>

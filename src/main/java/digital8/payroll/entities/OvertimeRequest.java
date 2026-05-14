@@ -1,5 +1,6 @@
 package digital8.payroll.entities;
 
+import digital8.payroll.HourFormatUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -101,6 +102,10 @@ public class OvertimeRequest {
 
     public void setTotalHours(BigDecimal totalHours) {
         this.totalHours = totalHours;
+    }
+
+    public String getTotalHoursDisplay() {
+        return HourFormatUtils.formatHours(totalHours);
     }
 
     public String getReason() {

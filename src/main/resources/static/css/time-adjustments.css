@@ -92,6 +92,38 @@
     width: 100%;
 }
 
+.preview-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 0.75rem 0 1rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #d9def0;
+    border-radius: 10px;
+    background: #f6f7ff;
+    position: sticky;
+    top: 0.75rem;
+    z-index: 5;
+}
+
+.preview-action-bar-bottom {
+    position: static;
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+.preview-action-copy {
+    color: #31315c;
+    font-size: 0.95rem;
+}
+
+.preview-approve-btn {
+    width: auto !important;
+    min-width: 220px;
+}
+
 /* ---- Card-based Unverified Time Logs layout ---- */
 
 .log-card {
@@ -278,6 +310,13 @@
     }
     .adjust-form-row label, .adjust-form-row .adjust-panel-btn {
         width: 100%;
+    }
+    .preview-action-bar {
+        position: static;
+        align-items: stretch;
+    }
+    .preview-approve-btn {
+        width: 100% !important;
     }
 }
 @media (max-width: 900px) {

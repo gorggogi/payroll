@@ -1,5 +1,6 @@
 package digital8.payroll.controllers;
 
+import digital8.payroll.HourFormatUtils;
 import digital8.payroll.dto.WeeklyScheduleRowDto;
 import digital8.payroll.entities.Attendance;
 import digital8.payroll.entities.EmployeeScheduleAssignment;
@@ -48,6 +49,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
@@ -57,8 +59,6 @@ import java.util.stream.Collectors;
 @Controller
 public class attendanceController {
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
-    private static final LocalTime DEFAULT_BREAK_OUT = LocalTime.NOON;
-    private static final LocalTime DEFAULT_BREAK_IN = LocalTime.of(13, 0);
 
     @Autowired
     private AttendanceRepository attendanceRepository;
@@ -452,16 +452,13 @@ public class attendanceController {
                     .filter(h -> h != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalOvertimeHours", totalOt);
-            int totalUndertimeMinutes = filtered.stream()
-                    .map(Attendance::getUndertime_minutes)
-                    .filter(m -> m != null)
-                    .reduce(0, Integer::sum);
-            model.addAttribute("totalUndertimeMinutes", totalUndertimeMinutes);
+            model.addAttribute("totalOvertimeHoursDisplay", HourFormatUtils.formatHours(totalOt));
             BigDecimal totalHoursWithOt = filtered.stream()
                     .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
                             .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
+            model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHours(totalHoursWithOt));
             model.addAttribute("overtimeRequestByDate",
                     overtimeRequestService.latestRequestByWorkDateForMonth(targetEmpId, selectedYear, selectedMonth));
         }
@@ -478,11 +475,14 @@ public class attendanceController {
         if (!model.containsAttribute("totalOvertimeHours")) {
             model.addAttribute("totalOvertimeHours", BigDecimal.ZERO);
         }
-        if (!model.containsAttribute("totalUndertimeMinutes")) {
-            model.addAttribute("totalUndertimeMinutes", 0);
+        if (!model.containsAttribute("totalOvertimeHoursDisplay")) {
+            model.addAttribute("totalOvertimeHoursDisplay", "0:00");
         }
         if (!model.containsAttribute("totalHoursWithOvertime")) {
             model.addAttribute("totalHoursWithOvertime", BigDecimal.ZERO);
+        }
+        if (!model.containsAttribute("totalHoursWithOvertimeDisplay")) {
+            model.addAttribute("totalHoursWithOvertimeDisplay", "0:00");
         }
         if (!model.containsAttribute("emp_id") && selfEmpId != null) {
             model.addAttribute("emp_id", selfEmpId);
@@ -723,12 +723,8 @@ public class attendanceController {
             }
             String inRaw = request.getParameter("timeInEdit_" + row.key);
             String outRaw = request.getParameter("timeOutEdit_" + row.key);
-            String breakOutRaw = request.getParameter("breakOutEdit_" + row.key);
-            String breakInRaw = request.getParameter("breakInEdit_" + row.key);
             LocalTime in = parseTimeFlexible(inRaw);
             LocalTime out = parseTimeFlexible(outRaw);
-            LocalTime breakOut = parseTimeFlexible(breakOutRaw);
-            LocalTime breakIn = parseTimeFlexible(breakInRaw);
             LocalDate date = parseDateFlexible(row.logDate);
             if (in == null || out == null || date == null) {
                 skipped++;
@@ -749,21 +745,14 @@ public class attendanceController {
                     in,
                     out,
                     shiftMatch.shiftIn,
-                    shiftMatch.shiftOut,
-                    breakOut,
-                    breakIn);
+                    shiftMatch.shiftOut);
             attendance.setEmployeeId(row.employeeId);
             attendance.setAttendance_date(date);
             attendance.setTime_in(in);
             attendance.setTime_out(out);
             attendance.setWork_hours(metrics.workHours);
             attendance.setLate_minutes(metrics.lateMinutes);
-            BigDecimal storedOvertime = attendance.getOvertime_hours();
-            if (storedOvertime != null && storedOvertime.compareTo(BigDecimal.ZERO) > 0) {
-                attendance.setOvertime_hours(storedOvertime.setScale(2, RoundingMode.HALF_UP));
-            } else {
-                attendance.setOvertime_hours(metrics.overtimeHours);
-            }
+            attendance.setOvertime_hours(resolveOvertimeHours(attendance.getOvertime_hours(), metrics.overtimeHours));
             attendance.setUndertime_minutes(metrics.undertimeMinutes);
             attendance.setStatus("Present");
             attendanceRepository.save(attendance);
@@ -911,6 +900,9 @@ public class attendanceController {
             return d.format(DateTimeFormatter.ofPattern("MM/dd/yyyy"));
         }
         public String format12h(String raw) {
+            if (raw == null || raw.isBlank()) {
+                return "";
+            }
             LocalTime t = LocalTime.parse(raw);
             return t.format(DateTimeFormatter.ofPattern("hh:mm a"));
         }
@@ -919,9 +911,7 @@ public class attendanceController {
     }
 
     private ShiftMatchResult validateAgainstShift(Integer employeeId, LocalDate date) {
-        Optional<EmployeeScheduleAssignment> assignmentOpt =
-                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
-                        employeeId, date.getYear(), date.getMonthValue());
+        Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, date);
         if (assignmentOpt.isEmpty()) {
             return ShiftMatchResult.denied("employee has no shift assignment for this month");
         }
@@ -934,7 +924,7 @@ public class attendanceController {
         }
         WeeklyScheduleTemplateDay day = dayOpt.get();
         if (day.isRestDay()) {
-            return ShiftMatchResult.denied("day is marked as rest day");
+            return ShiftMatchResult.restDay("day is marked as rest day");
         }
         if (day.getTimeIn() == null || day.getTimeOut() == null) {
             return ShiftMatchResult.denied("shift has no time in/out setup");
@@ -948,9 +938,7 @@ public class attendanceController {
             LocalTime actualIn,
             LocalTime actualOut,
             LocalTime shiftIn,
-            LocalTime shiftOut,
-            LocalTime breakOut,
-            LocalTime breakIn) {
+            LocalTime shiftOut) {
         if (actualIn == null || actualOut == null || shiftIn == null || shiftOut == null) {
             return AttendanceMetrics.zero();
         }
@@ -969,37 +957,9 @@ public class attendanceController {
         }
         long actualEnd = actualStart + actualDuration;
 
-        boolean hasBreak = breakOut != null && breakIn != null;
-        long breakStart = 0L;
-        long breakEnd = 0L;
-        if (hasBreak) {
-            breakStart = normalizeMinuteToTarget(breakOut, shiftStart + (shiftDuration / 2L));
-            long breakDuration = clockMinutesBetween(breakOut, breakIn);
-            if (breakDuration > 0) {
-                breakEnd = breakStart + breakDuration;
-            } else {
-                hasBreak = false;
-            }
-        }
-
-        long regularMinutes = paidMinutesBetween(
-                Math.max(actualStart, shiftStart),
-                Math.min(actualEnd, shiftEnd),
-                hasBreak,
-                breakStart,
-                breakEnd);
-        long lateMinutes = paidMinutesBetween(
-                shiftStart,
-                Math.min(actualStart, shiftEnd),
-                hasBreak,
-                breakStart,
-                breakEnd);
-        long undertimeMinutes = paidMinutesBetween(
-                Math.max(actualEnd, shiftStart),
-                shiftEnd,
-                hasBreak,
-                breakStart,
-                breakEnd);
+        long regularMinutes = Math.max(0L, Math.min(actualEnd, shiftEnd) - Math.max(actualStart, shiftStart));
+        long lateMinutes = Math.max(0L, Math.min(actualStart, shiftEnd) - shiftStart);
+        long undertimeMinutes = Math.max(0L, shiftEnd - Math.max(actualEnd, shiftStart));
         long overtimeMinutes = Math.max(0L, actualEnd - Math.max(shiftEnd, actualStart));
 
         return new AttendanceMetrics(
@@ -1009,17 +969,32 @@ public class attendanceController {
                 safeIntMinutes(undertimeMinutes));
     }
 
-    private long paidMinutesBetween(long start, long end, boolean hasBreak, long breakStart, long breakEnd) {
-        long minutes = Math.max(0L, end - start);
-        if (!hasBreak || minutes == 0L) {
-            return minutes;
-        }
-        long breakOverlap = overlapMinutes(start, end, breakStart, breakEnd);
-        return Math.max(0L, minutes - breakOverlap);
-    }
-
     private int safeIntMinutes(long minutes) {
         return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, minutes));
+    }
+
+    private Optional<EmployeeScheduleAssignment> resolveShiftAssignment(Integer employeeId, LocalDate date) {
+        if (employeeId == null || date == null) {
+            return Optional.empty();
+        }
+        Optional<EmployeeScheduleAssignment> exact =
+                employeeScheduleAssignmentRepository.findByEmployeeIdAndScheduleYearAndScheduleMonth(
+                        employeeId, date.getYear(), date.getMonthValue());
+        if (exact.isPresent()) {
+            return exact;
+        }
+        return employeeScheduleAssignmentRepository.findLatestAssignmentOnOrBefore(
+                employeeId, date.getYear(), date.getMonthValue());
+    }
+
+    private BigDecimal resolveOvertimeHours(BigDecimal storedOvertime, BigDecimal computedOvertime) {
+        BigDecimal stored = storedOvertime != null
+                ? storedOvertime.setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal computed = computedOvertime != null
+                ? computedOvertime.setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+        return stored.max(computed);
     }
 
     private void populateComputedWorkHours(List<Attendance> attendances) {
@@ -1027,6 +1002,14 @@ public class attendanceController {
             if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
                 continue;
             }
+            BigDecimal workHours = attendance.getWork_hours();
+            Integer lateMinutes = attendance.getLate_minutes();
+            Integer undertimeMinutes = attendance.getUndertime_minutes();
+            BigDecimal overtimeHours = attendance.getOvertime_hours();
+            if (workHours == null || workHours.compareTo(BigDecimal.ZERO) <= 0) {
+                workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+            }
+
             AttendanceMetrics metrics = new AttendanceMetrics(
                     minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out())),
                     BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP),
@@ -1034,29 +1017,34 @@ public class attendanceController {
                     0);
             if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
                 ShiftMatchResult shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
-                if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
+                if (shiftMatch.restDay) {
+                    workHours = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                    lateMinutes = 0;
+                    undertimeMinutes = 0;
+                    overtimeHours = attendance.getOvertime_hours() != null
+                            ? attendance.getOvertime_hours()
+                            : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                } else if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
                     metrics = computeAttendanceMetrics(
                             attendance.getTime_in(),
                             attendance.getTime_out(),
                             shiftMatch.shiftIn,
-                            shiftMatch.shiftOut,
-                            DEFAULT_BREAK_OUT,
-                            DEFAULT_BREAK_IN);
+                            shiftMatch.shiftOut);
+                    workHours = metrics.workHours;
+                    lateMinutes = metrics.lateMinutes;
+                    undertimeMinutes = metrics.undertimeMinutes;
+                    overtimeHours = resolveOvertimeHours(attendance.getOvertime_hours(), metrics.overtimeHours);
                 }
             }
 
-            if (attendance.getWork_hours() == null || attendance.getWork_hours().compareTo(BigDecimal.ZERO) <= 0) {
-                attendance.setWork_hours(metrics.workHours);
-            }
-            if (attendance.getLate_minutes() == null || attendance.getLate_minutes() <= 0) {
-                attendance.setLate_minutes(metrics.lateMinutes);
-            }
-            if (attendance.getUndertime_minutes() == null || attendance.getUndertime_minutes() <= 0) {
-                attendance.setUndertime_minutes(metrics.undertimeMinutes);
-            }
-            if (attendance.getOvertime_hours() == null || attendance.getOvertime_hours().compareTo(BigDecimal.ZERO) <= 0) {
-                attendance.setOvertime_hours(metrics.overtimeHours);
-            }
+            attendance.setWork_hours(workHours != null
+                    ? workHours.setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            attendance.setLate_minutes(lateMinutes != null ? Math.max(0, lateMinutes) : 0);
+            attendance.setUndertime_minutes(undertimeMinutes != null ? Math.max(0, undertimeMinutes) : 0);
+            attendance.setOvertime_hours(overtimeHours != null
+                    ? overtimeHours.setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
         }
     }
 
@@ -1084,12 +1072,6 @@ public class attendanceController {
         return best;
     }
 
-    private long overlapMinutes(long startA, long endA, long startB, long endB) {
-        long start = Math.max(startA, startB);
-        long end = Math.min(endA, endB);
-        return Math.max(0L, end - start);
-    }
-
     private BigDecimal minutesToHours(long minutes) {
         return BigDecimal.valueOf(minutes)
                 .divide(BigDecimal.valueOf(60), 2, RoundingMode.HALF_UP);
@@ -1097,13 +1079,15 @@ public class attendanceController {
 
     private static final class ShiftMatchResult {
         private final boolean allowed;
+        private final boolean restDay;
         private final String reason;
         private final String shiftLabel;
         private final LocalTime shiftIn;
         private final LocalTime shiftOut;
 
-        private ShiftMatchResult(boolean allowed, String reason, String shiftLabel, LocalTime shiftIn, LocalTime shiftOut) {
+        private ShiftMatchResult(boolean allowed, boolean restDay, String reason, String shiftLabel, LocalTime shiftIn, LocalTime shiftOut) {
             this.allowed = allowed;
+            this.restDay = restDay;
             this.reason = reason;
             this.shiftLabel = shiftLabel;
             this.shiftIn = shiftIn;
@@ -1111,11 +1095,15 @@ public class attendanceController {
         }
 
         private static ShiftMatchResult allowed(String shiftLabel, LocalTime shiftIn, LocalTime shiftOut) {
-            return new ShiftMatchResult(true, "", shiftLabel, shiftIn, shiftOut);
+            return new ShiftMatchResult(true, false, "", shiftLabel, shiftIn, shiftOut);
         }
 
         private static ShiftMatchResult denied(String reason) {
-            return new ShiftMatchResult(false, reason, "N/A", null, null);
+            return new ShiftMatchResult(false, false, reason, "N/A", null, null);
+        }
+
+        private static ShiftMatchResult restDay(String reason) {
+            return new ShiftMatchResult(false, true, reason, "N/A", null, null);
         }
     }
 
@@ -1388,7 +1376,17 @@ public class attendanceController {
                             && a.getAttendance_date().getYear() == selectedYear)
                     .collect(Collectors.toList());
             populateComputedWorkHours(filtered);
+            Map<LocalDate, String> shiftLabelByDate = new LinkedHashMap<>();
+            for (Attendance attendance : filtered) {
+                LocalDate attendanceDate = attendance.getAttendance_date();
+                if (attendanceDate == null) {
+                    continue;
+                }
+                ShiftMatchResult shiftMatch = validateAgainstShift(targetEmpId, attendanceDate);
+                shiftLabelByDate.put(attendanceDate, shiftMatch.allowed ? shiftMatch.shiftLabel : shiftMatch.reason);
+            }
             model.addAttribute("attendances", filtered);
+            model.addAttribute("shiftLabelByDate", shiftLabelByDate);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
             model.addAttribute("emp_id", targetEmpId); // currently viewed employee
             model.addAttribute("emp_payType", targetEmp.getPayType());
@@ -1397,6 +1395,7 @@ public class attendanceController {
                     .filter(h -> h != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursRendered", total);
+            model.addAttribute("totalHoursRenderedDisplay", HourFormatUtils.formatHours(total));
             int totalUndertimeMinutes = filtered.stream()
                     .map(Attendance::getUndertime_minutes)
                     .filter(m -> m != null)
@@ -1410,8 +1409,14 @@ public class attendanceController {
         if (!model.containsAttribute("attendances")) {
             model.addAttribute("attendances", List.<Attendance>of());
         }
+        if (!model.containsAttribute("shiftLabelByDate")) {
+            model.addAttribute("shiftLabelByDate", Map.<LocalDate, String>of());
+        }
         if (!model.containsAttribute("totalHoursRendered")) {
             model.addAttribute("totalHoursRendered", BigDecimal.ZERO);
+        }
+        if (!model.containsAttribute("totalHoursRenderedDisplay")) {
+            model.addAttribute("totalHoursRenderedDisplay", "0:00");
         }
         if (!model.containsAttribute("totalUndertimeMinutes")) {
             model.addAttribute("totalUndertimeMinutes", 0);
