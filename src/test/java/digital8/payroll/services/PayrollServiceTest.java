@@ -1,19 +1,16 @@
 package digital8.payroll.services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -50,9 +47,6 @@ public class PayrollServiceTest {
     
     @InjectMocks
     private PayrollService payrollService;
-
-    private static final int SCALE = 2;
-    private static final RoundingMode ROUND = RoundingMode.HALF_UP;
 
     private void assertBigDecimalEquals(String expected, BigDecimal actual) {
         assertEquals(0, new BigDecimal(expected).compareTo(actual), 
@@ -135,18 +129,18 @@ public class PayrollServiceTest {
 
         // Statutory
         assertBigDecimalEquals("1000.00", item.getSss());
-        // Philhealth: 20000 * 5% / 2 = 500
-        assertBigDecimalEquals("500.00", item.getPhilhealth());
-        // Pag-ibig: 20000 * 2% = 400
-        assertBigDecimalEquals("400.00", item.getPagibig());
+        // Philhealth: 21000 * 5% / 2 = 525
+        assertBigDecimalEquals("525.00", item.getPhilhealth());
+        // Pag-ibig: 21000 * 2% = 420
+        assertBigDecimalEquals("420.00", item.getPagibig());
         // Tax: 21000 * 10% - 2395.90 = -295.90 -> 0.00
         assertBigDecimalEquals("0.00", item.getTax());
 
-        // Semi Monthly = (1000 + 500 + 400 + 0) / 2 = 950.00
-        assertBigDecimalEquals("950.00", item.getSemiMonthlyContributions());
+        // Semi Monthly = (1000 + 525 + 420 + 0) / 2 = 972.50
+        assertBigDecimalEquals("972.50", item.getSemiMonthlyContributions());
 
-        // Net Pay = 9833.98 - 950.00 = 8883.98
-        assertBigDecimalEquals("8883.98", item.getNetPay());
+        // Net Pay = 9833.98 - 972.50 = 8861.48
+        assertBigDecimalEquals("8861.48", item.getNetPay());
     }
 
     @Test
@@ -241,5 +235,41 @@ public class PayrollServiceTest {
         // Tax is 5% EWT on total earnings
         // 53125.00 * 5% = 2656.25
         assertBigDecimalEquals("2656.25", item.getTax());
+    }
+
+    @Test
+    void testAllowanceIsFixedPerCutoffAndStatutoryUsesBasicSalaryOnly() {
+        Employees emp = new Employees();
+        emp.setEmploymentType("Regular");
+        emp.setBasicSalary(new BigDecimal("21000"));
+        emp.setAllowance(new BigDecimal("3000"));
+        when(employeeRepository.findById(4)).thenReturn(Optional.of(emp));
+
+        Attendance att = new Attendance();
+        att.setAttendance_date(LocalDate.of(2024, Month.JANUARY, 10));
+        att.setWork_hours(new BigDecimal("80"));
+        att.setOvertime_hours(new BigDecimal("4"));
+        att.setLate_minutes(33);
+        att.setUndertime_minutes(0);
+        when(attendanceRepository.findByEmployeeIdOrderByDateDesc(4)).thenReturn(List.of(att));
+
+        SssTable sssRow = new SssTable();
+        sssRow.setRangeFrom(new BigDecimal("20750"));
+        sssRow.setRangeTo(new BigDecimal("21249"));
+        sssRow.setEmployeeShare(new BigDecimal("1000.00"));
+        when(sssTableRepository.findByEffectiveYearOrderByRangeFromAsc(anyInt())).thenReturn(List.of(sssRow));
+
+        when(employeeDeductionsRepository.findByEmployeeId(4)).thenReturn(new ArrayList<>());
+
+        List<PayrollItems> result = payrollService.computePayroll(4, "semi_1", "JANUARY", 2024);
+
+        assertEquals(1, result.size());
+        PayrollItems item = result.get(0);
+
+        assertBigDecimalEquals("1500.00", item.getAllowances());
+        assertBigDecimalEquals("12656.25", item.getTotalEarnings());
+        assertBigDecimalEquals("525.00", item.getPhilhealth());
+        assertBigDecimalEquals("420.00", item.getPagibig());
+        assertBigDecimalEquals("972.50", item.getSemiMonthlyContributions());
     }
 }

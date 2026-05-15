@@ -66,10 +66,6 @@ public class PayrollService {
     private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
     private static final BigDecimal PHILHEALTH_RATE = new BigDecimal("0.025");
 
-    // Salary splitting for below-30k employees
-    private static final BigDecimal SALARY_THRESHOLD = new BigDecimal("30000");
-    private static final BigDecimal PREMIUM_BASE_CAP = new BigDecimal("20000");
-
     // Simplified withholding tax formula constants
     private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
     private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
@@ -151,19 +147,17 @@ public class PayrollService {
 
         Employees emp = empOpt.get();
         BigDecimal monthlyRate = emp.getBasicSalary() != null ? emp.getBasicSalary() : BigDecimal.ZERO;
+        BigDecimal monthlyAllowance = emp.getAllowance() != null ? emp.getAllowance() : BigDecimal.ZERO;
 
         // --- 1. Rate Derivation ---
-        // Daily Rate = Monthly Rate / Factor
+        // Daily/Hourly rates for base salary stay anchored on basic salary.
         BigDecimal factor = emp.getFactorRate();
         if (factor == null || factor.compareTo(BigDecimal.ZERO) <= 0) {
             factor = DEFAULT_PAY_FACTOR;
         }
         BigDecimal dailyRate = monthlyRate.divide(factor, 6, ROUND);
-        // Hourly Rate = Daily Rate / 8
         BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
-        // Per Minute Rate = Hourly Rate / 60
         BigDecimal perMinuteRate = hourlyRate.divide(MINUTES_PER_HOUR, 6, ROUND);
-
         // --- 2. Determine pay period ---
         Month month = null;
         if (monthName != null && !monthName.isBlank()) {
@@ -289,8 +283,15 @@ public class PayrollService {
         BigDecimal adjustmentEarnings = adjSplit[0];
         BigDecimal adjustmentDeductions = adjSplit[1];
 
-        // Total Earnings = Basic Pay + Overtime + Adjustment Earnings
+        // Allowance stays fixed from employee setup.
+        // Monthly payroll gets the full amount; semi-monthly payroll gets half.
+        BigDecimal allowances = semiMonthly
+                ? monthlyAllowance.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND)
+                : monthlyAllowance.setScale(SCALE, ROUND);
+
+        // Total Earnings = Basic Pay + Allowance + Overtime + Adjustment Earnings
         BigDecimal totalEarnings = basicPay
+                .add(allowances)
                 .add(overtimePay)
                 .add(holidayPay)    
                 .add(adjustmentEarnings)
@@ -320,14 +321,8 @@ public class PayrollService {
         BigDecimal serviceFee = totalEarnings.subtract(totalNonStatutoryDeductions).setScale(SCALE, ROUND);
 
         // --- 6. Compute Statutory Deductions ---
-        // Determine premium base for contributions.
-        // HR rule:
-        // - salary below 30k: treat as 20k basic + allowance (non-taxable), so premiums
-        // are computed on basic only (<=20k)
-        // - salary 30k and above: premiums computed on full salary
-        BigDecimal premiumBase = monthlyRate.compareTo(SALARY_THRESHOLD) < 0
-                ? monthlyRate.min(PREMIUM_BASE_CAP)
-                : monthlyRate;
+        // Statutory stays based on basic salary only.
+        BigDecimal premiumBase = monthlyRate;
 
         BigDecimal sss;
         BigDecimal philhealth;
@@ -341,10 +336,7 @@ public class PayrollService {
         philhealth = computePhilhealth(premiumBase, year);
         pagibig = computePagibig(premiumBase, year);
 
-        // WHT: for semi-monthly, use SEMI_MONTHLY table on premiumBase/2.
-        // For monthly, use MONTHLY table on premiumBase.
-        // Using premiumBase (not monthlyRate) ensures sub-30k employees (capped at ₱20k)
-        // stay in the 0% bracket → WHT = 0, matching HR's sample computation.
+        // WHT uses the same basic-salary premium base.
         if (semiMonthly) {
             BigDecimal semiBase = premiumBase.divide(SEMI_MONTHLY_DIVISOR, SCALE, ROUND);
             tax = computeWithholdingTaxFromTable(semiBase, year, "SEMI_MONTHLY");
@@ -369,7 +361,6 @@ public class PayrollService {
         BigDecimal netPay = serviceFee.subtract(statutoryDeductedThisSlip).setScale(SCALE, ROUND);
 
         // --- 8. For backward compatibility, compute existing fields ---
-        BigDecimal allowances = BigDecimal.ZERO; // placeholder
         BigDecimal grossPay = totalEarnings; // totalEarnings is the new grossPay
         BigDecimal totalDeductions = totalNonStatutoryDeductions.add(statutoryDeductedThisSlip).setScale(SCALE, ROUND);
 

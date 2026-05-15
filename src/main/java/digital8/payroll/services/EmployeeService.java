@@ -115,6 +115,7 @@ public class EmployeeService {
         dto.setPayType(e.getPayType());
         dto.setDateHired(e.getDateHired());
         dto.setBasicSalary(e.getBasicSalary());
+        dto.setAllowance(e.getAllowance());
         if (e.getDepartment() != null) dto.setDepartmentName(e.getDepartment().getDepartmentName());
         if (e.getPosition() != null) dto.setPositionName(e.getPosition().getPositionName());
         dto.setOtMultiplier(e.getOtMultiplier());
@@ -169,6 +170,9 @@ public class EmployeeService {
 
         if (emp.getFactorRate() == null || emp.getFactorRate().compareTo(BigDecimal.ZERO) <= 0) {
             emp.setFactorRate(new java.math.BigDecimal("20"));
+        }
+        if (emp.getAllowance() == null || emp.getAllowance().compareTo(BigDecimal.ZERO) < 0) {
+            emp.setAllowance(BigDecimal.ZERO);
         }
         if (emp.getOtMultiplier() == null || emp.getOtMultiplier().compareTo(BigDecimal.ZERO) <= 0) {
             emp.setOtMultiplier(new java.math.BigDecimal("1.0"));
@@ -248,6 +252,9 @@ public class EmployeeService {
         if (updated.getEmploymentType() != null) existing.setEmploymentType(updated.getEmploymentType());
         if (updated.getPayType() != null) existing.setPayType(updated.getPayType());
         if (updated.getBasicSalary() != null) existing.setBasicSalary(updated.getBasicSalary());
+        if (updated.getAllowance() != null && updated.getAllowance().compareTo(BigDecimal.ZERO) >= 0) {
+            existing.setAllowance(updated.getAllowance());
+        }
         if (updated.getFactorRate() != null && updated.getFactorRate().compareTo(BigDecimal.ZERO) > 0) {
             existing.setFactorRate(updated.getFactorRate());
         }

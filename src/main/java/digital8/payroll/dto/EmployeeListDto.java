@@ -17,6 +17,7 @@ public class EmployeeListDto {
     private String payType;
     private LocalDate dateHired;
     private BigDecimal basicSalary;
+    private BigDecimal allowance;
     private String departmentName;
     private String positionName;
     private BigDecimal otMultiplier;
@@ -47,6 +48,8 @@ public class EmployeeListDto {
     public void setDateHired(LocalDate dateHired) { this.dateHired = dateHired; }
     public BigDecimal getBasicSalary() { return basicSalary; }
     public void setBasicSalary(BigDecimal basicSalary) { this.basicSalary = basicSalary; }
+    public BigDecimal getAllowance() { return allowance; }
+    public void setAllowance(BigDecimal allowance) { this.allowance = allowance; }
     public String getDepartmentName() { return departmentName; }
     public void setDepartmentName(String departmentName) { this.departmentName = departmentName; }
     public String getPositionName() { return positionName; }

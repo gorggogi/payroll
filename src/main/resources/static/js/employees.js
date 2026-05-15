@@ -194,6 +194,7 @@ function displayEmployees(employees) {
                     <p><strong>Position:</strong> ${emp.positionName || 'N/A'}</p>
                     <p><strong>Type:</strong> ${emp.employmentType}</p>
                     <p><strong>Salary:</strong> ₱${emp.basicSalary ? emp.basicSalary.toLocaleString() : 'N/A'}</p>
+                    <p><strong>Allowance:</strong> ₱${emp.allowance ? emp.allowance.toLocaleString() : '0'}</p>
                     <p><strong>Date Hired:</strong> ${emp.dateHired || 'N/A'}</p>
                     <div class="employee-card-actions">
                         <button class="card-btn-attendance" data-empid="${emp.employeeId}" onclick="event.stopPropagation()" title="View attendance"><i class="fa-solid fa-calendar-check"></i> View attendance</button>
@@ -316,6 +317,7 @@ function renderEmployeeDetail(emp) {
                         <option value="hourly" ${(emp.payType || '').toLowerCase() === 'hourly' ? 'selected' : ''}>Hourly</option>
                     </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
+                    <label>Allowance: <input type="number" name="allowance" value="${emp.allowance || 0}" min="0" step="0.01" /></label>
                     <label>Pay factor: <select name="factorRate">${factorOptions}</select></label>
                     <label>OT multiplier: <select name="otMultiplier">${otOptions}</select></label>
                     <label>Department: <select name="departmentId">
@@ -406,6 +408,7 @@ function saveEmployee(employeeId) {
         employmentType: formData.get('employmentType'),
         payType: formData.get('payType'),
         basicSalary: formData.get('basicSalary') ? Number(formData.get('basicSalary')) : null,
+        allowance: formData.get('allowance') ? Number(formData.get('allowance')) : 0,
         tin: formData.get('tin'),
         sssNumber: formData.get('sssNumber'),
         philhealthNumber: formData.get('philhealthNumber'),
@@ -459,6 +462,7 @@ function saveEmployee(employeeId) {
                     employmentType: saved.employmentType,
                     payType: saved.payType,
                     basicSalary: saved.basicSalary,
+                    allowance: saved.allowance,
                     dateHired: saved.dateHired,
                     otMultiplier: saved.otMultiplier,
                     departmentName: saved.department ? saved.department.departmentName : existing.departmentName,

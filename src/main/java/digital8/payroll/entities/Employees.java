@@ -33,6 +33,7 @@ import jakarta.persistence.Transient;
         "employmentStatus",
         "employmentType",
         "basicSalary",
+        "allowance",
         "dateHired",
         "birthDate",
         "address",
@@ -95,6 +96,9 @@ public class Employees {
 
     @Column(nullable = false, unique = false)
     private BigDecimal basicSalary;
+
+    @Column(nullable = false, unique = false)
+    private BigDecimal allowance = BigDecimal.ZERO;
 
     @Column(nullable = false, unique = true)
     private String bank_Account;
@@ -289,6 +293,14 @@ public class Employees {
 
     public void setBasicSalary(BigDecimal basicSalary) {
         this.basicSalary = basicSalary;
+    }
+
+    public BigDecimal getAllowance() {
+        return allowance;
+    }
+
+    public void setAllowance(BigDecimal allowance) {
+        this.allowance = allowance;
     }
 
     public String getTin() {
