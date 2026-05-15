@@ -62,9 +62,7 @@ public class DeductionViewController {
             if (authentication != null && authentication.getPrincipal() instanceof Users) {
                 adminEmp = ((Users) authentication.getPrincipal()).getEmployee();
             }
-            assignments = adminEmp != null
-                ? employeeDeductionsRepository.findByEmployeeId(adminEmp.getEmployeeId())
-                : employeeDeductionsRepository.findAll();
+            assignments = employeeDeductionsRepository.findAll();
             employees = employeeRepository.findAllWithFetch(null, Sort.by(Sort.Direction.ASC, "lastName"));
             if (adminEmp != null) model.addAttribute("emp_id", adminEmp.getEmployeeId());
             Map<String, BigDecimal> balances = computeDeductionBalances(
@@ -348,11 +346,19 @@ public class DeductionViewController {
             BigDecimal amount = ed.getAmount() != null ? ed.getAmount() : BigDecimal.ZERO;
             outstandingObligation = outstandingObligation.add(amount);
             // One-time: included in next payroll if startDate falls within that period window
-            if (ed.getStartDate() != null
-                    && !ed.getStartDate().isBefore(nextPeriodStart)
-                    && !ed.getStartDate().isAfter(nextPeriodEnd)) {
-                monthlyCutoff = monthlyCutoff.add(amount);
-            }
+            // One-time: included in next payroll if startDate falls within that period window
+// AND the deduction's cutoff matches the next period's cutoff
+if (ed.getStartDate() != null
+&& !ed.getStartDate().isBefore(nextPeriodStart)
+&& !ed.getStartDate().isAfter(nextPeriodEnd)) {
+String cutoff = ed.getDeductionCutoff();
+boolean cutoffMatches = "BOTH".equals(cutoff)
+|| ("SEMI_1".equals(cutoff) && nextPeriodStart.equals(currentMonth.atDay(1)))
+|| ("SEMI_2".equals(cutoff) && nextPeriodStart.equals(currentMonth.atDay(16)));
+if (cutoffMatches) {
+monthlyCutoff = monthlyCutoff.add(amount);
+}
+}
         }
     
         outstandingBalance = outstandingObligation;

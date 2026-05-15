@@ -778,8 +778,9 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
             BigDecimal amount = ed.getAmount();
                 if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
@@ -816,7 +817,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             // Resolve type from catalog
             String adjType = "Earnings";
@@ -859,7 +861,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             // Resolve name from type catalog (mirrors getDeductionsBreakdown)
@@ -906,8 +909,9 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
             String name = "Other";
             if (ed.getDeductionId() != null) {
