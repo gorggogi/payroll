@@ -225,7 +225,7 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
+            @RequestParam(required = false, defaultValue = "BOTH") String deductionCutoff,
             RedirectAttributes ra) {
         EmployeeDeductions ed = new EmployeeDeductions();
         ed.setEmployeeId(employeeId);
@@ -258,7 +258,7 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
+            @RequestParam(required = false, defaultValue = "BOTH") String deductionCutoff,
             RedirectAttributes ra) {
         employeeDeductionsRepository.findById(id).ifPresent(ed -> {
             ed.setEmployeeId(employeeId);
