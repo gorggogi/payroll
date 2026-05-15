@@ -1,4 +1,25 @@
-function selectTemplate(templateId) {
+var SHIFT_DETAILS_HASH = '#shift-details';
+
+/** Tailwind utility class names (match shifting.html) for selected employee row */
+var SHIFT_EMP_ACTIVE_CLASSES = [
+    'border-[var(--primary-color)]',
+    'bg-[#f3f2ff]',
+    'shadow-[0_0_0_2px_rgba(112,111,214,0.12)]'
+];
+
+function clearShiftEmployeeActiveClasses(el) {
+    SHIFT_EMP_ACTIVE_CLASSES.forEach(function (c) {
+        el.classList.remove(c);
+    });
+}
+
+function addShiftEmployeeActiveClasses(el) {
+    SHIFT_EMP_ACTIVE_CLASSES.forEach(function (c) {
+        el.classList.add(c);
+    });
+}
+
+function selectTemplate(templateId, openDetailsAfterLoad) {
     if (!templateId) return;
     var monthInput = document.getElementById('scheduleMonthPicker');
     var yearInput = document.getElementById('scheduleYearPicker');
@@ -7,7 +28,20 @@ function selectTemplate(templateId) {
     var qs = '?scheduleMonth=' + encodeURIComponent(monthVal) +
              '&scheduleYear=' + encodeURIComponent(yearVal) +
              '&templateId=' + encodeURIComponent(templateId);
-    window.location.href = '/admin/attendance/shifts' + qs;
+    var url = '/admin/attendance/shifts' + qs;
+    if (openDetailsAfterLoad) {
+        url += SHIFT_DETAILS_HASH;
+    }
+    window.location.href = url;
+}
+
+function onShiftCardClick(templateId, isAlreadySelected) {
+    if (!templateId) return;
+    if (isAlreadySelected) {
+        openShiftDetailsModal();
+        return;
+    }
+    selectTemplate(templateId, true);
 }
 
 function openEditScheduleModal() {
@@ -114,9 +148,20 @@ function onWeeklyRestChange(cb) {
     }
 }
 
+function openShiftDetailsFromHashIfPresent() {
+    if (window.location.hash !== SHIFT_DETAILS_HASH) return;
+    var m = document.getElementById('shiftDetailsModal');
+    if (!m) return;
+    openShiftDetailsModal();
+    if (history.replaceState) {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('input[data-weekly-rest][data-dow]').forEach(applyWeeklyRestDisabled);
     initRemainingScheduleData();
+    openShiftDetailsFromHashIfPresent();
 });
 
 var remainingScheduleMeta = {
@@ -139,9 +184,9 @@ function initRemainingScheduleData() {
 function showEmployeeRemaining(el) {
     if (!el) return;
     document.querySelectorAll('.shift-employee-item').forEach(function (item) {
-        item.classList.remove('active');
+        clearShiftEmployeeActiveClasses(item);
     });
-    el.classList.add('active');
+    addShiftEmployeeActiveClasses(el);
     var empName = el.getAttribute('data-employee-name') || 'Employee';
     var panel = document.getElementById('shiftRemainingPanel');
     if (!panel) return;
@@ -149,7 +194,7 @@ function showEmployeeRemaining(el) {
     var year = remainingScheduleMeta.scheduleYear;
     var month = remainingScheduleMeta.scheduleMonth;
     if (!year || !month) {
-        panel.innerHTML = '<p class="no-payroll shifting-remaining-hint">No schedule data.</p>';
+        panel.innerHTML = '<p class="no-payroll m-0">No schedule data.</p>';
         return;
     }
 
@@ -180,9 +225,9 @@ function showEmployeeRemaining(el) {
     }
 
     panel.innerHTML =
-        '<p class="no-payroll shifting-remaining-hint"><b>' + escapeHtml(empName) + '</b></p>' +
-        '<p class="no-payroll shifting-remaining-line">Remaining calendar days in this shift: <b>' + totalRemaining + '</b></p>' +
-        '<p class="no-payroll shifting-remaining-line-tight">Remaining scheduled work days: <b>' + workRemaining + '</b></p>';
+        '<p class="no-payroll m-0"><b>' + escapeHtml(empName) + '</b></p>' +
+        '<p class="no-payroll mt-1.5 mb-0">Remaining calendar days in this shift: <b>' + totalRemaining + '</b></p>' +
+        '<p class="no-payroll mt-0.5 mb-0">Remaining scheduled work days: <b>' + workRemaining + '</b></p>';
 }
 
 function escapeHtml(str) {

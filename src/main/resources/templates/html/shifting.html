@@ -9,110 +9,109 @@
     <link rel="stylesheet" href="/css/settings.css" />
     <link rel="stylesheet" href="/css/nav.css" />
     <link rel="stylesheet" href="/css/attendance.css" />
-    <link rel="stylesheet" th:href="@{/css/shifting.css}" />
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        /* Disable Tailwind's `.container` utility — we use the same class name for the nav+content flex shell (nav.css).
+           Otherwise Tailwind adds max-width + auto margins and the main column stays narrow with empty space beside it. */
+        tailwind.config = { corePlugins: { preflight: false, container: false } };
+    </script>
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <div class="container">
         <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
-    <section class="shifting-section">
-        <div class="head">
+    <section class="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--tertiary-color,#f7f6ff)] box-border w-full max-w-full p-12 rounded-xl max-[640px]:p-[0.45rem] max-[640px]:rounded-lg">
+        <div class="head mb-5">
             <h1>Shifting</h1>
         </div>
 
-        <div th:if="${successMessage}" class="alert-success">
+        <div th:if="${successMessage}" class="alert-success block">
             <p th:text="${successMessage}"></p>
         </div>
-        <div th:if="${errorMessage}" class="alert-error">
+        <div th:if="${errorMessage}" class="alert-error block">
             <p th:text="${errorMessage}"></p>
         </div>
 
-        <h2 class="no-print shifting-page-title">Schedule classes (weekly pattern)</h2>
+        <div class="schedule-toolbar mb-4 flex flex-wrap justify-between items-center gap-2.5">
+            <h2 class="shifting-page-title">Schedule classes (weekly pattern)</h2>
+            <button type="button" class="btn-print" onclick="openNewTemplateModal()">
+                <i class="fa-solid fa-plus"></i> New Schedule Class
+            </button>
+        </div>
         <p class="no-payroll no-print">Create a <b>schedule class</b> for the month, set Sun–Sat, then tick employees who use it. One schedule per employee per month.</p>
 
-        <form method="get" th:action="@{/admin/attendance/shifts}" class="attendance-filter no-print shifting-schedule-filter">
-            <div>
-                <label for="scheduleMonthPicker">Month</label>
-                <select name="scheduleMonth" id="scheduleMonthPicker" onchange="this.form.submit()">
+        <form method="get" th:action="@{/admin/attendance/shifts}"
+              class="no-print mb-4 mt-8 flex w-full min-w-0 max-w-full flex-row flex-nowrap items-stretch gap-4 box-border">
+            <div class="grid min-w-0 flex-1 basis-0 grid-cols-[auto_1fr] items-center gap-2">
+                <label for="scheduleMonthPicker" class="block shrink-0 font-semibold">Month</label>
+                <select name="scheduleMonth" id="scheduleMonthPicker" onchange="this.form.submit()"
+                        class="box-border max-w-full min-w-0 w-full rounded px-2 py-1.5">
                     <option th:each="mo : ${#numbers.sequence(1, 12)}"
                             th:value="${mo}"
                             th:selected="${scheduleMonth == mo}"
                             th:text="${#temporals.format(T(java.time.LocalDate).of(2000, mo, 1), 'MMMM')}">January</option>
                 </select>
             </div>
-            <div>
-                <label for="scheduleYearPicker">Year</label>
-                <select name="scheduleYear" id="scheduleYearPicker" onchange="this.form.submit()">
+            <div class="grid min-w-0 flex-1 basis-0 grid-cols-[auto_1fr] items-center gap-2">
+                <label for="scheduleYearPicker" class="block shrink-0 font-semibold">Year</label>
+                <select name="scheduleYear" id="scheduleYearPicker" onchange="this.form.submit()"
+                        class="box-border max-w-full min-w-0 w-full rounded px-2 py-1.5">
                     <option th:each="y : ${scheduleYears}"
                             th:value="${y}"
                             th:selected="${scheduleYear == y}"
                             th:text="${y}">2026</option>
                 </select>
             </div>
-            <div th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}">
-                <label for="templatePicker">Schedule class</label>
-                <select name="templateId" id="templatePicker" onchange="this.form.submit()">
-                    <option th:each="t : ${scheduleTemplates}"
-                            th:value="${t.templateId}"
-                            th:selected="${selectedTemplateId != null and selectedTemplateId == t.templateId}"
-                            th:text="${t.templateName}">Class A</option>
-                </select>
-            </div>
         </form>
 
-        <div class="shifting-open-details-wrap no-print">
-            <button type="button" class="btn-print" onclick="openNewTemplateModal()">
-                <i class="fa-solid fa-plus"></i> New Schedule Class
-            </button>
-            <button type="button" class="btn-print" th:if="${selectedTemplateId != null}" onclick="openShiftDetailsModal()">
-                <i class="fa-solid fa-circle-info"></i> Shift details
-            </button>
-        </div>
-
-        <div class="shift-card-grid no-print" th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}">
-            <div class="shift-card"
+        <div class="mb-4 grid w-full max-w-full grid-cols-[repeat(auto-fill,minmax(260px,1fr))] justify-start gap-3 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1 no-print"
+             th:if="${scheduleTemplates != null and #lists.size(scheduleTemplates) > 0}">
+            <div class="flex cursor-pointer flex-col items-stretch justify-start rounded-[0.9rem] border border-[#e8e9f1] bg-gradient-to-b from-white to-[#fbfbff] p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-[var(--primary-color)] hover:shadow-[0_4px_14px_rgba(0,0,0,0.06)] max-[640px]:p-[0.85rem]"
                  th:each="t : ${scheduleTemplates}"
-                 th:classappend="${selectedTemplateId != null and selectedTemplateId == t.templateId} ? ' selected' : ''"
+                 th:classappend="${selectedTemplateId != null and selectedTemplateId == t.templateId} ? ' border-[var(--primary-color)] shadow-[0_0_0_2px_rgba(112,111,214,0.15),0_4px_14px_rgba(0,0,0,0.06)]' : ''"
                  th:attr="data-template-id=${t.templateId}"
-                 th:onclick="|selectTemplate('${t.templateId}')|">
-                <h3 th:text="${t.templateName}">Shift Class</h3>
-                <p>
-                    <b>Employees:</b>
+                 th:onclick="|onShiftCardClick('${t.templateId}', ${selectedTemplateId != null and selectedTemplateId == t.templateId})|">
+                <h3 class="m-0 mb-1.5 text-base text-gray-800" th:text="${t.templateName}">Shift Class</h3>
+                <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm text-gray-500">
+                    <b class="shrink-0 font-semibold text-gray-800">Employees:</b>
                     <span th:text="${assignmentCountByTemplateId != null ? assignmentCountByTemplateId.get(t.templateId) : 0}">0</span>
                 </p>
-                <p>
-                    <b>Month:</b>
+                <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm text-gray-500">
+                    <b class="shrink-0 font-semibold text-gray-800">Month:</b>
                     <span th:text="${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')}">January</span>
                     <span th:text="${scheduleYear}">2026</span>
                 </p>
-                <p>
-                    <b>Start:</b>
+                <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm text-gray-500">
+                    <b class="shrink-0 font-semibold text-gray-800">Start:</b>
                     <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}">2026-01-01</span>
                 </p>
-                <p>
-                    <b>End:</b>
+                <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm text-gray-500">
+                    <b class="shrink-0 font-semibold text-gray-800">End:</b>
                     <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}">2026-01-31</span>
                 </p>
             </div>
         </div>
 
-        <div id="newTemplateModal" class="shift-modal no-print" aria-hidden="true">
-            <div class="shift-modal-content">
-                <span class="shift-modal-close" onclick="closeNewTemplateModal()" aria-label="Close">&times;</span>
-                <h2 class="shifting-modal-title">New schedule class</h2>
-                <form th:action="@{/admin/attendance/schedule-template/create}" method="post" class="shift-form">
+        <div id="newTemplateModal" class="no-print fixed inset-0 z-[1000] hidden overflow-auto bg-black/50" aria-hidden="true">
+            <div class="relative mx-auto my-[5vh] block w-[min(520px,92%)] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-5 max-[640px]:my-[3vh] max-[640px]:p-4">
+                <span class="absolute right-4 top-4 z-10 cursor-pointer text-2xl leading-none text-[var(--secondary-color)] hover:text-[var(--primary-color)]" onclick="closeNewTemplateModal()" aria-label="Close">&times;</span>
+                <h2 class="m-0 mb-4">New schedule class</h2>
+                <form th:action="@{/admin/attendance/schedule-template/create}" method="post">
                     <input type="hidden" name="scheduleYear" th:value="${scheduleYear}" />
                     <input type="hidden" name="scheduleMonth" th:value="${scheduleMonth}" />
-                    <label for="newTemplateName">Name</label>
-                    <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director — March" />
-                    <label for="newTemplateStartDate">Start date</label>
+                    <label for="newTemplateName" class="block text-sm font-semibold text-gray-800">Name</label>
+                    <input type="text" id="newTemplateName" name="templateName" required placeholder="e.g. Technical Director — March"
+                           class="mt-1 w-full" />
+                    <label for="newTemplateStartDate" class="mt-3 block text-sm font-semibold text-gray-800">Start date</label>
                     <input type="date" id="newTemplateStartDate" name="startDate"
-                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}" />
-                    <label for="newTemplateEndDate">End date</label>
+                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}"
+                           class="mt-1 w-full rounded px-2 py-1.5" />
+                    <label for="newTemplateEndDate" class="mt-3 block text-sm font-semibold text-gray-800">End date</label>
                     <input type="date" id="newTemplateEndDate" name="endDate"
-                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}" />
-                    <button type="submit" class="btn-print no-print">
+                           th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}"
+                           class="mt-1 w-full rounded px-2 py-1.5" />
+                    <button type="submit" class="btn-print no-print mt-4">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
                 </form>
@@ -124,24 +123,24 @@
         </p>
 
         <!-- Shift details (modal) -->
-        <div id="shiftDetailsModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
-            <div class="shift-modal-content shift-modal-content--wide">
-                <span class="shift-modal-close" onclick="closeShiftDetailsModal()" aria-label="Close">&times;</span>
-                <div class="shift-details shift-details--in-modal">
-                    <h3 class="shifting-details-title">Shift details</h3>
-                    <p class="no-payroll shifting-details-lead">
+        <div id="shiftDetailsModal" class="no-print fixed inset-0 z-[1000] hidden overflow-auto bg-black/50" aria-hidden="true" th:if="${selectedTemplateId != null}">
+            <div class="relative mx-auto my-[5vh] block w-[min(920px,96%)] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-5 max-[640px]:my-[3vh] max-[640px]:p-4">
+                <span class="absolute right-4 top-4 z-10 cursor-pointer text-2xl leading-none text-[var(--secondary-color)] hover:text-[var(--primary-color)]" onclick="closeShiftDetailsModal()" aria-label="Close">&times;</span>
+                <div class="m-0 flex flex-col items-stretch border-0 bg-transparent p-0 shadow-none">
+                    <h3 class="m-0 mb-1.5">Shift details</h3>
+                    <p class="no-payroll m-0">
                         <b th:text="${selectedTemplateName}">Class A</b>
                         for
                         <span th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear}|"></span>
                     </p>
-                    <p class="no-payroll shifting-details-meta">
+                    <p class="no-payroll mt-1.5 mb-0">
                         <b>Date range:</b>
                         <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}">2026-01-01</span>
                         to
                         <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}">2026-01-31</span>
                     </p>
 
-                    <div class="shifting-details-actions">
+                    <div class="mt-3 flex flex-wrap gap-2">
                         <button type="button" class="btn-print" onclick="openAssignEmployeesModal()">
                             <i class="fa-solid fa-user-plus"></i> Assign employee
                         </button>
@@ -150,36 +149,36 @@
                         </button>
                     </div>
 
-                    <div class="shift-employee-list"
+                    <div class="mt-3 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
                          th:if="${employees != null and assignedEmployeeIds != null and #lists.size(assignedEmployeeIds) > 0}">
-                        <div class="shift-employee-item"
+                        <div class="shift-employee-item flex cursor-pointer flex-col items-stretch justify-start rounded-[0.65rem] border border-[#e8e9f1] bg-[#fcfcff] p-2.5 transition-all duration-150 hover:border-[var(--primary-color)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
                              th:each="e : ${employees}"
                              th:if="${#lists.contains(assignedEmployeeIds, e.employeeId)}"
                              th:attr="data-employee-id=${e.employeeId},data-employee-name=${e.lastName + ', ' + e.firstName}"
                              onclick="showEmployeeRemaining(this)">
                             <b th:text="${e.lastName + ', ' + e.firstName}">Employee</b>
-                            <p class="shifting-emp-number"
+                            <p class="m-0 mt-0.5 text-sm text-[#555]"
                                th:text="${e.employeeNumber}">EMP-001</p>
                         </div>
                     </div>
-                    <p th:if="${assignedEmployeeIds == null or #lists.size(assignedEmployeeIds) == 0}" class="no-payroll shifting-empty-assignees">
+                    <p th:if="${assignedEmployeeIds == null or #lists.size(assignedEmployeeIds) == 0}" class="no-payroll mt-2.5 mb-0">
                         No employees assigned yet.
                     </p>
 
-                    <div class="shift-remaining" id="shiftRemainingPanel">
-                        <p class="no-payroll shifting-remaining-hint">Click an employee to view remaining schedule days in this shift.</p>
+                    <div class="mt-3.5 border-t border-dashed border-[#d6d9e8] pt-3.5" id="shiftRemainingPanel">
+                        <p class="no-payroll m-0">Click an employee to view remaining schedule days in this shift.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Edit weekly pattern (modal) -->
-        <div id="editScheduleModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
-            <div class="shift-modal-content shift-modal-content--wide">
-                <span class="shift-modal-close" onclick="closeEditScheduleModal()" aria-label="Close">&times;</span>
-                <h2 class="shifting-modal-title--tight">Edit schedule class</h2>
-                <p class="no-payroll shifting-edit-schedule-caption" th:text="${selectedTemplateName}">Name</p>
-                <p class="no-payroll shifting-edit-schedule-caption"
+        <div id="editScheduleModal" class="no-print fixed inset-0 z-[1000] hidden overflow-auto bg-black/50" aria-hidden="true" th:if="${selectedTemplateId != null}">
+            <div class="relative mx-auto my-[5vh] block w-[min(920px,96%)] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-5 max-[640px]:my-[3vh] max-[640px]:p-4">
+                <span class="absolute right-4 top-4 z-10 cursor-pointer text-2xl leading-none text-[var(--secondary-color)] hover:text-[var(--primary-color)]" onclick="closeEditScheduleModal()" aria-label="Close">&times;</span>
+                <h2 class="m-0 mb-2">Edit schedule class</h2>
+                <p class="no-payroll mb-4" th:text="${selectedTemplateName}">Name</p>
+                <p class="no-payroll mb-4"
                    th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear} · Sun–Sat|"></p>
 
                 <form th:action="@{/admin/attendance/schedule-template/save-days}" method="post" id="editScheduleForm">
@@ -227,7 +226,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <div class="shifting-form-actions">
+                    <div class="mt-4 flex flex-wrap gap-2">
                         <button type="submit" class="btn-print">
                             <i class="fa-solid fa-floppy-disk"></i> Save
                         </button>
@@ -238,11 +237,11 @@
         </div>
 
         <!-- Assign employees (modal) -->
-        <div id="assignEmployeesModal" class="shift-modal no-print" aria-hidden="true" th:if="${selectedTemplateId != null}">
-            <div class="shift-modal-content shift-modal-content--wide">
-                <span class="shift-modal-close" onclick="closeAssignEmployeesModal()" aria-label="Close">&times;</span>
-                <h2 class="shifting-modal-title--tight">Assign employees</h2>
-                <p class="no-payroll shifting-assign-intro">
+        <div id="assignEmployeesModal" class="no-print fixed inset-0 z-[1000] hidden overflow-auto bg-black/50" aria-hidden="true" th:if="${selectedTemplateId != null}">
+            <div class="relative mx-auto my-[5vh] block w-[min(920px,96%)] max-h-[90vh] overflow-y-auto rounded-xl bg-white p-5 max-[640px]:my-[3vh] max-[640px]:p-4">
+                <span class="absolute right-4 top-4 z-10 cursor-pointer text-2xl leading-none text-[var(--secondary-color)] hover:text-[var(--primary-color)]" onclick="closeAssignEmployeesModal()" aria-label="Close">&times;</span>
+                <h2 class="m-0 mb-2">Assign employees</h2>
+                <p class="no-payroll m-0 mb-3">
                     Select who uses <b th:text="${selectedTemplateName}">this class</b> for
                     <span th:text="|${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')} ${scheduleYear}|"></span>.
                     One schedule class per employee per month.
@@ -250,21 +249,23 @@
 
                 <form th:action="@{/admin/attendance/schedule-template/assign}" method="post" id="assignEmployeesForm">
                     <input type="hidden" name="assignTemplateId" th:value="${selectedTemplateId}" />
-                    <input type="search" class="employee-assign-search" id="employeeAssignFilter"
+                    <input type="search" class="mb-3 w-full min-w-0 max-w-full box-border" id="employeeAssignFilter"
                            placeholder="Search by name…" autocomplete="off" oninput="filterAssignEmployees(this.value)" />
 
-                    <div class="employee-assign-grid" th:if="${employees != null and #lists.size(employees) > 0}">
-                        <label class="employee-assign-chip employee-assign-row"
+                    <div class="max-h-[50vh] overflow-y-auto rounded-lg border border-[#e0e0e0] bg-[#fafafa] p-1 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
+                         th:if="${employees != null and #lists.size(employees) > 0}">
+                        <label class="employee-assign-chip employee-assign-row flex cursor-pointer items-center gap-2 rounded-lg border border-[#e8e9f1] bg-white px-2.5 py-2 transition-all duration-150 hover:border-[var(--primary-color)] hover:shadow-[0_1px_4px_rgba(0,0,0,0.08)]"
                                th:each="e : ${employees}"
                                th:attr="data-search=${#strings.toLowerCase(e.lastName + ' ' + e.firstName + ' ' + e.employeeNumber)}">
                             <input type="checkbox" name="assignEmployeeIds" th:value="${e.employeeId}"
+                                   class="m-0 shrink-0 cursor-pointer"
                                    th:checked="${assignedEmployeeIds != null and #lists.contains(assignedEmployeeIds, e.employeeId)}" />
-                            <span th:text="${e.lastName + ', ' + e.firstName}">Name</span>
+                            <span class="truncate text-sm font-medium text-[#333]" th:text="${e.lastName + ', ' + e.firstName}">Name</span>
                         </label>
                     </div>
                     <p th:if="${employees == null or #lists.size(employees) == 0}" class="alert-error">No employees — add employees first.</p>
 
-                    <div class="shifting-form-actions">
+                    <div class="mt-4 flex flex-wrap gap-2">
                         <button type="submit" class="btn-print" th:disabled="${employees == null or #lists.size(employees) == 0}">
                             <i class="fa-solid fa-floppy-disk"></i> Save assignments
                         </button>
@@ -273,7 +274,11 @@
                 </form>
             </div>
         </div>
-        
+
+        <!-- Tailwind CDN scans static HTML; shifting.js toggles these classes on .shift-employee-item -->
+        <span aria-hidden="true"
+              class="pointer-events-none fixed left-0 top-0 -z-[1] h-px w-px overflow-hidden opacity-0 border-[var(--primary-color)] bg-[#f3f2ff] shadow-[0_0_0_2px_rgba(112,111,214,0.12)]"></span>
+
     </section>
     </div>
     <script src="/js/nav.js"></script>

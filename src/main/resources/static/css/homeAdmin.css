@@ -36,7 +36,8 @@ section {
     padding: 3rem;
 }
 
-section div {
+/* Scoped to home dashboards only — a global `section div` rule breaks other admin pages (e.g. Tailwind grids on Shifting). */
+section.home-admin div {
     display: flex;
     justify-content: space-between;
 }
