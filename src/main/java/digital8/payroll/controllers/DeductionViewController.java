@@ -58,12 +58,18 @@ public class DeductionViewController {
         List<Employees> employees;
 
         if (isAdmin) {
+            Employees adminEmp = null;
+            if (authentication != null && authentication.getPrincipal() instanceof Users) {
+                adminEmp = ((Users) authentication.getPrincipal()).getEmployee();
+            }
             assignments = employeeDeductionsRepository.findAll();
             employees = employeeRepository.findAllWithFetch(null, Sort.by(Sort.Direction.ASC, "lastName"));
-            if (authentication != null && authentication.getPrincipal() instanceof Users) {
-                Employees adminEmp = ((Users) authentication.getPrincipal()).getEmployee();
-                if (adminEmp != null) model.addAttribute("emp_id", adminEmp.getEmployeeId());
-            }
+            if (adminEmp != null) model.addAttribute("emp_id", adminEmp.getEmployeeId());
+            Map<String, BigDecimal> balances = computeDeductionBalances(
+                adminEmp != null ? adminEmp.getEmployeeId() : null, LocalDate.now());
+            model.addAttribute("deductionOutstandingObligation", balances.get("deductionOutstandingObligation"));
+            model.addAttribute("deductionMonthlyCutoff", balances.get("deductionMonthlyCutoff"));
+            model.addAttribute("deductionOutstandingBalance", balances.get("deductionOutstandingBalance"));
         } else {
             Integer empId = null;
             if (authentication != null && authentication.getPrincipal() instanceof Users) {
@@ -73,6 +79,11 @@ public class DeductionViewController {
             assignments = empId != null ? employeeDeductionsRepository.findByEmployeeId(empId) : List.of();
             employees = List.of();
             if (empId != null) model.addAttribute("emp_id", empId);
+
+            Map<String, BigDecimal> balances = computeDeductionBalances(empId, LocalDate.now());
+            model.addAttribute("deductionOutstandingObligation", balances.get("deductionOutstandingObligation"));
+            model.addAttribute("deductionMonthlyCutoff", balances.get("deductionMonthlyCutoff"));
+            model.addAttribute("deductionOutstandingBalance", balances.get("deductionOutstandingBalance"));
         }
 
         Map<Integer, String> employeeNames = isAdmin && !employees.isEmpty()
@@ -214,7 +225,7 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
+            @RequestParam(required = false, defaultValue = "BOTH") String deductionCutoff,
             RedirectAttributes ra) {
         EmployeeDeductions ed = new EmployeeDeductions();
         ed.setEmployeeId(employeeId);
@@ -247,7 +258,7 @@ public class DeductionViewController {
             @RequestParam(required = false) Boolean isRecurring,
             @RequestParam String startDate,
             @RequestParam String endDate,
-            @RequestParam(required = false, defaultValue = "SEMI_2") String deductionCutoff,
+            @RequestParam(required = false, defaultValue = "BOTH") String deductionCutoff,
             RedirectAttributes ra) {
         employeeDeductionsRepository.findById(id).ifPresent(ed -> {
             ed.setEmployeeId(employeeId);
@@ -261,5 +272,107 @@ public class DeductionViewController {
         });
         ra.addFlashAttribute("message", "Deduction assignment updated.");
         return "redirect:/admin/deductions";
+    }
+
+    protected Map<String, BigDecimal> computeDeductionBalances(Integer employeeId, LocalDate today) {
+        BigDecimal outstandingObligation = BigDecimal.ZERO;
+        BigDecimal monthlyCutoff = BigDecimal.ZERO;
+        BigDecimal outstandingBalance = BigDecimal.ZERO;
+    
+        if (employeeId == null) {
+            return Map.of(
+                "deductionOutstandingObligation", outstandingObligation,
+                "deductionMonthlyCutoff", monthlyCutoff,
+                "deductionOutstandingBalance", outstandingBalance
+            );
+        }
+    
+        
+        java.time.YearMonth currentMonth = java.time.YearMonth.from(today);
+        LocalDate nextPeriodStart;
+        LocalDate nextPeriodEnd;
+        if (today.getDayOfMonth() <= 15) {
+            nextPeriodStart = currentMonth.atDay(1);
+            nextPeriodEnd   = currentMonth.atDay(15);
+        } else {
+            nextPeriodStart = currentMonth.atDay(16);
+            nextPeriodEnd   = currentMonth.atEndOfMonth();
+        }
+    
+        // Get active recurring deductions whose window overlaps today
+        List<EmployeeDeductions> activeRecurring = employeeDeductionsRepository
+            .findActiveRecurringByEmployee(employeeId, today, today);
+    
+        // One-time deductions for this employee
+        List<EmployeeDeductions> oneTime = employeeDeductionsRepository.findByEmployeeId(employeeId)
+            .stream()
+            .filter(ed -> !Boolean.TRUE.equals(ed.getIsRecurring()))
+            .toList();
+
+        // Process recurring deductions
+        for (EmployeeDeductions ed : activeRecurring) {
+            BigDecimal amount = ed.getAmount() != null ? ed.getAmount() : BigDecimal.ZERO;
+            LocalDate endDate = ed.getEndDate();
+            int periodsPerYear = "BOTH".equals(ed.getDeductionCutoff()) ? 24 : 12;
+    
+            // Monthly cutoff: what applies to the next payroll period
+            boolean appliesThisCutoff;
+            String cutoff = ed.getDeductionCutoff();
+            if ("BOTH".equals(cutoff)) {
+                appliesThisCutoff = true;
+            } else if ("SEMI_1".equals(cutoff)) {
+                appliesThisCutoff = nextPeriodStart.equals(currentMonth.atDay(1));
+            } else {
+                appliesThisCutoff = nextPeriodStart.equals(currentMonth.atDay(16));
+            }
+            if (appliesThisCutoff) {
+                monthlyCutoff = monthlyCutoff.add(amount);
+            }
+    
+            // Remaining periods from today to endDate
+            long remainingPeriods = 0;
+            if (endDate != null && !endDate.isBefore(today)) {
+                remainingPeriods = calculateRemainingPeriods(today, endDate, periodsPerYear);
+            } else if (endDate == null) {
+                // Open-ended: assume 36 periods (18 months) as a projection
+                remainingPeriods = 36;
+            }
+            outstandingObligation = outstandingObligation.add(amount.multiply(BigDecimal.valueOf(remainingPeriods)));
+        }
+    
+        // Process one-time deductions
+                        // Process one-time deductions      
+            for (EmployeeDeductions ed : oneTime) {
+            BigDecimal amount = ed.getAmount() != null ? ed.getAmount() : BigDecimal.ZERO;
+            outstandingObligation = outstandingObligation.add(amount);
+            // One-time: included in next payroll if startDate falls within that period window
+            // One-time: included in next payroll if startDate falls within that period window
+// AND the deduction's cutoff matches the next period's cutoff
+if (ed.getStartDate() != null
+&& !ed.getStartDate().isBefore(nextPeriodStart)
+&& !ed.getStartDate().isAfter(nextPeriodEnd)) {
+String cutoff = ed.getDeductionCutoff();
+boolean cutoffMatches = "BOTH".equals(cutoff)
+|| ("SEMI_1".equals(cutoff) && nextPeriodStart.equals(currentMonth.atDay(1)))
+|| ("SEMI_2".equals(cutoff) && nextPeriodStart.equals(currentMonth.atDay(16)));
+if (cutoffMatches) {
+monthlyCutoff = monthlyCutoff.add(amount);
+}
+}
+        }
+    
+        outstandingBalance = outstandingObligation;
+    
+        return Map.of(
+            "deductionOutstandingObligation", outstandingObligation,
+            "deductionMonthlyCutoff", monthlyCutoff,
+            "deductionOutstandingBalance", outstandingBalance
+        );
+    }
+    
+    private long calculateRemainingPeriods(LocalDate from, LocalDate to, int periodsPerYear) {
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(from, to);
+        double yearsRemaining = daysBetween / 365.0;
+        return Math.max(0, (long) Math.ceil(yearsRemaining * (periodsPerYear / 2.0)));
     }
 }

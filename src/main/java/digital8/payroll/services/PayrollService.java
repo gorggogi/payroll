@@ -769,10 +769,15 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
-            sum = sum.add(ed.getAmount());
+            BigDecimal amount = ed.getAmount();
+                if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+                sum = sum.add(amount);
         }
         return sum.setScale(SCALE, ROUND);
     }
@@ -803,7 +808,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             // Resolve type from catalog
             String adjType = "Earnings";
@@ -846,7 +852,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             // Resolve name from type catalog (mirrors getDeductionsBreakdown)
@@ -893,8 +900,9 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
             String name = "Other";
             if (ed.getDeductionId() != null) {
@@ -903,10 +911,13 @@ public class PayrollService {
                     name = d.getDeductionName();
                 }
             }
-
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             item.setDeductionName(name);
-            item.setAmount(ed.getAmount().setScale(SCALE, ROUND));
+            BigDecimal amount = ed.getAmount();
+            if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+            item.setAmount(amount.setScale(SCALE, ROUND));
             result.add(item);
         }
         return result;

@@ -25,7 +25,7 @@
 
             <div class="deduction-section">
                 <!-- Deduction summary cards for employees -->
-                <div sec:authorize="hasRole('EMPLOYEE')" class="deduction-card leave-card">
+                <div class="deduction-card leave-card">
                     <h2>Deduction Balance</h2>
                     <div class="balance-grid">
                         <div class="balance-item">
@@ -171,7 +171,7 @@
                     <select id="editDeductionCutoff" name="deductionCutoff">
                         <option value="SEMI_1">1st cutoff (1&ndash;15)</option>
                         <option value="SEMI_2">2nd cutoff (16&ndash;end)</option>
-                        <option value="BOTH">Both cutoffs</option>
+                        <option value="BOTH" selected>Both cutoffs</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -318,8 +318,8 @@
                     <label for="deductionCutoff">Apply on cutoff *</label>
                     <select id="deductionCutoff" name="deductionCutoff">
                         <option value="SEMI_1">1st cutoff (1&ndash;15)</option>
-                        <option value="SEMI_2" selected>2nd cutoff (16&ndash;end)</option>
-                        <option value="BOTH">Both cutoffs</option>
+                        <option value="SEMI_2">2nd cutoff (16&ndash;end)</option>
+                        <option value="BOTH" selected>Both cutoffs</option>
                     </select>
                 </div>
                 <div class="form-group">
