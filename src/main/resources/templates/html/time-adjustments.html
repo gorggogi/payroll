@@ -28,12 +28,12 @@
             <div class="adjust-panel">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <h2 style="margin-bottom: 0;"><i class="fa-solid fa-upload"></i> Upload Biometrics DTR</h2>
-                    <button type="button" id="infoBtn" class="info-btn" title="Show import format info" style="background: none; border: none; cursor: pointer; margin-left: 0.5rem;">
+                    <button type="button" id="infoBtn" class="info-btn" title="Show import format info" style="padding:0; background: none; border: none; cursor: pointer; width: 24px; height: 26px;">
                         <i class="fa-solid fa-circle-info" style="color: #706fd6; font-size: 1.5rem;"></i>
                     </button>
                 </div>
                 <p class="adjust-panel-desc">
-                    Required format: tab-separated, 7 columns. <span style="color:#706fd6; cursor:pointer; text-decoration:underline;" onclick="document.getElementById('importInfoModal').style.display='block'">See details</span>
+                    Check required format by clicking the info icon.
                 </p>
 
                 <!-- Modal for import info -->
@@ -51,9 +51,9 @@ Column guide:
 5) Log type: 0=LOG IN, 2=BREAKOUT, 3=BREAKIN, 1=OUT
 6) Fixed value: 15
 7) Fixed value: 0</pre>
-                    <button id="closeModalBtn2" style="background:#706fd6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.5rem; font-size:1rem; cursor:pointer;">Close</button>
                   </div>
                 </div>
+
 
 
                 <form method="post"
@@ -187,15 +187,14 @@ Column guide:
        var infoBtn = document.getElementById('infoBtn');
        var modal = document.getElementById('importInfoModal');
        var closeModalBtn = document.getElementById('closeModalBtn');
-       var closeModalBtn2 = document.getElementById('closeModalBtn2');
-       if (infoBtn && modal && closeModalBtn && closeModalBtn2) {
+       if (infoBtn && modal && closeModalBtn) {
            infoBtn.onclick = function() { modal.style.display = 'block'; };
            closeModalBtn.onclick = function() { modal.style.display = 'none'; };
-           closeModalBtn2.onclick = function() { modal.style.display = 'none'; };
            window.onclick = function(event) {
                if (event.target === modal) { modal.style.display = 'none'; }
            };
        }
+
     </script>
 </body>
 </html>
