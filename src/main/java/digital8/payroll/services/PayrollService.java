@@ -781,7 +781,11 @@ public class PayrollService {
                         || ed.getStartDate().isBefore(periodStart))
                     continue;
             }
-            sum = sum.add(ed.getAmount());
+            BigDecimal amount = ed.getAmount();
+                if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+                sum = sum.add(amount);
         }
         return sum.setScale(SCALE, ROUND);
     }
@@ -912,10 +916,13 @@ public class PayrollService {
                     name = d.getDeductionName();
                 }
             }
-
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             item.setDeductionName(name);
-            item.setAmount(ed.getAmount().setScale(SCALE, ROUND));
+            BigDecimal amount = ed.getAmount();
+            if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+            item.setAmount(amount.setScale(SCALE, ROUND));
             result.add(item);
         }
         return result;
