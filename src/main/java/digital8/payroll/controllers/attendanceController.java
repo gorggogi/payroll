@@ -48,6 +48,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.Optional;
@@ -59,6 +61,7 @@ import java.util.stream.Collectors;
 @Controller
 public class attendanceController {
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
+    private static final String TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY = "timeAdjustmentsCountDayOffHours";
 
     @Autowired
     private AttendanceRepository attendanceRepository;
@@ -443,7 +446,7 @@ public class attendanceController {
                             && a.getAttendance_date().getMonthValue() == selectedMonth
                             && a.getAttendance_date().getYear() == selectedYear)
                     .collect(Collectors.toList());
-            populateComputedWorkHours(filtered);
+            populateComputedWorkHours(filtered, true);
             model.addAttribute("attendances", filtered);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
             model.addAttribute("emp_id", targetEmpId);
@@ -525,6 +528,13 @@ public class attendanceController {
             if (previewRows != null) {
                 model.addAttribute("previewRows", previewRows);
             }
+            Object cdo = session.getAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY);
+            if (cdo instanceof Boolean b) {
+                model.addAttribute("countDayOffHours", b);
+            }
+        }
+        if (!model.containsAttribute("countDayOffHours")) {
+            model.addAttribute("countDayOffHours", true);
         }
         return "html/time-adjustments";
     }
@@ -535,6 +545,7 @@ public class attendanceController {
             @RequestParam(value = "startDate", required = false) String startDateRaw,
             @RequestParam(value = "endDate", required = false) String endDateRaw,
             @RequestParam(value = "overwrite", required = false) Boolean overwrite,
+            @RequestParam(value = "countDayOffHours", required = false) Boolean countDayOffHours,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes) {
 
@@ -544,6 +555,7 @@ public class attendanceController {
         }
 
         final boolean shouldOverwrite = Boolean.TRUE.equals(overwrite);
+        final boolean countDayOff = countDayOffHours == null || Boolean.TRUE.equals(countDayOffHours);
         final LocalDate startDate = parseDateFlexible(startDateRaw);
         final LocalDate endDate = parseDateFlexible(endDateRaw);
         if ((startDateRaw != null && !startDateRaw.trim().isEmpty() && startDate == null)
@@ -642,13 +654,15 @@ public class attendanceController {
             Employees emp = empOpt.get();
             ShiftMatchResult shiftMatch = validateAgainstShift(emp.getEmployeeId(), acc.logDate);
             if (!shiftMatch.allowed) {
-                skippedRows++;
-                errors.add("Biometric " + acc.biometricId + " on " + acc.logDate + ": " + shiftMatch.reason);
-                continue;
+                if (!(countDayOff && shiftMatch.restDay)) {
+                    skippedRows++;
+                    errors.add("Biometric " + acc.biometricId + " on " + acc.logDate + ": " + shiftMatch.reason);
+                    continue;
+                }
             }
             String employeeName = (emp.getLastName() != null ? emp.getLastName() : "")
                     + ", " + (emp.getFirstName() != null ? emp.getFirstName() : "");
-            String key = emp.getEmployeeId() + "|" + acc.logDate;
+            String key = emp.getEmployeeId() + "_" + acc.logDate;
             previewRows.add(new TimeAdjustmentPreviewRow(
                     key,
                     emp.getEmployeeId(),
@@ -667,7 +681,9 @@ public class attendanceController {
             ));
             readyForApproval++;
         }
-        request.getSession(true).setAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY, previewRows);
+        HttpSession uploadSession = request.getSession(true);
+        uploadSession.setAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY, previewRows);
+        uploadSession.setAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY, countDayOff);
 
         StringBuilder summary = new StringBuilder();
         summary.append("Parsed rows: ").append(parsedRows)
@@ -709,16 +725,28 @@ public class attendanceController {
             return "redirect:/admin/attendance/time-adjustments";
         }
 
+        boolean countDayOff = true;
+        String cdoParam = request.getParameter("countDayOffHours");
+        if (cdoParam != null) {
+            countDayOff = "true".equalsIgnoreCase(cdoParam);
+        } else if (session.getAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY) instanceof Boolean b) {
+            countDayOff = b;
+        }
+
+        boolean shouldOverwrite = "true".equalsIgnoreCase(request.getParameter("overwrite"));
         int inserted = 0;
         int updated = 0;
         int skipped = 0;
+        List<String> skipReasons = new ArrayList<>();
         for (Object o : rowsRaw) {
             if (!(o instanceof TimeAdjustmentPreviewRow row)) {
                 continue;
             }
+            String rowLabel = row.employeeName + " (" + row.getDisplayDate() + ")";
             String approvedFlag = request.getParameter("verify_" + row.key);
             if (!"true".equalsIgnoreCase(approvedFlag)) {
                 skipped++;
+                skipReasons.add(rowLabel + ": not checked for verify");
                 continue;
             }
             String inRaw = request.getParameter("timeInEdit_" + row.key);
@@ -728,32 +756,49 @@ public class attendanceController {
             LocalDate date = parseDateFlexible(row.logDate);
             if (in == null || out == null || date == null) {
                 skipped++;
-                continue;
-            }
-            ShiftMatchResult shiftMatch = validateAgainstShift(row.employeeId, date);
-            if (!shiftMatch.allowed || shiftMatch.shiftIn == null || shiftMatch.shiftOut == null) {
-                skipped++;
+                skipReasons.add(rowLabel + ": invalid time in/out (in=\"" + inRaw + "\", out=\"" + outRaw + "\")");
                 continue;
             }
             Optional<Attendance> existingOpt = attendanceRepository.findAttendanceOnDate(row.employeeId, date);
-            if (existingOpt.isPresent() && !row.overwrite) {
+            if (existingOpt.isPresent() && !shouldOverwrite && !row.overwrite) {
                 skipped++;
+                skipReasons.add(rowLabel + ": attendance already exists (enable Overwrite existing attendance)");
                 continue;
             }
             Attendance attendance = existingOpt.orElseGet(Attendance::new);
-            AttendanceMetrics metrics = computeAttendanceMetrics(
-                    in,
-                    out,
-                    shiftMatch.shiftIn,
-                    shiftMatch.shiftOut);
+            ShiftMatchResult shiftMatch = validateAgainstShift(row.employeeId, date);
+            BigDecimal workHours;
+            int lateMinutes;
+            int undertimeMinutes;
+            BigDecimal overtimeHours;
+            if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
+                AttendanceMetrics metrics = computeAttendanceMetrics(
+                        in,
+                        out,
+                        shiftMatch.shiftIn,
+                        shiftMatch.shiftOut);
+                workHours = metrics.workHours;
+                lateMinutes = metrics.lateMinutes;
+                undertimeMinutes = metrics.undertimeMinutes;
+                overtimeHours = resolveOvertimeHours(attendance.getOvertime_hours(), metrics.overtimeHours);
+            } else if (countDayOff && shiftMatch.restDay) {
+                workHours = minutesToHours(clockMinutesBetween(in, out));
+                lateMinutes = 0;
+                undertimeMinutes = 0;
+                overtimeHours = resolveOvertimeHours(attendance.getOvertime_hours(), BigDecimal.ZERO);
+            } else {
+                skipped++;
+                skipReasons.add(rowLabel + ": " + shiftMatch.reason);
+                continue;
+            }
             attendance.setEmployeeId(row.employeeId);
             attendance.setAttendance_date(date);
             attendance.setTime_in(in);
             attendance.setTime_out(out);
-            attendance.setWork_hours(metrics.workHours);
-            attendance.setLate_minutes(metrics.lateMinutes);
-            attendance.setOvertime_hours(resolveOvertimeHours(attendance.getOvertime_hours(), metrics.overtimeHours));
-            attendance.setUndertime_minutes(metrics.undertimeMinutes);
+            attendance.setWork_hours(workHours);
+            attendance.setLate_minutes(lateMinutes);
+            attendance.setOvertime_hours(overtimeHours);
+            attendance.setUndertime_minutes(undertimeMinutes);
             attendance.setStatus("Present");
             attendanceRepository.save(attendance);
             if (existingOpt.isPresent()) {
@@ -763,8 +808,22 @@ public class attendanceController {
             }
         }
         session.removeAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Approved logs saved. Inserted: " + inserted + ", updated: " + updated + ", skipped: " + skipped + ".");
+        session.removeAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY);
+        StringBuilder result = new StringBuilder();
+        result.append("Approved logs saved. Inserted: ").append(inserted)
+                .append(", updated: ").append(updated)
+                .append(", skipped: ").append(skipped).append(".");
+        if (!skipReasons.isEmpty()) {
+            result.append("\n\nSkipped rows:\n");
+            int max = Math.min(15, skipReasons.size());
+            for (int i = 0; i < max; i++) {
+                result.append("- ").append(skipReasons.get(i)).append("\n");
+            }
+            if (skipReasons.size() > max) {
+                result.append("- ... ").append(skipReasons.size() - max).append(" more");
+            }
+        }
+        redirectAttributes.addFlashAttribute("successMessage", result.toString());
         return "redirect:/admin/attendance/time-adjustments";
     }
 
@@ -786,19 +845,53 @@ public class attendanceController {
         return null;
     }
 
+    private static final Pattern MIXED_24H_AMPM = Pattern.compile(
+            "^(\\d{1,2}):(\\d{2})(?::(\\d{2}))?\\s*(AM|PM)?\\s*$",
+            Pattern.CASE_INSENSITIVE);
+
     private LocalTime parseTimeFlexible(String raw) {
         if (raw == null) return null;
         String v = raw.trim();
         if (v.isEmpty()) return null;
+        String normalized = normalizeMixed24hAmPm(v);
+        if (normalized != null) {
+            LocalTime parsed = tryParseTime(normalized);
+            if (parsed != null) {
+                return parsed;
+            }
+        }
+        return tryParseTime(v);
+    }
+
+    /** e.g. "21:40 PM" → "21:40" so 24-hour values with a stray AM/PM still parse. */
+    private static String normalizeMixed24hAmPm(String v) {
+        Matcher m = MIXED_24H_AMPM.matcher(v.trim());
+        if (!m.matches()) {
+            return null;
+        }
+        int hour = Integer.parseInt(m.group(1));
+        String ampm = m.group(4);
+        if (hour > 12 && ampm != null && !ampm.isBlank()) {
+            return m.group(1) + ":" + m.group(2) + (m.group(3) != null ? ":" + m.group(3) : "");
+        }
+        return null;
+    }
+
+    private LocalTime tryParseTime(String v) {
         List<DateTimeFormatter> formatters = List.of(
                 DateTimeFormatter.ofPattern("HH:mm:ss"),
                 DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm"),
                 DateTimeFormatter.ofPattern("hh:mm:ss a"),
-                DateTimeFormatter.ofPattern("hh:mm a")
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("HH:mm:ss a"),
+                DateTimeFormatter.ofPattern("HH:mm a")
         );
+        String upper = v.toUpperCase();
         for (DateTimeFormatter f : formatters) {
             try {
-                return LocalTime.parse(v.toUpperCase(), f);
+                return LocalTime.parse(upper, f);
             } catch (DateTimeParseException ignored) {
             }
         }
@@ -997,7 +1090,11 @@ public class attendanceController {
         return stored.max(computed);
     }
 
-    private void populateComputedWorkHours(List<Attendance> attendances) {
+    /**
+     * @param countDayOffHours when true, rest-day rows use clocked in–out span as work hours (and keep stored OT).
+     *                         when false, rest-day regular work hours are zero (previous behavior).
+     */
+    private void populateComputedWorkHours(List<Attendance> attendances, boolean countDayOffHours) {
         for (Attendance attendance : attendances) {
             if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
                 continue;
@@ -1018,12 +1115,19 @@ public class attendanceController {
             if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
                 ShiftMatchResult shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
                 if (shiftMatch.restDay) {
-                    workHours = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-                    lateMinutes = 0;
-                    undertimeMinutes = 0;
-                    overtimeHours = attendance.getOvertime_hours() != null
-                            ? attendance.getOvertime_hours()
-                            : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                    if (countDayOffHours) {
+                        workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+                        lateMinutes = 0;
+                        undertimeMinutes = 0;
+                        overtimeHours = resolveOvertimeHours(attendance.getOvertime_hours(), BigDecimal.ZERO);
+                    } else {
+                        workHours = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                        lateMinutes = 0;
+                        undertimeMinutes = 0;
+                        overtimeHours = attendance.getOvertime_hours() != null
+                                ? attendance.getOvertime_hours()
+                                : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                    }
                 } else if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
                     metrics = computeAttendanceMetrics(
                             attendance.getTime_in(),
@@ -1103,7 +1207,7 @@ public class attendanceController {
         }
 
         private static ShiftMatchResult restDay(String reason) {
-            return new ShiftMatchResult(false, true, reason, "N/A", null, null);
+            return new ShiftMatchResult(false, true, reason, "Rest day", null, null);
         }
     }
 
@@ -1325,6 +1429,7 @@ public class attendanceController {
             @RequestParam(required = false) Integer month,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer empId,
+            @RequestParam(required = false) Boolean countDayOffHours,
             HttpServletRequest request,
             Model model,
             Authentication authentication) {
@@ -1341,6 +1446,9 @@ public class attendanceController {
         List<Integer> years = new ArrayList<>();
         for (int y = currentYear - 5; y <= currentYear + 2; y++) years.add(y);
         model.addAttribute("years", years);
+
+        boolean countDayOff = countDayOffHours == null || Boolean.TRUE.equals(countDayOffHours);
+        model.addAttribute("countDayOffHours", countDayOff);
 
         boolean isAdmin = authentication != null && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
         // Logged-in user's own employee id (for nav links / "my payroll")
@@ -1375,7 +1483,7 @@ public class attendanceController {
                             && a.getAttendance_date().getMonthValue() == selectedMonth
                             && a.getAttendance_date().getYear() == selectedYear)
                     .collect(Collectors.toList());
-            populateComputedWorkHours(filtered);
+            populateComputedWorkHours(filtered, countDayOff);
             Map<LocalDate, String> shiftLabelByDate = new LinkedHashMap<>();
             for (Attendance attendance : filtered) {
                 LocalDate attendanceDate = attendance.getAttendance_date();

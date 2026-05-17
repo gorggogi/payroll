@@ -49,6 +49,12 @@
                     <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}">
                     </option>
                 </select>
+                <label for="countDayOffHours">Count day-off / rest-day hours</label>
+                <select name="countDayOffHours" id="countDayOffHours" onchange="this.form.submit()"
+                    title="When Yes, time in–out on scheduled rest days counts toward work hours and the monthly total. When No, those days show 0 regular hours (stored overtime still applies).">
+                    <option value="true" th:selected="${countDayOffHours}">Yes</option>
+                    <option value="false" th:selected="${!countDayOffHours}">No</option>
+                </select>
             </form>
 
             <table class="attendanceTable">

@@ -401,7 +401,7 @@ function saveEmployee(employeeId) {
         middleName: formData.get('middleName'),
         lastName: formData.get('lastName'),
         email: formData.get('email'),
-        biometricId: formData.get('biometricId'),
+        biometricId: String(formData.get('biometricId') ?? '').trim(),
         contactNumber: formData.get('contactNumber'),
         address: formData.get('address'),
         employmentStatus: formData.get('employmentStatus'),
@@ -437,8 +437,15 @@ function saveEmployee(employeeId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-        .then(res => {
-            if (!res.ok) throw new Error('Failed to save');
+        .then(async res => {
+            if (!res.ok) {
+                let message = 'Failed to save';
+                try {
+                    const body = await res.json();
+                    if (body && body.error) message = body.error;
+                } catch (_) { /* non-JSON error body */ }
+                throw new Error(message);
+            }
             return res.json();
         })
         .then(saved => {

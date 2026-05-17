@@ -4,11 +4,13 @@ import digital8.payroll.dto.EmployeeListDto;
 import digital8.payroll.entities.Employees;
 import digital8.payroll.services.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -63,9 +65,13 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Employees> updateEmployee(@PathVariable Integer id, @RequestBody Employees updated) {
-        Optional<Employees> saved = employeeService.updateEmployee(id, updated);
-        return saved.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<?> updateEmployee(@PathVariable Integer id, @RequestBody Employees updated) {
+        try {
+            Optional<Employees> saved = employeeService.updateEmployee(id, updated);
+            return saved.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+        }
     }
     
 }

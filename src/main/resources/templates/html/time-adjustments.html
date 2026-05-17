@@ -34,6 +34,7 @@
                 </div>
                 <p class="adjust-panel-desc">
                     Check required format by clicking the info icon.
+                    <span class="no-print"><strong>Count rest-day hours:</strong> choose before import. <em>Yes</em> includes biometric days that fall on a <strong>scheduled</strong> rest day (ignored for employees with no shift for that month). <em>No</em> skips those lines like before.</span>
                 </p>
 
                 <!-- Modal for import info -->
@@ -76,6 +77,13 @@ Column guide:
                             <span>Overwrite existing attendance</span>
                             <input type="checkbox" name="overwrite" value="true" checked />
                         </label>
+                        <label style="margin-right:1rem;" title="Only applies when the employee has a monthly shift assignment and that weekday is marked rest. Rows without a schedule stay excluded.">
+                            Count rest-day hours
+                            <select name="countDayOffHours" style="margin-left:0.35rem;">
+                                <option value="true" th:selected="${countDayOffHours}">Yes</option>
+                                <option value="false" th:selected="${!countDayOffHours}">No</option>
+                            </select>
+                        </label>
                         <div class="adjust-panel-btn" style="margin:0;">
                             <button type="submit" class="btn-import">
                                 <i class="fa-solid fa-file-import"></i> Import DTR
@@ -96,6 +104,11 @@ Column guide:
                     Biometric lines are grouped into one card per employee per date. Choose the correct IN/OUT from that day's detected logs, edit if needed, then approve.
                 </p>
                 <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
+                    <input type="hidden" name="countDayOffHours" th:value="${countDayOffHours}" />
+                    <label class="overwrite-checkbox preview-overwrite" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                        <input type="checkbox" name="overwrite" value="true" checked />
+                        <span>Overwrite existing attendance for this approval</span>
+                    </label>
                     <div class="preview-action-bar">
                         <div class="preview-action-copy">
                             <strong th:text="${#lists.size(previewRows)}">0</strong> grouped day record(s) ready for review
@@ -179,7 +192,12 @@ Column guide:
             radio.addEventListener('change', function () {
                 var targetName = this.getAttribute('data-target');
                 var target = document.querySelector('input[name="' + targetName + '"]');
-                if (target) target.value = this.value;
+                var labelText = this.parentElement ? this.parentElement.querySelector('span') : null;
+                if (target && labelText) {
+                    target.value = labelText.textContent.trim();
+                } else if (target) {
+                    target.value = this.value;
+                }
             });
        });
 

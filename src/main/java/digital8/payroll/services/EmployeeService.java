@@ -21,6 +21,7 @@ import digital8.payroll.repositories.DepartmentsRepository;
 import digital8.payroll.repositories.PositionsRepository;
 import digital8.payroll.repositories.UsersRepository;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import java.math.BigDecimal;
@@ -209,6 +210,7 @@ public class EmployeeService {
                 .orElse("EMP00001");
     }
 
+    @Transactional
     public Optional<Employees> updateEmployee(Integer id, Employees updated) {
         Optional<Employees> existingOpt = employeeRepository.findById(id);
         if (!existingOpt.isPresent()) {
@@ -233,18 +235,7 @@ public class EmployeeService {
 
         }
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
-        if (updated.getBiometricId() != null) {
-            String candidate = updated.getBiometricId().trim();
-            if (candidate.isEmpty()) {
-                existing.setBiometricId(null);
-            } else if (!candidate.equals(existing.getBiometricId())) {
-                Optional<Employees> owner = employeeRepository.findByBiometricId(candidate);
-                if (owner.isPresent() && !owner.get().getEmployeeId().equals(id)) {
-                    return Optional.empty();
-                }
-                existing.setBiometricId(candidate);
-            }
-        }
+        applyBiometricIdUpdate(id, existing, updated.getBiometricId());
         if (updated.getContactNumber() != null) existing.setContactNumber(updated.getContactNumber());
         if (updated.getAddress() != null) existing.setAddress(updated.getAddress());
         if (updated.getDateHired() != null) existing.setDateHired(updated.getDateHired());
@@ -280,6 +271,30 @@ public class EmployeeService {
 
         Employees saved = employeeRepository.save(existing);
         return Optional.of(saved);
+    }
+
+    /**
+     * Applies biometric ID from the update payload. Null means "field not sent" (leave unchanged).
+     * Blank clears the ID. Throws when the ID is already used by another employee.
+     */
+    private void applyBiometricIdUpdate(Integer employeeId, Employees existing, String rawBiometricId) {
+        if (rawBiometricId == null) {
+            return;
+        }
+        String candidate = rawBiometricId.trim();
+        if (candidate.isEmpty()) {
+            existing.setBiometricId(null);
+            return;
+        }
+        if (Objects.equals(candidate, existing.getBiometricId())) {
+            return;
+        }
+        Optional<Employees> owner = employeeRepository.findByBiometricId(candidate);
+        if (owner.isPresent() && !Objects.equals(owner.get().getEmployeeId(), employeeId)) {
+            throw new IllegalArgumentException(
+                    "Biometric ID is already assigned to another employee (" + owner.get().getEmployeeNumber() + ")");
+        }
+        existing.setBiometricId(candidate);
     }
 
     public boolean isEmployeeNumberTakenByOther(String employeeNumber, Integer excludeEmployeeId) {
