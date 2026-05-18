@@ -207,6 +207,9 @@ public class OvertimeRequestService {
                 .orElseThrow(() -> new RuntimeException(
                         "No daily time record for " + d + ". Add attendance for that date first."));
 
+        if (att.getStatus() == null || att.getStatus().isBlank()) {
+            att.setStatus("Present");
+        }
         att.setOvertime_hours(r.getTotalHours().setScale(2, RoundingMode.HALF_UP));
         attendanceRepository.save(att);
 

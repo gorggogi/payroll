@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -166,7 +166,7 @@
                             <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
                             <td th:text="${r.totalHoursDisplay}"></td>
                             <td th:text="${r.status}"></td>
-                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : 'â€”'}"></td>
+                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '-'}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
                             <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
                         </tr>
@@ -174,7 +174,6 @@
                 </table>
             </div>
 
-            
 
             <form method="post" th:action="${overtimeSaveAction}" th:if="${isAdmin and !attendances.isEmpty()}">
                 <input type="hidden" name="year" th:value="${selectedYear}" />
@@ -204,10 +203,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.workHoursDisplay}"></td>
                             <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td>
                                 <label th:for="|ot_${a.attendanceId}|" class="visually-hidden">Overtime on DTR</label>
                                 <input class="overtime-input" type="number" step="0.25" min="0"
@@ -250,10 +249,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.workHoursDisplay}"></td>
                             <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td th:text="${a.overtimeHoursDisplay}"></td>
                         </tr>
                     </tbody>
@@ -336,4 +335,3 @@
     </script>
 </body>
 </html>
-
