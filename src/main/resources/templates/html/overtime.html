@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -74,7 +74,7 @@
 
             <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${!adminOvertimePage}">
                 <h2><i class="fa-solid fa-file-pen"></i> File overtime</h2>
-                <p style="margin:0 0 0.75rem;font-size:0.9rem;color:#555;">Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
+                <p>Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
                 <button type="button" class="btn-primary" onclick="openOtFilingModal()">
                     <i class="fa-solid fa-file-circle-plus"></i> File OT
                 </button>

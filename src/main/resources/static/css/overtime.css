@@ -39,12 +39,17 @@
 
 .ot-panel { 
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .ot-panel h2 { 
-    margin: 0 0 1rem; 
     font-size: 1.1rem; 
+}
+
+.ot-panel p {
+    font-size:0.9rem;
+    color:#555;
 }
 
 .ot-form-grid { 
