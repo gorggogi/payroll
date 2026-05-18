@@ -13,18 +13,24 @@
         <link rel="stylesheet" href="/css/overtime.css" />
 </head>
 <body>
+    <!-- WARNING: Do NOT submit POST requests to /admin/attendance/overtime. That endpoint only supports GET. -->
     <div class="container">
         <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
         <section>
             <div class="head">
-                <h1>Overtime of <span th:if="${employeeName != null and !employeeName.isEmpty()}"><span th:text="${employeeName}">Name</span></span></h1>
+                <h1>
+                    Overtime
+                </h1>
+                <button th:if="${isAdmin}" th:onclick="window.location.href='/admin/attendance/overtime/self'" class="btn-primary my-overtime-btn">
+                    <i class="fa-solid fa-file-circle-plus"></i> My Overtime
+                </button>
             </div>
 
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
-            <div sec:authorize="hasRole('ADMIN')" class="ot-panel" th:if="${pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
+            <div class="ot-panel" th:if="${adminOvertimePage and pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
                 <h2>Pending overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>
@@ -64,8 +70,9 @@
                     </tbody>
                 </table>
             </div>
+            <p th:if="${adminOvertimePage and (pendingOvertimeRequests == null or pendingOvertimeRequests.isEmpty())}" class="total-hours" style="margin-top:0.5rem;">No pending overtime requests.</p>
 
-            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel">
+            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${!adminOvertimePage}">
                 <h2><i class="fa-solid fa-file-pen"></i> File overtime</h2>
                 <p style="margin:0 0 0.75rem;font-size:0.9rem;color:#555;">Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
                 <button type="button" class="btn-primary" onclick="openOtFilingModal()">
@@ -79,7 +86,11 @@
                         <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
                         <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
                     </div>
-                    <form method="post" th:action="${overtimeRequestAction}">
+                    <form method="post" th:action="${isAdmin} ? '/admin/attendance/overtime/save' : overtimeRequestAction">
+                        <!-- Hidden fields for admin POST handler -->
+                        <input type="hidden" name="year" th:value="${selectedYear}" th:if="${isAdmin}" />
+                        <input type="hidden" name="month" th:value="${selectedMonth}" th:if="${isAdmin}" />
+                        <input type="hidden" name="empId" th:value="${viewingEmployeeId}" th:if="${isAdmin}" />
                         <div class="ot-form-grid">
                             <label>Work date (date OT applies to)
                                 <input type="date" name="workDate" required />
@@ -258,18 +269,28 @@
         </section>
     </div>
     <script src="/js/nav.js"></script>
+        <script>
+        // Prevent accidental POST to /admin/attendance/overtime (405 error)
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (form.method && form.method.toLowerCase() === 'post' && form.action && form.action.endsWith('/admin/attendance/overtime')) {
+                e.preventDefault();
+                alert('This page does not support POST. Please contact your administrator.');
+            }
+        }, true);
+        </script>
     <script>
         function openOtFilingModal() {
             var modal = document.getElementById('otFilingModal');
             if (!modal) return;
-            modal.style.display = 'block';
+                modal.classList.add('show');
             modal.setAttribute('aria-hidden', 'false');
             computeFiledOvertimeHours();
         }
         function closeOtFilingModal() {
             var modal = document.getElementById('otFilingModal');
             if (!modal) return;
-            modal.style.display = 'none';
+                modal.classList.remove('show');
             modal.setAttribute('aria-hidden', 'true');
         }
         function computeFiledOvertimeHours() {

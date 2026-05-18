@@ -1,4 +1,10 @@
 /* Overtime page specific styles extracted from inline <style> in overtime.html */
+.head{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
 
 .overtime-input { 
     width: 5.5rem; 
@@ -80,7 +86,7 @@
 }
 
 .ot-modal {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     position: fixed;
@@ -92,6 +98,9 @@
     overflow: auto;
     background: rgba(0, 0, 0, 0.45);
     padding: 2rem 1rem;
+}
+.ot-modal.show {
+    display: flex;
 }
 .ot-modal-content {
     display: flex;

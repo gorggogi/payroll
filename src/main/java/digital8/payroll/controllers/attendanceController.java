@@ -58,6 +58,74 @@ import java.util.stream.Collectors;
 
 @Controller
 public class attendanceController {
+        @GetMapping("/admin/attendance/overtime/self")
+        public String adminSelfOvertimePage(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            HttpServletRequest request,
+            Model model,
+            Authentication authentication) {
+        boolean isAdmin = authentication != null
+            && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (!isAdmin) {
+            return "redirect:/login";
+        }
+        Integer selfEmpId = null;
+        Employees selfEmp = null;
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users currentUser = (Users) authentication.getPrincipal();
+            if (currentUser.getEmployee() != null) {
+            selfEmp = currentUser.getEmployee();
+            selfEmpId = selfEmp.getEmployeeId();
+            }
+        }
+        if (selfEmpId == null || selfEmp == null) {
+            return "redirect:/admin/attendance/overtime";
+        }
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        int selectedYear = year != null ? year : currentYear;
+        int selectedMonth = (month != null && month >= 1 && month <= 12) ? month : currentMonth;
+        model.addAttribute("selectedMonth", selectedMonth);
+        model.addAttribute("selectedYear", selectedYear);
+        String monthName = Month.of(selectedMonth).toString().charAt(0)
+            + Month.of(selectedMonth).toString().substring(1).toLowerCase();
+        model.addAttribute("captionMonthYear", monthName + " " + selectedYear);
+        List<Integer> years = new ArrayList<>();
+        for (int y = currentYear - 5; y <= currentYear + 2; y++) {
+            years.add(y);
+        }
+        model.addAttribute("years", years);
+        List<Attendance> all = attendanceRepository.findByEmployeeIdOrderByDateDesc(selfEmpId);
+        List<Attendance> filtered = all.stream()
+            .filter(a -> a.getAttendance_date() != null
+                && a.getAttendance_date().getMonthValue() == selectedMonth
+                && a.getAttendance_date().getYear() == selectedYear)
+            .collect(Collectors.toList());
+        populateComputedWorkHours(filtered);
+        model.addAttribute("attendances", filtered);
+        model.addAttribute("employeeName", selfEmp.getFirstName() + " " + selfEmp.getLastName());
+        model.addAttribute("emp_id", selfEmpId);
+        BigDecimal totalOt = filtered.stream()
+            .map(Attendance::getOvertime_hours)
+            .filter(h -> h != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("totalOvertimeHours", totalOt);
+        model.addAttribute("totalOvertimeHoursDisplay", HourFormatUtils.formatHours(totalOt));
+        BigDecimal totalHoursWithOt = filtered.stream()
+            .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
+                .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
+        model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHours(totalHoursWithOt));
+        model.addAttribute("overtimeRequestByDate",
+            overtimeRequestService.latestRequestByWorkDateForMonth(selfEmpId, selectedYear, selectedMonth));
+        List<OvertimeRequest> myRequests = overtimeRequestService.listForEmployeeInMonth(selfEmpId, selectedYear, selectedMonth);
+        model.addAttribute("myOvertimeRequests", myRequests);
+        model.addAttribute("approverNameByRequestId", overtimeRequestService.approverNameByRequestId(myRequests));
+        model.addAttribute("self_emp_id", selfEmpId);
+        return "html/overtimeAdminSelf";
+        }
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
 
     @Autowired
@@ -381,10 +449,14 @@ public class attendanceController {
 
         model.addAttribute("overtimeFilterAction", request.getRequestURI());
         boolean isAdmin = authentication != null
-                && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("overtimeSaveAction", "/admin/attendance/overtime/save");
-        model.addAttribute("overtimeRequestAction", "/employee/attendance/overtime/request");
+        if (isAdmin) {
+            model.addAttribute("overtimeRequestAction", "/admin/attendance/overtime/save");
+        } else {
+            model.addAttribute("overtimeRequestAction", "/employee/attendance/overtime/request");
+        }
 
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
@@ -500,11 +572,13 @@ public class attendanceController {
             model.addAttribute("approverNameByRequestId", Map.<Integer, String>of());
         }
 
-        if (isAdmin && authentication != null && authentication.getPrincipal() instanceof Users) {
+        boolean adminOvertimePage = isAdmin && request.getRequestURI().startsWith("/admin");
+        model.addAttribute("adminOvertimePage", adminOvertimePage);
+        if (adminOvertimePage && authentication != null && authentication.getPrincipal() instanceof Users) {
             Users u = (Users) authentication.getPrincipal();
             Integer adminEmpId = u.getEmployee() != null ? u.getEmployee().getEmployeeId() : null;
             model.addAttribute("pendingOvertimeRequests",
-                    overtimeRequestService.listPendingExcludingEmployeeInMonth(adminEmpId, selectedYear, selectedMonth));
+                    overtimeRequestService.listPendingExcludingEmployee(adminEmpId));
         } else {
             model.addAttribute("pendingOvertimeRequests", List.<OvertimeRequest>of());
         }
