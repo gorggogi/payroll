@@ -66,6 +66,10 @@ public class PayrollService {
     private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
     private static final BigDecimal PHILHEALTH_RATE = new BigDecimal("0.025");
 
+    // Premium base cap (HR policy: salary-splitting for employees under 30,000)
+    private static final BigDecimal PREMIUM_SALARY_THRESHOLD = new BigDecimal("30000");
+    private static final BigDecimal PREMIUM_BASE_CAP = new BigDecimal("20000");
+
     // Simplified withholding tax formula constants
     private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
     private static final BigDecimal TAX_CONSTANT = new BigDecimal("2395.90");
@@ -158,6 +162,7 @@ public class PayrollService {
         BigDecimal dailyRate = monthlyRate.divide(factor, 6, ROUND);
         BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
         BigDecimal perMinuteRate = hourlyRate.divide(MINUTES_PER_HOUR, 6, ROUND);
+        BigDecimal roundedHourlyRate = hourlyRate.setScale(SCALE, ROUND);
         // --- 2. Determine pay period ---
         Month month = null;
         if (monthName != null && !monthName.isBlank()) {
@@ -254,7 +259,7 @@ public class PayrollService {
             }
 
             // Premium for worked regular-holiday hours: +1x hourly (to make total 2x)
-            holidayPay = holidayPay.add(hourlyRate.multiply(regularHolidayWorkedHours));
+            holidayPay = holidayPay.add(roundedHourlyRate.multiply(regularHolidayWorkedHours));
 
             // Pay for unworked regular holidays: +1x daily rate
             for (LocalDate hd : regularHolidayDates) {
@@ -267,16 +272,16 @@ public class PayrollService {
 
         }
         // --- 4. Compute Earnings ---
-        // Basic Pay = Hourly Rate × Total Hours
-        BigDecimal basicPay = hourlyRate.multiply(totalWorkedHours).setScale(SCALE, ROUND);
+        // Basic Pay = Rounded Hourly Rate × Total Hours
+        BigDecimal basicPay = roundedHourlyRate.multiply(totalWorkedHours).setScale(SCALE, ROUND);
 
-        // Overtime Pay = Hourly Rate × Total OT Hours × OT Multiplier
+        // Overtime Pay = Rounded Hourly Rate × Total OT Hours × OT Multiplier
         // Use per-employee override if set; fall back to system defaults by employment type
         BigDecimal employeeOtMultiplier = emp.getOtMultiplier();
         BigDecimal otMultiplier = (employeeOtMultiplier != null && employeeOtMultiplier.compareTo(BigDecimal.ZERO) > 0)
             ? employeeOtMultiplier
             : OT_MULTIPLIER_DEFAULT;
-        BigDecimal overtimePay = hourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
+        BigDecimal overtimePay = roundedHourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
 
         // Adjustment Earnings — from employee_adjustments where adjustmentType = 'EARNINGS'
         BigDecimal[] adjSplit = computeAdjustmentsSplit(empId, periodStart, periodEnd, period);
@@ -321,8 +326,10 @@ public class PayrollService {
         BigDecimal serviceFee = totalEarnings.subtract(totalNonStatutoryDeductions).setScale(SCALE, ROUND);
 
         // --- 6. Compute Statutory Deductions ---
-        // Statutory stays based on basic salary only.
-        BigDecimal premiumBase = monthlyRate;
+        // HR policy: employees earning below 30,000 have premium base capped at 20,000
+        BigDecimal premiumBase = monthlyRate.compareTo(PREMIUM_SALARY_THRESHOLD) < 0
+            ? monthlyRate.min(PREMIUM_BASE_CAP)
+            : monthlyRate;
 
         BigDecimal sss;
         BigDecimal philhealth;
@@ -370,7 +377,7 @@ public class PayrollService {
 
         // Rate breakdown
         item.setDailyRate(dailyRate.setScale(SCALE, ROUND));
-        item.setHourlyRate(hourlyRate.setScale(SCALE, ROUND));
+        item.setHourlyRate(roundedHourlyRate);
         item.setPerMinuteRate(perMinuteRate.setScale(SCALE, ROUND));
 
         // Hours
