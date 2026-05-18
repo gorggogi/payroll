@@ -17,15 +17,20 @@
         <section>
             <div class="head">
             <h1>Deductions</h1>
-            <button type="button" class="btn-print no-print" onclick="window.print()">
-                <i class="fa-solid fa-print"></i> Print
-            </button>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button sec:authorize="hasRole('ADMIN')" type="button" class="btn-my-deductions" onclick="window.location.href='/admin/my-deductions'">
+                    <i class="fa-solid fa-user-minus"></i> My Deductions
+                </button>
+                <button type="button" class="btn-print no-print" onclick="window.print()">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+            </div>
             </div>
             <p th:if="${message}" class="alert-success" th:text="${message}"></p>
 
             <div class="deduction-section">
-                <!-- Deduction summary cards for employees -->
-                <div class="deduction-card leave-card">
+                <!-- Deduction summary cards for employees only -->
+                <div sec:authorize="hasRole('EMPLOYEE')" class="deduction-card leave-card">
                     <h2>Deduction Balance</h2>
                     <div class="balance-grid">
                         <div class="balance-item">
@@ -34,7 +39,7 @@
                                 <p class="balance-days">
                                     <span th:text="${deductionOutstandingObligation}">0.00</span> PHP
                                 </p>
-                                <small>Total obligation for all active deductions</small>
+                                <small>Total committed amount for all deductions</small>
                             </div>
                         </div>
                         <div class="balance-item">
@@ -43,7 +48,7 @@
                                 <p class="balance-days">
                                     <span th:text="${deductionMonthlyCutoff}">0.00</span> PHP
                                 </p>
-                                <small>Amount deducted this cutoff</small>
+                                <small>Amount to be deducted this cutoff</small>
                             </div>
                         </div>
                         <div class="balance-item">
@@ -52,7 +57,7 @@
                                 <p class="balance-days">
                                     <span th:text="${deductionOutstandingBalance}">0.00</span> PHP
                                 </p>
-                                <small>Remaining balance for all deductions</small>
+                                <small>Remaining unpaid amount for all deductions</small>
                             </div>
                         </div>
                     </div>
