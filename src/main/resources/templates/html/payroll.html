@@ -16,7 +16,7 @@
         <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
         <section>
-            <div class="head">
+            <div class="head no-print">
                 <h1>Payroll of <span th:text="${employeeName}">User</span></h1>
                 <button type="button" class="btn-print no-print" onclick="window.print()">
                     <i class="fa-solid fa-print"></i> Print
@@ -51,15 +51,37 @@
                 </select>
             </form>
 
-            <p class="print-only print-date">
-                <span th:text="${selectedYear}">2026</span> &mdash;
-                <span th:text="${selectedMonth}">May</span> &mdash;
-                <span th:text="${selectedPeriod == 'monthly' ? 'Monthly' : (selectedPeriod == 'semi_1' ? 'Semi-monthly (1–15)' : 'Semi-monthly (16–end)')}">Monthly</span>
-            </p>
+            <div class="print-only print-header" th:if="${employee != null}">
+                <!-- Logo and title -->
+                <div class="print-logo-block">
+                    <img th:src="@{/images/cropped-D8-black-4.webp}" alt="Digital8" class="print-logo" />
+                    <h2 class="print-title">PAYSLIP</h2>
+                </div>
+
+                <!-- Employee details section -->
+                <table class="print-employee-details">
+                    <tr>
+                        <td class="detail-section-header" colspan="4">Employee Details</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label">Employee Name</td>
+                        <td class="detail-value" th:text="${employeeName}">—</td>
+                        <td class="detail-label">Address</td>
+                        <td class="detail-value" th:text="${employee.address != null ? employee.address : '—'}">—</td>
+                    </tr>
+                </table>
+
+                <!-- Period info line -->
+                <p class="print-period-line">
+                    <strong>Pay Period</strong>
+                    <span th:text="${selectedYear}">2026</span> &mdash;
+                    <span th:text="${selectedMonth}">May</span> &mdash;
+                    <span th:text="${selectedPeriod == 'monthly' ? 'Monthly' : (selectedPeriod == 'semi_1' ? 'Semi-monthly (1–15)' : 'Semi-monthly (16–end)')}">Monthly</span>
+                </p>
+            </div>
 
             <div th:if="${payrollItems != null and !payrollItems.isEmpty()}" class="payslip-wrap">
                 <table class="attendanceTable payslip-table">
-                    <caption>Payslip</caption>
                     <thead>
                         <tr class="attendanceHeader"><th>Earnings / Deductions</th><th>Amount (PHP)</th></tr>
                     </thead>
@@ -115,7 +137,12 @@
             <p th:if="${payrollItems == null || payrollItems.isEmpty()}" class="no-payroll">No payroll data for this period.</p>
         </section>
     </div>
+    <p class="print-only print-footer-date" id="printDate"></p>
     <script src="/js/nav.js"></script>
+    <script>
+        document.getElementById('printDate').textContent =
+            new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    </script>
 </body>
 </html>
 
