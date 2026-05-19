@@ -51,6 +51,12 @@
                 </select>
             </form>
 
+            <p class="print-only print-date">
+                <span th:text="${selectedYear}">2026</span> &mdash;
+                <span th:text="${selectedMonth}">May</span> &mdash;
+                <span th:text="${selectedPeriod == 'monthly' ? 'Monthly' : (selectedPeriod == 'semi_1' ? 'Semi-monthly (1–15)' : 'Semi-monthly (16–end)')}">Monthly</span>
+            </p>
+
             <div th:if="${payrollItems != null and !payrollItems.isEmpty()}" class="payslip-wrap">
                 <table class="attendanceTable payslip-table">
                     <caption>Payslip</caption>

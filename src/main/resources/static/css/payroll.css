@@ -141,3 +141,165 @@
 .payslip-table .attendanceHeader th {
     font-size: 1.130rem;   /* try 1rem, 1.15rem, 1.2rem */
 }
+
+/* Print-only elements: hidden on screen */
+.print-only {
+    display: none !important;
+}
+
+.print-date {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+    /* Minimise page margins to maximise usable area */
+    @page {
+        size: portrait;
+        margin: 8mm;
+    }
+
+    /* Strip background & fixed dimensions from body */
+    body {
+        background: white !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Flatten the flex layout — hide nav, let section fill full width */
+    .container {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    nav {
+        display: none !important;
+    }
+
+    section {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Hide non-printable UI elements */
+    .no-print,
+    .btn-print,
+    .payroll-filters,
+    .payroll-subnav {
+        display: none !important;
+    }
+
+    /* Show print-only elements */
+    .print-only {
+        display: block !important;
+    }
+
+    .print-date {
+        font-size: 10pt !important;
+        margin: 2pt 0 4pt 0 !important;
+        color: #333 !important;
+    }
+
+    /* ---- Heading ---- */
+    section .head {
+        margin-bottom: 2pt !important;
+    }
+
+    section .head h1 {
+        font-size: 13pt !important;
+        margin: 0 0 2pt 0 !important;
+    }
+
+    /* ---- Payslip table – compact for single-page fit ---- */
+    .payslip-wrap {
+        width: 100% !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .attendanceTable.payslip-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 9pt !important;
+        border-collapse: collapse !important;
+    }
+
+    .attendanceTable.payslip-table caption {
+        font-size: 10pt !important;
+        margin-bottom: 2pt !important;
+        text-align: left;
+    }
+
+    .attendanceTable.payslip-table tr {
+        page-break-inside: avoid;
+    }
+
+    .attendanceTable th,
+    .attendanceTable td {
+        border: 1px solid #444 !important;
+        padding: 2pt 4pt !important;
+        background: white !important;
+        color: #000 !important;
+        line-height: 1.3 !important;
+    }
+
+    .attendanceHeader th {
+        background: #ddd !important;
+        color: #000 !important;
+        font-size: 9pt !important;
+        padding: 3pt 4pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .attendanceTable.payslip-table td.table-section-header {
+        background-color: #e8e4f5 !important;
+        font-size: 9.5pt !important;
+        padding: 3pt 4pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .payslip-table .net-row td {
+        border-top: 2pt solid #000 !important;
+        font-weight: 700;
+    }
+
+    .payslip-table .gross-row td {
+        border-top: 1.5pt solid #000 !important;
+    }
+
+    .payslip-table .deduct-row td {
+        border-top: 1pt solid #999 !important;
+    }
+
+    .payslip-table .service-fee-row td {
+        padding: 2pt 4pt !important;
+    }
+
+    .rate-note {
+        font-size: 8pt !important;
+    }
+
+    /* Remove hover effects in print */
+    tr td:hover {
+        background-color: white !important;
+    }
+
+    li:hover {
+        background-color: transparent !important;
+    }
+}
