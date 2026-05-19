@@ -6,6 +6,16 @@
     flex-direction: column;
 }
 
+.adjust-panel-header {
+    display: flex;
+    justify-content: space-between;
+}
+
+.adjust-panel-header i {
+    color: var(--secondary-color);
+    font-size: 1.5rem;
+}
+
 .adjust-panel > label {
     display: block;
 }
