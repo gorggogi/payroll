@@ -30,7 +30,7 @@
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
-            <div class="ot-panel" th:if="${adminOvertimePage and pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
+            <div class="ot-requests" th:if="${adminOvertimePage and pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
                 <h2>Pending overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>
@@ -86,7 +86,7 @@
                         <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
                         <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
                     </div>
-                    <form method="post" th:action="${isAdmin} ? '/admin/attendance/overtime/save' : overtimeRequestAction">
+                    <form method="post" th:action="@{/employee/attendance/overtime/request}">
                         <!-- Hidden fields for admin POST handler -->
                         <input type="hidden" name="year" th:value="${selectedYear}" th:if="${isAdmin}" />
                         <input type="hidden" name="month" th:value="${selectedMonth}" th:if="${isAdmin}" />
@@ -144,7 +144,7 @@
             </form>
             <p sec:authorize="hasRole('EMPLOYEE')" th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}" class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
 
-            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-requests" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
                 <h2>My overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>

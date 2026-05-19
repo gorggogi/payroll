@@ -336,6 +336,9 @@ function renderEmployeeDetail(emp) {
                     <label class="checkbox-label"><input type="checkbox" name="holidayPayEligible" ${emp.holidayPayEligible ? 'checked' : ''} /> Holiday Pay Eligible
                         <small>If checked, this employee receives 2× pay on regular holidays.</small>
                     </label>
+                    <label class="checkbox-label"><input type="checkbox" name="isAdmin" ${emp.isAdmin ? 'checked' : ''} /> Admin
+                        <small>Grant this employee admin privileges.</small>
+                    </label>
                     <div class="form-actions">
                         <a href="/admin/attendance?empId=${emp.employeeId}" class="btn-view-attendance" target="_blank"><i class="fa-solid fa-calendar-check"></i> View Attendance</a>
                         <a href="/payroll/${emp.employeeId}" class="btn-view-payroll" target="_blank"><i class="fa-solid fa-money-bill"></i> View Payroll</a>
@@ -417,6 +420,7 @@ function saveEmployee(employeeId) {
         factorRate: formData.get('factorRate') ? Number(formData.get('factorRate')) : null,
         otMultiplier: formData.get('otMultiplier') ? Number(formData.get('otMultiplier')) : null,
         holidayPayEligible: form.querySelector('[name="holidayPayEligible"]').checked,
+        isAdmin: form.querySelector('[name="isAdmin"]').checked,
     };
 
     const deptId = formData.get('departmentId');

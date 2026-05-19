@@ -87,14 +87,8 @@ public class OvertimeRequestService {
     }
 
     public List<OvertimeRequest> listPendingExcludingEmployee(Integer excludeEmployeeId) {
-        List<OvertimeRequest> pending = overtimeRequestRepository.findByStatusOrderByRequestedAtAsc("Pending");
-        if (excludeEmployeeId == null) {
-            return pending;
-        }
-        return pending.stream()
-                .filter(r -> r.getEmployee() == null
-                        || !excludeEmployeeId.equals(r.getEmployee().getEmployeeId()))
-                .toList();
+        // Now includes all pending requests, including those by the admin themselves
+        return overtimeRequestRepository.findByStatusOrderByRequestedAtAsc("Pending");
     }
 
     public List<OvertimeRequest> listPendingExcludingEmployeeInMonth(Integer excludeEmployeeId, int year, int month) {

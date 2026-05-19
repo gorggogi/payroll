@@ -126,6 +126,44 @@ public class attendanceController {
         model.addAttribute("self_emp_id", selfEmpId);
         return "html/overtimeAdminSelf";
         }
+
+        @PostMapping("/admin/attendance/overtime/self")
+        public String submitAdminSelfOvertimeRequest(
+                @RequestParam LocalDate workDate,
+                @RequestParam String overtimeIn,
+                @RequestParam String overtimeOut,
+                @RequestParam String reason,
+                Authentication authentication,
+                RedirectAttributes redirectAttributes) {
+
+            if (!(authentication.getPrincipal() instanceof Users)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Not signed in.");
+                return "redirect:/index";
+            }
+            Users user = (Users) authentication.getPrincipal();
+            if (user.getEmployee() == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "No employee profile linked.");
+                return "redirect:/adminHome";
+            }
+            if (workDate == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Work date is required.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
+            LocalTime in = parseLocalTime(overtimeIn);
+            LocalTime out = parseLocalTime(overtimeOut);
+            if (in == null || out == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Invalid overtime in or out time.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
+            try {
+                overtimeRequestService.submit(
+                        user.getEmployee().getEmployeeId(), workDate, in, out, reason);
+                redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            }
+            return "redirect:/admin/attendance/overtime/self";
+        }
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
 
     @Autowired

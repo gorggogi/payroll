@@ -20,6 +20,9 @@
                 <h1 style="display: flex; align-items: center; gap: 1rem;">
                     Overtime
                 </h1>
+                <button type="button" class="btn-primary" style="margin-left:auto;" onclick="window.location.href='/admin/attendance/overtime'">
+                    <i class="fa-solid fa-arrow-right"></i> Go to Admin Overtime
+                </button>
             </div>
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
@@ -52,7 +55,7 @@
                 </select>
             </form>
             <p th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}" class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
-            <div class="ot-panel" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+            <div class="ot-requests" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
                 <h2>My overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>
@@ -124,7 +127,7 @@
                         <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
                         <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
                     </div>
-                    <form method="post" th:action="${overtimeRequestAction}">
+                    <form method="post" th:action="@{/admin/attendance/overtime/self}">
                         <div class="ot-form-grid">
                             <label>Work date (date OT applies to)
                                 <input type="date" name="workDate" required />
@@ -148,35 +151,7 @@
                     </form>
                 </div>
             </div>
-            <div class="ot-panel" th:if="${myOvertimeRequests != null && !myOvertimeRequests.isEmpty()}">
-                <h2>My overtime requests</h2>
-                <table class="attendanceTable">
-                    <thead>
-                        <tr class="attendanceHeader">
-                            <th>Work date</th>
-                            <th>Overtime time in</th>
-                            <th>Overtime time out</th>
-                            <th>Total hours</th>
-                            <th>Status</th>
-                            <th>Approved by</th>
-                            <th>Reason</th>
-                            <th>Submitted</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="r : ${myOvertimeRequests}">
-                            <td th:text="${r.workDate}"></td>
-                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.totalHoursDisplay}"></td>
-                            <td th:text="${r.status}"></td>
-                            <td th:text="${approverNameByRequestId != null && approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '—'}"></td>
-                            <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
-                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <!-- Duplicate 'My overtime requests' table removed -->
         </section>
     </div>
     <script src="/js/nav.js"></script>
