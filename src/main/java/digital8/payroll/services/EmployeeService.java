@@ -140,7 +140,12 @@ public class EmployeeService {
     }
 
     public Optional<Employees> getEmployeeById(Integer id) {
-        return employeeRepository.findById(id);
+        return employeeRepository.findById(id).map(emp -> {
+            if (emp.getUser() != null && emp.getUser().getRole() != null) {
+                emp.setIsAdmin(emp.getUser().getRole().getRoleId() == 1);
+            }
+            return emp;
+        });
     }
 
     @Transactional
