@@ -120,3 +120,34 @@
 .total-hours strong { 
     margin-left: 0.25rem; 
 }
+
+.btn-edit-shift {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-edit-shift.save-btn {
+    background-color: #28a745;
+    color: white;
+    border: none;
+}
+
+.btn-edit-shift.save-btn:hover {
+    background-color: #218838;
+}
+
+.shift-cell {
+    vertical-align: middle;
+}
+
+.shift-edit-row input[type="time"] {
+    width: 100px;
+    padding: 4px 6px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+.shift-edit-banner { display: none; }

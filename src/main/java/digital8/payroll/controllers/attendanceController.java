@@ -16,6 +16,8 @@ import digital8.payroll.repositories.WeeklyScheduleTemplateDayRepository;
 import digital8.payroll.repositories.WeeklyScheduleTemplateRepository;
 import digital8.payroll.services.OvertimeRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
@@ -58,6 +60,7 @@ import java.util.stream.Collectors;
 
 @Controller
 public class attendanceController {
+    private static final Logger log = LoggerFactory.getLogger(attendanceController.class);
         @GetMapping("/admin/attendance/overtime/self")
         public String adminSelfOvertimePage(
             @RequestParam(required = false) Integer month,
@@ -445,25 +448,35 @@ public class attendanceController {
         String v = unquote(raw.trim());
         if (v.isEmpty()) return null;
 
-        // Accept HH:mm or HH:mm:ss (also ISO when provided)
-        try {
-            return LocalTime.parse(v);
-        } catch (DateTimeParseException ignored) {
-            DateTimeFormatter[] formatters = new DateTimeFormatter[]{
-                    DateTimeFormatter.ofPattern("H:mm"),
-                    DateTimeFormatter.ofPattern("HH:mm"),
-                    DateTimeFormatter.ofPattern("H:mm:ss"),
-                    DateTimeFormatter.ofPattern("HH:mm:ss"),
-            };
-            for (DateTimeFormatter f : formatters) {
-                try {
-                    return LocalTime.parse(v, f);
-                } catch (DateTimeParseException ignored2) {
-                    // keep trying
-                }
+        DateTimeFormatter[] formatters = new DateTimeFormatter[]{
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm"),
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm:ss"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+        };
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalTime.parse(v, f);
+            } catch (DateTimeParseException ignored) {
             }
-            return null;
         }
+        String ampm = v.replaceAll(".*?(AM|PM).*", "$1").toUpperCase();
+        if (ampm.equals("AM") || ampm.equals("PM")) {
+            String timeOnly = v.replaceAll("(AM|PM)", "").trim();
+            String[] hm = timeOnly.split(":");
+            if (hm.length >= 2) {
+                int h = Integer.parseInt(hm[0].trim());
+                int m = hm[1].trim().length() > 0 ? Integer.parseInt(hm[1].trim().split("[^0-9]")[0]) : 0;
+                if (ampm.equals("PM") && h != 12) h += 12;
+                if (ampm.equals("AM") && h == 12) h = 0;
+                return LocalTime.of(h, m);
+            }
+        }
+        return null;
     }
 
     private String unquote(String v) {
@@ -476,6 +489,7 @@ public class attendanceController {
         }
         return s;
     }
+
     @GetMapping({"/admin/attendance/overtime", "/employee/attendance/overtime"})
     public String overtimePage(
             @RequestParam(required = false) Integer month,
@@ -1114,6 +1128,9 @@ public class attendanceController {
             if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
                 continue;
             }
+            log.debug("[POPULATE] attId={}, time_in={}, time_out={}, shiftOverride='{}'",
+                    attendance.getAttendanceId(), attendance.getTime_in(), attendance.getTime_out(),
+                    attendance.getShiftOverride());
             BigDecimal workHours = attendance.getWork_hours();
             Integer lateMinutes = attendance.getLate_minutes();
             Integer undertimeMinutes = attendance.getUndertime_minutes();
@@ -1128,7 +1145,15 @@ public class attendanceController {
                     0,
                     0);
             if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
-                ShiftMatchResult shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                ShiftMatchResult shiftMatch;
+                if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                    shiftMatch = parseShiftOverride(attendance.getShiftOverride());
+                } else {
+                    shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                }
+                log.debug("[POPULATE] attId={}, shiftMatch: allowed={}, restDay={}, shiftIn={}, shiftOut={}",
+                        attendance.getAttendanceId(), shiftMatch.allowed, shiftMatch.restDay,
+                        shiftMatch.shiftIn, shiftMatch.shiftOut);
                 if (shiftMatch.restDay) {
                     workHours = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
                     lateMinutes = 0;
@@ -1157,6 +1182,55 @@ public class attendanceController {
             attendance.setOvertime_hours(overtimeHours != null
                     ? overtimeHours.setScale(2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        }
+    }
+
+    private ShiftMatchResult parseShiftOverride(String override) {
+        if (override == null || override.isBlank()) {
+            log.warn("[PARSE_OVERRIDE] empty shift override");
+            return ShiftMatchResult.denied("empty shift override");
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                "(\\d{1,2}:\\d{2}(?::\\d{2})?)\\s*(AM|PM)?\\s*-\\s*(\\d{1,2}:\\d{2}(?::\\d{2})?)\\s*(AM|PM)?",
+                java.util.regex.Pattern.CASE_INSENSITIVE).matcher(override.trim());
+        if (!m.matches()) {
+            log.warn("[PARSE_OVERRIDE] invalid format: '{}'", override);
+            return ShiftMatchResult.denied("invalid shift override format: " + override);
+        }
+        String inRaw = m.group(1);
+        String outRaw = m.group(3);
+        String ampmIn = m.group(2);
+        String ampmOut = m.group(4);
+        LocalTime shiftIn = parseShiftTime(inRaw, ampmIn);
+        LocalTime shiftOut = parseShiftTime(outRaw, ampmOut);
+        log.debug("[PARSE_OVERRIDE] override='{}', shiftIn={}, shiftOut={}", override, shiftIn, shiftOut);
+        if (shiftIn == null || shiftOut == null) {
+            return ShiftMatchResult.denied("unparseable shift override times: " + override);
+        }
+        return ShiftMatchResult.allowed(override, shiftIn, shiftOut);
+    }
+
+    private LocalTime parseShiftTime(String time, String ampm) {
+        if (time == null) return null;
+        time = time.trim();
+        if (time.isEmpty()) return null;
+        if (ampm != null && !ampm.isBlank()) {
+            time = time + " " + ampm.trim();
+        }
+        return parseLocalTime(time);
+    }
+
+    private String formatShiftLabel12h(String label24h) {
+        if (label24h == null || label24h.isBlank()) return label24h;
+        try {
+            String[] parts = label24h.split("\\s*-\\s*");
+            if (parts.length != 2) return label24h;
+            LocalTime in = parseLocalTime(parts[0].trim());
+            LocalTime out = parseLocalTime(parts[1].trim());
+            if (in == null || out == null) return label24h;
+            return in.format(DateTimeFormatter.ofPattern("hh:mm a")) + " - " + out.format(DateTimeFormatter.ofPattern("hh:mm a"));
+        } catch (Exception e) {
+            return label24h;
         }
     }
 
@@ -1494,8 +1568,12 @@ public class attendanceController {
                 if (attendanceDate == null) {
                     continue;
                 }
-                ShiftMatchResult shiftMatch = validateAgainstShift(targetEmpId, attendanceDate);
-                shiftLabelByDate.put(attendanceDate, shiftMatch.allowed ? shiftMatch.shiftLabel : shiftMatch.reason);
+                if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                    shiftLabelByDate.put(attendanceDate, formatShiftLabel12h(attendance.getShiftOverride()));
+                } else {
+                    ShiftMatchResult shiftMatch = validateAgainstShift(targetEmpId, attendanceDate);
+                    shiftLabelByDate.put(attendanceDate, shiftMatch.allowed ? shiftMatch.shiftLabel : shiftMatch.reason);
+                }
             }
             model.addAttribute("attendances", filtered);
             model.addAttribute("shiftLabelByDate", shiftLabelByDate);
@@ -1534,5 +1612,52 @@ public class attendanceController {
             model.addAttribute("totalUndertimeMinutes", 0);
         }
         return "html/attendance";
+    }
+
+    @PostMapping("/admin/attendance/shift/edit")
+    public String editAttendanceShift(
+            @RequestParam(value = "attendanceId", required = false) List<Integer> attendanceIds,
+            @RequestParam(value = "shiftIn", required = false) List<String> shiftIns,
+            @RequestParam(value = "shiftOut", required = false) List<String> shiftOuts,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer empId,
+            RedirectAttributes ra,
+            HttpServletRequest request) {
+
+        if (attendanceIds != null) {
+            for (int i = 0; i < attendanceIds.size(); i++) {
+                Integer attId = attendanceIds.get(i);
+                String shiftIn = shiftIns != null && i < shiftIns.size() ? shiftIns.get(i) : null;
+                String shiftOut = shiftOuts != null && i < shiftOuts.size() ? shiftOuts.get(i) : null;
+
+                log.debug("[SHIFT_SAVE] attId={}, shiftIn='{}', shiftOut='{}'", attId, shiftIn, shiftOut);
+
+                Attendance attendance = attendanceRepository.findById(attId)
+                        .orElseThrow(() -> new IllegalArgumentException("Attendance not found: " + attId));
+
+                String shiftLabel = null;
+                if (shiftIn != null && !shiftIn.isBlank() && shiftOut != null && !shiftOut.isBlank()) {
+                    shiftLabel = shiftIn + " - " + shiftOut;
+                }
+                log.debug("[SHIFT_SAVE] attId={}, shiftLabel='{}'", attId, shiftLabel);
+                attendance.setShiftOverride(shiftLabel);
+                attendanceRepository.save(attendance);
+                populateComputedWorkHours(List.of(attendance));
+                attendanceRepository.save(attendance);
+                log.debug("[SHIFT_SAVE] attId={}, after recalc: late={}, undertime={}, overtime={}, workHours={}",
+                        attId, attendance.getLate_minutes(), attendance.getUndertime_minutes(),
+                        attendance.getOvertime_hours(), attendance.getWork_hours());
+            }
+        }
+
+        ra.addFlashAttribute("successMessage", "Shift updated successfully.");
+
+        StringBuilder redirectUrl = new StringBuilder("/admin/attendance");
+        String sep = "?";
+        if (month != null) { redirectUrl.append(sep).append("month=").append(month); sep = "&"; }
+        if (year != null)  { redirectUrl.append(sep).append("year=").append(year);  sep = "&"; }
+        if (empId != null) { redirectUrl.append(sep).append("empId=").append(empId); }
+        return "redirect:" + redirectUrl;
     }
 }
