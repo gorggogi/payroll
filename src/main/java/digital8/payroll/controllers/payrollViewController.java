@@ -79,8 +79,10 @@ public class payrollViewController {
         }
         model.addAttribute("emp_id", empId);
 
-        employeeService.getEmployeeById(empId).ifPresent(emp ->
-                model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName()));
+        employeeService.getEmployeeById(empId).ifPresent(emp -> {
+                model.addAttribute("employeeName", emp.getFirstName() + " " + emp.getLastName());
+                model.addAttribute("employee", emp);
+        });
         if (!model.containsAttribute("employeeName")) {
             model.addAttribute("employeeName", "Employee");
         }
