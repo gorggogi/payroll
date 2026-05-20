@@ -35,6 +35,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Month;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -442,12 +444,28 @@ public class PayrollService {
                     preferStoredInt(attendance.getLate_minutes(), 0),
                     preferStoredInt(attendance.getUndertime_minutes(), 0));
 
-            if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date())) {
+            if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date(), attendance.getShiftOverride())) {
                 return new AttendanceMetrics(
                         BigDecimal.ZERO.setScale(SCALE, ROUND),
                         storedOvertime,
                         0,
                         0);
+            }
+
+            if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                ShiftOverrideResult overrideResult = parseShiftOverride(attendance.getShiftOverride());
+                if (overrideResult != null) {
+                    AttendanceMetrics computed = computeAttendanceMetrics(
+                            timeIn,
+                            timeOut,
+                            overrideResult.shiftIn,
+                            overrideResult.shiftOut);
+                    return new AttendanceMetrics(
+                            computed.workHours,
+                            resolveOvertimeHours(attendance.getOvertime_hours(), computed.overtimeHours),
+                            computed.lateMinutes,
+                            computed.undertimeMinutes);
+                }
             }
 
             Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
@@ -471,14 +489,66 @@ public class PayrollService {
         return fallback;
     }
 
-    private boolean isRestDay(Integer employeeId, LocalDate date) {
-        if (employeeId == null || date == null) {
-            return false;
+    private static final class ShiftOverrideResult {
+        final LocalTime shiftIn;
+        final LocalTime shiftOut;
+        ShiftOverrideResult(LocalTime shiftIn, LocalTime shiftOut) {
+            this.shiftIn = shiftIn;
+            this.shiftOut = shiftOut;
         }
+    }
+
+    private ShiftOverrideResult parseShiftOverride(String override) {
+        if (override == null || override.isBlank()) return null;
+        try {
+            String[] parts = override.trim().split("\\s*-\\s*");
+            if (parts.length != 2) return null;
+            LocalTime in = parseLocalTime(parts[0].trim());
+            LocalTime out = parseLocalTime(parts[1].trim());
+            if (in == null || out == null) return null;
+            return new ShiftOverrideResult(in, out);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private LocalTime parseLocalTime(String raw) {
+        if (raw == null) return null;
+        String v = raw.trim();
+        if (v.isEmpty()) return null;
+        DateTimeFormatter[] formatters = new DateTimeFormatter[]{
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm"),
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm:ss"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+        };
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalTime.parse(v, f);
+            } catch (DateTimeParseException ignored) {}
+        }
+        String ampm = v.replaceAll(".*?(AM|PM).*", "$1").toUpperCase();
+        if (ampm.equals("AM") || ampm.equals("PM")) {
+            String timeOnly = v.replaceAll("(AM|PM)", "").trim();
+            String[] hm = timeOnly.split(":");
+            if (hm.length >= 2) {
+                int h = Integer.parseInt(hm[0].trim());
+                int m = hm[1].trim().length() > 0 ? Integer.parseInt(hm[1].trim().split("[^0-9]")[0]) : 0;
+                if (ampm.equals("PM") && h != 12) h += 12;
+                if (ampm.equals("AM") && h == 12) h = 0;
+                return LocalTime.of(h, m);
+            }
+        }
+        return null;
+    }
+
+    private boolean isRestDay(Integer employeeId, LocalDate date, String shiftOverride) {
+        if (employeeId == null || date == null) return false;
+        if (shiftOverride != null && !shiftOverride.isBlank()) return false;
         Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, date);
-        if (assignmentOpt.isEmpty()) {
-            return false;
-        }
+        if (assignmentOpt.isEmpty()) return false;
         return weeklyScheduleTemplateDayRepository.findByTemplateIdAndDayOfWeek(
                 assignmentOpt.get().getTemplateId(),
                 date.getDayOfWeek().getValue())
