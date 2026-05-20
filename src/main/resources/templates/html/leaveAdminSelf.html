@@ -93,7 +93,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="reliever">Reliever/Substitute for this leave:</label>
+                        <label for="reliever">Reliever for this leave:</label>
                         <select id="reliever" name="reliever">
                             <option value="">-- None --</option>
                             <option th:each="emp : ${activeEmployees}"
@@ -103,7 +103,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="attachment">Attach File (Proof of Absence):</label>
+                        <label for="attachment">Attach File (For Proof): *</label>
                         <input type="file" id="attachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
                     </div>
 
