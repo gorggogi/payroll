@@ -10,6 +10,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,10 +22,15 @@ import org.springframework.http.ResponseEntity;
 @Controller
 public class LeaveController {
 
+    private static final Logger log = LoggerFactory.getLogger(LeaveController.class);
+
     @Autowired
     private LeaveService leaveService;
     @Autowired
     private UsersRepository usersRepository;
+
+    @Autowired
+    private digital8.payroll.services.EmployeeService employeeService;
 
     @GetMapping("/employee/leave")
     public String employeeLeavePage(Model model, Authentication authentication) {
@@ -36,6 +44,7 @@ public class LeaveController {
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
         model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        model.addAttribute("activeEmployees", employeeService.filterEmployees(null, null, null, "Active", null, null, null, null, null, null));
         user.setLastLeaveViewedAt(LocalDateTime.now());
         usersRepository.save(user);
 
@@ -53,6 +62,7 @@ public class LeaveController {
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
         model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        model.addAttribute("activeEmployees", employeeService.filterEmployees(null, null, null, "Active", null, null, null, null, null, null));
         user.setLastLeaveViewedAt(LocalDateTime.now());
         usersRepository.save(user);
 
@@ -65,17 +75,36 @@ public class LeaveController {
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
             @RequestParam String reason,
+            @RequestParam(value = "reliever", required = false) String reliever,
+            @RequestParam(value = "attachment", required = false) org.springframework.web.multipart.MultipartFile attachment,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
+
         try {
+            log.info("[LeaveController] submitLeaveRequest called with leaveTypeId={}, startDate={}, endDate={}, reason={}, reliever={}", leaveTypeId, startDate, endDate, reason, reliever);
             Users user = (Users) authentication.getPrincipal();
             Integer employeeId = user.getEmployee().getEmployeeId();
 
-            leaveService.submitLeaveRequest(employeeId, leaveTypeId, startDate, endDate, reason);
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                // Always use project root for uploads
+                String projectRoot = System.getProperty("user.dir");
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "leave_attachments");
+                java.nio.file.Files.createDirectories(uploadDir);
+                String fileName = System.currentTimeMillis() + "_" + attachment.getOriginalFilename();
+                java.nio.file.Path filePath = uploadDir.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                attachmentPath = "uploads/leave_attachments/" + fileName;
+            }
+
+            log.info("[LeaveController] Calling leaveService.submitLeaveRequest with employeeId={}, leaveTypeId={}, startDate={}, endDate={}, reason={}, reliever={}, attachmentPath={}", employeeId, leaveTypeId, startDate, endDate, reason, reliever, attachmentPath);
+            leaveService.submitLeaveRequest(employeeId, leaveTypeId, startDate, endDate, reason, reliever, attachmentPath);
+            log.info("[LeaveController] leaveService.submitLeaveRequest completed");
 
             redirectAttributes.addFlashAttribute("successMessage", "Leave request submitted successfully!");
         } catch (Exception e) {
+            log.error("[LeaveController] Exception in submitLeaveRequest", e);
             redirectAttributes.addFlashAttribute("errorMessage", "Failed to submit leave request: " + e.getMessage());
         }
 
