@@ -91,10 +91,19 @@ public class payrollViewController {
         int selectedYear = (year != null) ? year : currentYear;
         String monthName = (month != null && !month.isBlank()) ? month : Month.of(java.time.LocalDate.now().getMonthValue()).name();
         String effectivePeriod = (period != null && !period.isBlank()) ? period : "monthly";
-        List<PayrollItems> items = payrollService.computePayroll(empId, effectivePeriod, monthName, selectedYear);
-        if (items == null || items.isEmpty()) {
+        
+        List<PayrollItems> items = null;
+        try {
+            items = payrollService.computePayroll(empId, effectivePeriod, monthName, selectedYear);
+        } catch (digital8.payroll.exceptions.ScheduleNotAssignedException e) {
+            model.addAttribute("noScheduleError", true);
+            model.addAttribute("noScheduleMessage", "No schedule assigned for this employee. Assign a schedule to compute payroll.");
+        }
+
+        if ((items == null || items.isEmpty()) && !model.containsAttribute("noScheduleError")) {
             items = payrollItemsRepository.findByEmployeeIdOrderByPayrollItemIdDesc(empId);
         }
+        
         model.addAttribute("payrollItems", items != null ? items : List.of());
         model.addAttribute("selectedMonth", monthName);
         model.addAttribute("selectedYear", selectedYear);
@@ -107,6 +116,11 @@ public class payrollViewController {
         } catch (Exception e) {
             monthEnum = Month.from(java.time.LocalDate.now());
         }
+        model.addAttribute("selectedMonthValue", monthEnum.getValue());
+        
+        int workingDaysInMonth = payrollService.computeWorkingDaysInMonth(empId, java.time.YearMonth.of(selectedYear, monthEnum));
+        model.addAttribute("workingDaysInMonth", workingDaysInMonth);
+        
         LocalDate[] bounds = payrollService.getPayrollPeriodBounds(selectedYear, monthEnum, effectivePeriod);
         List<DeductionBreakdownItem> deductionsBreakdown =
                 payrollService.getDeductionsBreakdown(empId, bounds[0], bounds[1], effectivePeriod);

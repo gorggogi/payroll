@@ -255,6 +255,7 @@ public class attendanceController {
             }
             if (selected != null) {
                 selectedTemplateName = selected.getTemplateName() != null ? selected.getTemplateName() : "";
+                model.addAttribute("selectedTemplateIndefinite", selected.isIndefinite());
                 model.addAttribute("weeklyScheduleRows", buildTemplateDayRows(selectedTemplateId));
                 model.addAttribute("assignedEmployeeIds", employeeScheduleAssignmentRepository.findEmployeeIdsByTemplateAndMonth(
                         selectedTemplateId, selected.getScheduleYear(), selected.getScheduleMonth()));
@@ -271,11 +272,31 @@ public class attendanceController {
         return "html/shifting";
     }
 
+    @PostMapping("/admin/attendance/schedule-template/toggle-indefinite")
+    public String toggleIndefiniteScheduleTemplate(
+            @RequestParam("templateId") Integer templateId,
+            @RequestParam(value = "indefinite", defaultValue = "false") boolean indefinite,
+            RedirectAttributes redirectAttributes) {
+
+        WeeklyScheduleTemplate tpl = weeklyScheduleTemplateRepository.findById(templateId).orElse(null);
+        if (tpl == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Schedule class not found.");
+            return "redirect:/admin/attendance/shifts";
+        }
+        
+        tpl.setIndefinite(indefinite);
+        weeklyScheduleTemplateRepository.save(tpl);
+        
+        redirectAttributes.addFlashAttribute("successMessage", "Schedule updated.");
+        return redirectForShifting(tpl.getScheduleYear(), tpl.getScheduleMonth(), templateId);
+    }
+
     @PostMapping("/admin/attendance/schedule-template/create")
     public String createScheduleTemplate(
             @RequestParam("templateName") String templateName,
             @RequestParam("scheduleYear") Integer scheduleYear,
             @RequestParam("scheduleMonth") Integer scheduleMonth,
+            @RequestParam(value = "indefinite", defaultValue = "false") boolean indefinite,
             RedirectAttributes redirectAttributes) {
 
         if (templateName == null || templateName.trim().isEmpty()) {
@@ -291,6 +312,7 @@ public class attendanceController {
         t.setTemplateName(unquote(templateName.trim()));
         t.setScheduleYear(scheduleYear);
         t.setScheduleMonth(scheduleMonth);
+        t.setIndefinite(indefinite);
         weeklyScheduleTemplateRepository.save(t);
         redirectAttributes.addFlashAttribute("successMessage", "Schedule class created.");
         return redirectForShifting(scheduleYear, scheduleMonth, t.getTemplateId());
@@ -350,6 +372,29 @@ public class attendanceController {
         }
 
         return redirectForShifting(sy, sm, templateId);
+    }
+
+    @PostMapping("/admin/attendance/schedule-template/unassign")
+    public String unassignScheduleTemplateEmployee(
+            @RequestParam("templateId") Integer templateId,
+            @RequestParam("employeeId") Integer employeeId,
+            RedirectAttributes redirectAttributes) {
+
+        WeeklyScheduleTemplate tpl = weeklyScheduleTemplateRepository.findById(templateId).orElse(null);
+        if (tpl == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Schedule class not found.");
+            return "redirect:/admin/attendance/shifts";
+        }
+
+        try {
+            employeeScheduleAssignmentRepository.deleteByEmployeeIdAndScheduleYearAndScheduleMonth(
+                    employeeId, tpl.getScheduleYear(), tpl.getScheduleMonth());
+            redirectAttributes.addFlashAttribute("successMessage", "Employee unassigned.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to unassign employee: " + e.getMessage());
+        }
+
+        return redirectForShifting(tpl.getScheduleYear(), tpl.getScheduleMonth(), templateId);
     }
 
     @PostMapping("/admin/attendance/schedule-template/assign")

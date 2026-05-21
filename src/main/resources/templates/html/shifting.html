@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -39,7 +39,7 @@
                 <i class="fa-solid fa-plus"></i> New Schedule Class
             </button>
         </div>
-        <p class="no-payroll no-print">Create a <b>schedule class</b> for the month, set Sun–Sat, then tick employees who use it. One schedule per employee per month.</p>
+        <p class="no-payroll no-print">Create a <b>schedule class</b> (Sun–Sat pattern), then assign employees to it. One schedule per employee per month. Toggle <b>Indefinite</b> when creating a class to carry it over automatically to future months until changed, or leave it off to restrict it to that month only.</p>
 
         <form method="get" th:action="@{/admin/attendance/shifts}"
               class="no-print mb-4 mt-8 flex w-full min-w-0 max-w-full flex-row flex-nowrap items-stretch gap-4 box-border">
@@ -82,6 +82,16 @@
                     <span th:text="${#temporals.format(T(java.time.LocalDate).of(2000, scheduleMonth, 1), 'MMMM')}">January</span>
                     <span th:text="${scheduleYear}">2026</span>
                 </p>
+                <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm">
+                    <span th:if="${t.indefinite}"
+                          class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                        <i class="fa-solid fa-infinity text-[0.65rem]"></i> Indefinite
+                    </span>
+                    <span th:unless="${t.indefinite}"
+                          class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                        <i class="fa-solid fa-calendar-day text-[0.65rem]"></i> Month only
+                    </span>
+                </p>
                 <p class="my-0.5 flex flex-wrap items-baseline justify-start gap-1.5 text-sm text-gray-500">
                     <b class="shrink-0 font-semibold text-gray-800">Start:</b>
                     <span th:text="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1)}">2026-01-01</span>
@@ -111,6 +121,14 @@
                     <input type="date" id="newTemplateEndDate" name="endDate"
                            th:value="${T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).withDayOfMonth(T(java.time.LocalDate).of(scheduleYear, scheduleMonth, 1).lengthOfMonth())}"
                            class="mt-1 w-full rounded px-2 py-1.5" />
+                    <div class="mt-3 flex items-start gap-2 rounded-lg border border-[#e8e9f1] bg-[#fafaff] px-3 py-2.5">
+                        <input type="checkbox" id="newTemplateIndefinite" name="indefinite" value="true" checked
+                               class="mt-0.5 shrink-0 cursor-pointer accent-[var(--primary-color)]" />
+                        <label for="newTemplateIndefinite" class="cursor-pointer select-none">
+                            <span class="block text-sm font-semibold text-gray-800">Indefinite</span>
+                            <span class="block text-xs text-gray-500">Carry this schedule over to future months until changed. Uncheck to apply this month only.</span>
+                        </label>
+                    </div>
                     <button type="submit" class="btn-print no-print mt-4">
                         <i class="fa-solid fa-plus"></i> Create
                     </button>
@@ -119,7 +137,7 @@
         </div>
 
         <p th:if="${scheduleTemplates == null or #lists.size(scheduleTemplates) == 0}" class="no-payroll no-print">
-            No schedule class for this month yet — click <b>New schedule class</b>.
+            No schedule class for this month yet. Click <b>New schedule class</b>.
         </p>
 
         <!-- Shift details (modal) -->
@@ -147,16 +165,30 @@
                         <button type="button" class="btn-print" onclick="openEditScheduleModal()">
                             <i class="fa-solid fa-calendar-days"></i> Edit shift per day
                         </button>
+                        <form th:action="@{'/admin/attendance/schedule-template/delete/' + ${selectedTemplateId}}" method="post" class="m-0" onsubmit="return confirm('Are you sure you want to delete this schedule class? This cannot be undone.');">
+                            <button type="submit" class="btn-print" style="color: #dc3545; border-color: #f5c2c7; background-color: #fff;">
+                                <i class="fa-solid fa-trash-can"></i> Delete
+                            </button>
+                        </form>
                     </div>
 
                     <div class="mt-3 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-2 max-[900px]:grid-cols-2 max-[640px]:grid-cols-1"
                          th:if="${employees != null and assignedEmployeeIds != null and #lists.size(assignedEmployeeIds) > 0}">
-                        <div class="shift-employee-item flex cursor-pointer flex-col items-stretch justify-start rounded-[0.65rem] border border-[#e8e9f1] bg-[#fcfcff] p-2.5 transition-all duration-150 hover:border-[var(--primary-color)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+                        <div class="shift-employee-item flex cursor-pointer flex-col items-stretch justify-start rounded-[0.65rem] border border-[#e8e9f1] bg-[#fcfcff] p-2.5 transition-all duration-150 hover:border-[var(--primary-color)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)] relative group"
                              th:each="e : ${employees}"
                              th:if="${#lists.contains(assignedEmployeeIds, e.employeeId)}"
                              th:attr="data-employee-id=${e.employeeId},data-employee-name=${e.lastName + ', ' + e.firstName}"
                              onclick="showEmployeeRemaining(this)">
-                            <b th:text="${e.lastName + ', ' + e.firstName}">Employee</b>
+                             
+                            <form th:action="@{/admin/attendance/schedule-template/unassign}" method="post" class="absolute top-1.5 right-1.5 m-0 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <input type="hidden" name="templateId" th:value="${selectedTemplateId}" />
+                                <input type="hidden" name="employeeId" th:value="${e.employeeId}" />
+                                <button type="submit" class="flex h-6 w-6 items-center justify-center border-0 bg-transparent text-gray-400 transition-colors hover:bg-transparent hover:text-red-500 cursor-pointer" title="Unassign" onclick="event.stopPropagation(); return confirm('Are you sure you want to unassign this employee from the schedule?');">
+                                    <i class="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </form>
+
+                            <b th:text="${e.lastName + ', ' + e.firstName}" class="pr-6">Employee</b>
                             <p class="m-0 mt-0.5 text-sm text-[#555]"
                                th:text="${e.employeeNumber}">EMP-001</p>
                         </div>
@@ -167,6 +199,20 @@
 
                     <div class="mt-3.5 border-t border-dashed border-[#d6d9e8] pt-3.5" id="shiftRemainingPanel">
                         <p class="no-payroll m-0">Click an employee to view remaining schedule days in this shift.</p>
+                    </div>
+
+                    <div class="mt-4 flex justify-start">
+                        <form th:action="@{/admin/attendance/schedule-template/toggle-indefinite}" method="post" class="flex items-start gap-2 w-fit max-w-md">
+                            <input type="hidden" name="templateId" th:value="${selectedTemplateId}" />
+                            <input type="checkbox" id="editTemplateIndefinite" name="indefinite" value="true"
+                                   th:checked="${selectedTemplateIndefinite != null and selectedTemplateIndefinite}"
+                                   onchange="this.form.submit()"
+                                   class="mt-0.5 shrink-0 cursor-pointer accent-[var(--primary-color)]" />
+                            <label for="editTemplateIndefinite" class="cursor-pointer select-none text-left">
+                                <span class="block text-sm font-semibold text-gray-800">Indefinite Schedule</span>
+                                <span class="block text-xs text-gray-500">When checked, this schedule carries over to future months. Uncheck for month-only.</span>
+                            </label>
+                        </form>
                     </div>
                 </div>
             </div>

@@ -87,8 +87,9 @@
                     </thead>
                     <tbody class="attendanceBody" th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
     <tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>
-    <tr><td>Daily Rate</td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Hourly Rate</td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Monthly Rate</td><td th:text="${employee != null and employee.basicSalary != null ? #numbers.formatDecimal(employee.basicSalary, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Daily Rate <span class="rate-note" th:text="${workingDaysInMonth > 0 ? '(Monthly Rate ÷ ' + workingDaysInMonth + ' working days)' : ''}"></span></td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Hourly Rate <span class="rate-note">(Daily Rate ÷ 8 hours)</span></td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHoursDisplay}">0:00</td></tr>
     <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHoursDisplay}">0:00</td></tr>
     
@@ -134,7 +135,19 @@
 </tbody>
                 </table>
             </div>
-            <p th:if="${payrollItems == null || payrollItems.isEmpty()}" class="no-payroll">No payroll data for this period.</p>
+            <div th:if="${noScheduleError != null and noScheduleError}" class="no-payroll no-print" style="background-color: #fff4f4; border: 1px solid #ffcccc; color: #cc0000; padding: 20px; border-radius: 8px; margin-top: 20px; text-align: center;">
+                <p style="margin: 0; font-size: 1.1em; font-weight: 500;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span th:text="${noScheduleMessage}">No schedule assigned for this employee.</span>
+                </p>
+                <a th:href="@{/admin/attendance/shifts(scheduleMonth=${selectedMonthValue}, scheduleYear=${selectedYear})}" 
+                   class="btn-print no-print" 
+                   style="display: inline-block; margin-top: 15px; background-color: #cc0000; color: white; text-decoration: none; padding: 8px 16px; border-radius: 4px;">
+                    <i class="fa-solid fa-calendar-plus"></i> Go to Shifting Page
+                </a>
+            </div>
+            
+            <p th:if="${(payrollItems == null || payrollItems.isEmpty()) and (noScheduleError == null or !noScheduleError)}" class="no-payroll">No payroll data for this period.</p>
         </section>
     </div>
     <p class="print-only print-footer-date" id="printDate"></p>
