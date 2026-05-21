@@ -132,12 +132,13 @@ public class attendanceController {
 
         @PostMapping("/admin/attendance/overtime/self")
         public String submitAdminSelfOvertimeRequest(
-                @RequestParam LocalDate workDate,
-                @RequestParam String overtimeIn,
-                @RequestParam String overtimeOut,
-                @RequestParam String reason,
-                Authentication authentication,
-                RedirectAttributes redirectAttributes) {
+            @RequestParam LocalDate workDate,
+            @RequestParam String overtimeIn,
+            @RequestParam String overtimeOut,
+            @RequestParam String reason,
+            @RequestParam("attachment") MultipartFile attachment,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
 
             if (!(authentication.getPrincipal() instanceof Users)) {
                 redirectAttributes.addFlashAttribute("errorMessage", "Not signed in.");
@@ -158,9 +159,25 @@ public class attendanceController {
                 redirectAttributes.addFlashAttribute("errorMessage", "Invalid overtime in or out time.");
                 return "redirect:/admin/attendance/overtime/self";
             }
+            if (attachment == null || attachment.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Attachment is required.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
             try {
-                overtimeRequestService.submit(
-                        user.getEmployee().getEmployeeId(), workDate, in, out, reason);
+                // Save file
+                String uploadsDir = "uploads/ot_attachments";
+                java.nio.file.Path uploadsPath = java.nio.file.Paths.get(uploadsDir);
+                if (!java.nio.file.Files.exists(uploadsPath)) {
+                    java.nio.file.Files.createDirectories(uploadsPath);
+                }
+                String originalFilename = attachment.getOriginalFilename();
+                String safeFilename = java.util.UUID.randomUUID() + "_" + (originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_") : "attachment");
+                java.nio.file.Path filePath = uploadsPath.resolve(safeFilename);
+                attachment.transferTo(filePath);
+
+                String attachmentPath = filePath.toString().replace("\\", "/");
+                overtimeRequestService.submitWithAttachment(
+                    user.getEmployee().getEmployeeId(), workDate, in, out, reason, attachmentPath);
                 redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -1329,6 +1346,7 @@ public class attendanceController {
             @RequestParam String overtimeIn,
             @RequestParam String overtimeOut,
             @RequestParam String reason,
+            @RequestParam(value = "attachment", required = false) MultipartFile attachment,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
@@ -1354,8 +1372,27 @@ public class attendanceController {
             return redirectOvertime(false, y, m, null);
         }
         try {
-            overtimeRequestService.submit(
-                    user.getEmployee().getEmployeeId(), workDate, in, out, reason);
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                // Save file to uploads/ot_attachments/ in the project directory
+                String uploadDir = System.getProperty("user.dir") + "/uploads/ot_attachments/";
+                java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
+                if (!java.nio.file.Files.exists(uploadPath)) {
+                    java.nio.file.Files.createDirectories(uploadPath);
+                }
+                String originalFilename = attachment.getOriginalFilename();
+                String ext = "";
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+                }
+                String fileName = "ot_" + user.getEmployee().getEmployeeId() + "_" + System.currentTimeMillis() + ext;
+                java.nio.file.Path filePath = uploadPath.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                // Save only the relative path for DB/storage
+                attachmentPath = "uploads/ot_attachments/" + fileName;
+            }
+            overtimeRequestService.submitWithAttachment(
+                user.getEmployee().getEmployeeId(), workDate, in, out, reason, attachmentPath);
             redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

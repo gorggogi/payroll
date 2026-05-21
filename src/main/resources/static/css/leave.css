@@ -1,3 +1,10 @@
+/* Ensure modal content (images, iframes) are rounded inside modals */
+.modal-content img,
+.modal-content iframe,
+.leave-modal-content img,
+.leave-modal-content iframe {
+    border-radius: 8px !important;
+}
 /* ==================== MODAL STYLES ==================== */
 .leave-modal {
     display: none;
@@ -609,4 +616,8 @@
 .leave-modal .modal-close:hover {
     color: var(--secondary-color);
     background-color: #f5f5f5;
+}
+
+#attachmentModalBody {
+    border-radius: 8px;
 }

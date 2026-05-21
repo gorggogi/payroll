@@ -1,3 +1,4 @@
+
 package digital8.payroll.entities;
 
 import digital8.payroll.HourFormatUtils;
@@ -55,6 +56,9 @@ public class OvertimeRequest {
 
     @Column(name = "approved_by_user_id")
     private Integer approvedByUserId;
+
+    @Column(name = "attachment_path", length = 255)
+    private String attachmentPath;
 
     public Integer getOvertimeRequestId() {
         return overtimeRequestId;
@@ -146,5 +150,13 @@ public class OvertimeRequest {
 
     public void setApprovedByUserId(Integer approvedByUserId) {
         this.approvedByUserId = approvedByUserId;
+    }
+
+    public String getAttachmentPath() {
+        return attachmentPath;
+    }
+
+    public void setAttachmentPath(String attachmentPath) {
+        this.attachmentPath = attachmentPath;
     }
 }

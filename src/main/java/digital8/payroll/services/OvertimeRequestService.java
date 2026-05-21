@@ -1,3 +1,5 @@
+// ...existing code...
+
 package digital8.payroll.services;
 
 import digital8.payroll.entities.Attendance;
@@ -26,6 +28,46 @@ import java.util.Set;
 
 @Service
 public class OvertimeRequestService {
+    @Transactional
+    public OvertimeRequest submitWithAttachment(
+        Integer employeeId,
+        LocalDate workDate,
+        LocalTime overtimeIn,
+        LocalTime overtimeOut,
+        String reason,
+        String attachmentPath) {
+
+        Employees emp = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new RuntimeException("Employee not found"));
+        if (workDate == null) {
+            throw new RuntimeException("Work date is required.");
+        }
+        if (overtimeIn == null || overtimeOut == null) {
+            throw new RuntimeException("Overtime in and out are required.");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new RuntimeException("Reason is required.");
+        }
+        if (attachmentPath == null || attachmentPath.isBlank()) {
+            throw new RuntimeException("Attachment is required.");
+        }
+        BigDecimal hours = computeHours(overtimeIn, overtimeOut);
+        if (hours.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Total hours must be greater than zero.");
+        }
+
+        OvertimeRequest r = new OvertimeRequest();
+        r.setEmployee(emp);
+        r.setWorkDate(workDate);
+        r.setOvertimeIn(overtimeIn);
+        r.setOvertimeOut(overtimeOut);
+        r.setTotalHours(hours);
+        r.setReason(reason.trim());
+        r.setStatus("Pending");
+        r.setRequestedAt(LocalDateTime.now());
+        r.setAttachmentPath(attachmentPath);
+        return overtimeRequestRepository.save(r);
+    }
 
     @Autowired
     private OvertimeRequestRepository overtimeRequestRepository;

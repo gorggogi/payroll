@@ -68,6 +68,7 @@
                             <th>Approved by</th>
                             <th>Reason</th>
                             <th>Submitted</th>
+                            <th>Attachment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,6 +81,9 @@
                             <td th:text="${approverNameByRequestId != null && approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '—'}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
                             <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                            <td>
+                                <a th:if="${r.attachmentPath != null}" href="#" th:attr="onclick=|showOtAttachmentModal('${r.attachmentPath}'); return false;|">View</a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -127,7 +131,7 @@
                         <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
                         <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
                     </div>
-                    <form method="post" th:action="@{/admin/attendance/overtime/self}">
+                    <form method="post" th:action="@{/admin/attendance/overtime/self}" enctype="multipart/form-data">
                         <div class="ot-form-grid">
                             <label>Work date (date OT applies to)
                                 <input type="date" name="workDate" required />
@@ -144,6 +148,10 @@
                             <label>Reason
                                 <textarea name="reason" required maxlength="1000" placeholder="Project / task / manager request"></textarea>
                             </label>
+                            <label>Attachment <span style="color:red">*</span>
+                                <input type="file" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" required />                                
+                                <span style="font-size:0.85em;color:#888;">Attach supporting document (image, PDF, etc.)</span>
+                            </label>
                         </div>
                         <p style="margin-top:1rem;">
                             <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
@@ -151,7 +159,15 @@
                     </form>
                 </div>
             </div>
-            <!-- Duplicate 'My overtime requests' table removed -->
+            <!-- Attachment Preview Modal -->
+                        <!-- Attachment Modal (copied from leave modal for consistency) -->
+<!-- Unified OT Attachment Modal (matches leaveAdmin.html) -->
+<div id="otAttachmentModal" class="ot-attachment-modal" style="display:none;">
+    <div class="ot-attachment-modal-content">
+        <span class="ot-attachment-modal-close" onclick="closeOtAttachmentModal()">&times;</span>
+        <div id="otAttachmentModalBody"></div>
+    </div>
+</div>
         </section>
     </div>
     <script src="/js/nav.js"></script>
@@ -210,5 +226,35 @@
         });
         document.addEventListener('DOMContentLoaded', computeFiledOvertimeHours);
     </script>
+    <!-- ...existing code... -->
+    </body>
+    <script>
+        // Unified OT Attachment Modal logic (matches leaveAdmin.html)
+        function showOtAttachmentModal(path) {
+            var modal = document.getElementById('otAttachmentModal');
+            var body = document.getElementById('otAttachmentModalBody');
+            if (!path) {
+                body.innerHTML = '<p>No attachment.</p>';
+            } else if (path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i)) {
+                body.innerHTML = '<img src="/' + path + '" alt="Attachment" style="max-width:80vw;max-height:70vh;display:block;margin:auto;">';
+            } else if (path.match(/\.pdf$/i)) {
+                body.innerHTML =
+                    '<iframe src="/' + path + '" width="800px" height="600px" style="max-width:90vw;max-height:80vh;display:block;margin:auto;border:none;"></iframe>' +
+                    '<div style="text-align:center;margin-top:1em;">'+
+                    '<a href="/' + path + '" target="_blank" download>Download PDF</a></div>';
+            } else {
+                body.innerHTML = '<a href="/' + path + '" target="_blank" download>Download Attachment</a>';
+            }
+            modal.style.display = 'flex';
+        }
+        function closeOtAttachmentModal() {
+            document.getElementById('otAttachmentModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById('otAttachmentModal');
+            if (event.target == modal) closeOtAttachmentModal();
+        }
+    </script>
+</script>
 </body>
 </html>

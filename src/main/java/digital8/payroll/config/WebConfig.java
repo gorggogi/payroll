@@ -9,6 +9,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/leave_attachments/**")
-                .addResourceLocations("file:uploads/leave_attachments/");
+            .addResourceLocations("file:uploads/leave_attachments/");
+        registry.addResourceHandler("/uploads/ot_attachments/**")
+            .addResourceLocations("file:uploads/ot_attachments/");
     }
 }
