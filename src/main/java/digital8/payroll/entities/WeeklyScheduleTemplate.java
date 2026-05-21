@@ -25,6 +25,11 @@ public class WeeklyScheduleTemplate {
     @Column(name = "schedule_month", nullable = false)
     private int scheduleMonth;
 
+    /** If true, this template carries over to future months until explicitly replaced.
+     *  If false, it applies to its own month only and is never used as a carryover source. */
+    @Column(name = "indefinite", nullable = false)
+    private boolean indefinite = true;
+
     public Integer getTemplateId() {
         return templateId;
     }
@@ -55,5 +60,13 @@ public class WeeklyScheduleTemplate {
 
     public void setScheduleMonth(int scheduleMonth) {
         this.scheduleMonth = scheduleMonth;
+    }
+
+    public boolean isIndefinite() {
+        return indefinite;
+    }
+
+    public void setIndefinite(boolean indefinite) {
+        this.indefinite = indefinite;
     }
 }

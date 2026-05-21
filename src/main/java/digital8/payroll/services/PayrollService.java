@@ -47,6 +47,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import digital8.payroll.entities.Holiday;
+import digital8.payroll.exceptions.ScheduleNotAssignedException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -156,30 +157,36 @@ public class PayrollService {
         BigDecimal monthlyAllowance = emp.getAllowance() != null ? emp.getAllowance() : BigDecimal.ZERO;
 
         // --- 1. Rate Derivation ---
-        // Daily/Hourly rates for base salary stay anchored on basic salary.
-        BigDecimal factor = emp.getFactorRate();
-        if (factor == null || factor.compareTo(BigDecimal.ZERO) <= 0) {
-            factor = DEFAULT_PAY_FACTOR;
+        // Resolve the pay period month/year early so we can count working days.
+        Month rateMonth = null;
+        if (monthName != null && !monthName.isBlank()) {
+            try { rateMonth = Month.valueOf(monthName.toUpperCase()); } catch (Exception ignored) {}
         }
-        BigDecimal dailyRate = monthlyRate.divide(factor, 6, ROUND);
+        int rateYear = (yearParam != null) ? yearParam : LocalDate.now().getYear();
+        if (rateMonth == null) rateMonth = LocalDate.now().getMonth();
+        YearMonth rateYm = YearMonth.of(rateYear, rateMonth);
+
+        // Count actual scheduled working days in the month from the employee's shift template.
+        // If no schedule is assigned, throw a warning so HR knows to assign one.
+        int workingDaysInMonth = computeWorkingDaysInMonth(empId, rateYm);
+        if (workingDaysInMonth <= 0) {
+            throw new ScheduleNotAssignedException(
+                "Employee ID " + empId + " has no schedule assignment for "
+                + rateYm.getMonth().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+                + " " + rateYm.getYear()
+                + ". Please assign a shift schedule before computing payroll."
+            );
+        }
+
+        BigDecimal effectiveDivisor = new BigDecimal(workingDaysInMonth);
+        BigDecimal dailyRate = monthlyRate.divide(effectiveDivisor, 6, ROUND);
         BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
         BigDecimal perMinuteRate = hourlyRate.divide(MINUTES_PER_HOUR, 6, ROUND);
         BigDecimal roundedHourlyRate = hourlyRate.setScale(SCALE, ROUND);
         // --- 2. Determine pay period ---
-        Month month = null;
-        if (monthName != null && !monthName.isBlank()) {
-            try {
-                month = Month.valueOf(monthName.toUpperCase());
-            } catch (Exception e) {
-                month = null;
-            }
-        }
-        int year = (yearParam != null) ? yearParam : LocalDate.now().getYear();
-        if (month == null) {
-            month = LocalDate.now().getMonth();
-        }
-
-        YearMonth ym = YearMonth.of(year, month);
+        // rateYm was already resolved above for rate derivation; reuse it here.
+        int year = rateYm.getYear();
+        YearMonth ym = rateYm;
         PayPeriod pp = resolvePayPeriod(period, ym);
         LocalDate periodStart = pp.start;
         LocalDate periodEnd = pp.end;
@@ -593,6 +600,49 @@ public class PayrollService {
         }
         return employeeScheduleAssignmentRepository.findLatestAssignmentOnOrBefore(
                 employeeId, date.getYear(), date.getMonthValue());
+    }
+
+    /**
+     * Counts the number of scheduled working (non-rest) days in the given month
+     * for the employee, using their WeeklyScheduleTemplateDay assignment.
+     *
+     * <p>Returns 0 if no schedule assignment exists for the employee in that month.
+     * The caller is responsible for deciding what to do in that case (warn, fallback, etc.).
+     */
+    public int computeWorkingDaysInMonth(Integer employeeId, YearMonth ym) {
+        // Resolve the assignment using the first day of the month as the reference date.
+        LocalDate firstOfMonth = ym.atDay(1);
+        Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, firstOfMonth);
+        if (assignmentOpt.isEmpty()) {
+            return 0;
+        }
+
+        Integer templateId = assignmentOpt.get().getTemplateId();
+        List<WeeklyScheduleTemplateDay> templateDays =
+                weeklyScheduleTemplateDayRepository.findByTemplateIdOrderByDayOfWeekAsc(templateId);
+        if (templateDays == null || templateDays.isEmpty()) {
+            return 0;
+        }
+
+        // Build a fast lookup: dayOfWeek (1=Mon..7=Sun) → isRestDay
+        Map<Integer, Boolean> restDayByDow = templateDays.stream()
+                .collect(Collectors.toMap(
+                        WeeklyScheduleTemplateDay::getDayOfWeek,
+                        WeeklyScheduleTemplateDay::isRestDay,
+                        (a, b) -> a));
+
+        // Count calendar days in the month that are not rest days.
+        int count = 0;
+        int lengthOfMonth = ym.lengthOfMonth();
+        for (int day = 1; day <= lengthOfMonth; day++) {
+            LocalDate date = ym.atDay(day);
+            int dow = date.getDayOfWeek().getValue(); // 1=Monday .. 7=Sunday
+            Boolean isRest = restDayByDow.get(dow);
+            if (isRest == null || !isRest) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private AttendanceMetrics computeAttendanceMetrics(

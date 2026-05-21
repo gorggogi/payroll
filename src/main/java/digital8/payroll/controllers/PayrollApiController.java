@@ -16,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import digital8.payroll.exceptions.TaxTableNotFoundException;
+import digital8.payroll.exceptions.ScheduleNotAssignedException;
 import java.util.List;
 
 @RestController
@@ -58,4 +59,11 @@ public class PayrollApiController {
             .status(HttpStatus.BAD_REQUEST)
             .body(ex.getMessage());
         }
+
+    @ExceptionHandler(ScheduleNotAssignedException.class)
+    public ResponseEntity<String> handleScheduleNotAssigned(ScheduleNotAssignedException ex) {
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(ex.getMessage());
+    }
 }

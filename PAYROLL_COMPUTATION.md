@@ -38,16 +38,31 @@ This document describes how payroll is computed in this system for semi-monthly 
 
 ## 2. Rate Derivation
 
-All rates are derived from the employee's monthly salary (`basicSalary`) using a fixed divisor.
+All rates are derived from the employee's monthly salary (`basicSalary`) using the **actual number of scheduled working days** in the payroll month, taken from the employee's shift template assignment (Shifting page).
 
 ```
-monthlyRate  = employee.basicSalary          (BigDecimal, defaults to 0 if null)
-factorRate   = employee.factorRate             (defaults to 20 if null or <= 0)
+workingDaysInMonth = count of non-rest-day calendar dates in the month
+                     per the employee's WeeklyScheduleTemplateDay assignment
 
-dailyRate     = monthlyRate / factorRate      (6 decimal places, HALF_UP)
-hourlyRate    = dailyRate / 8                (6 decimal places, HALF_UP)
-perMinuteRate = hourlyRate / 60              (6 decimal places, HALF_UP)
+dailyRate     = monthlyRate / workingDaysInMonth   (6 decimal places, HALF_UP)
+hourlyRate    = dailyRate / 8                      (6 decimal places, HALF_UP)
+perMinuteRate = hourlyRate / 60                    (6 decimal places, HALF_UP)
 ```
+
+**Why per-month?** The employee's monthly salary is fixed. But the number of scheduled working days differs between months (e.g. January Mon–Fri = 23 days vs. February Mon–Fri = 20 days). Dividing by the actual working days gives a fair daily rate each month — an employee who works all scheduled days will always receive exactly their monthly salary.
+
+**Working-day count rules:**
+- Only non-rest-day dates are counted (using `is_rest_day` from `WeeklyScheduleTemplateDay`).
+- Public holidays are **not** subtracted — the count is based purely on the schedule pattern. Holiday pay is a separate additive premium (see Section 5.3).
+- For semi-monthly periods (`semi_1` / `semi_2`), the divisor is still the **full month's** working day count, since `basicSalary` is a monthly figure.
+
+**No schedule assigned → payroll is blocked.** If an employee has no shift template assigned for the payroll month (and no prior assignment to fall back on), an error is returned:
+```
+HTTP 422: "Employee ID <n> has no schedule assignment for <Month> <Year>.
+           Please assign a shift schedule before computing payroll."
+```
+
+The `factorRate` field on the employee record (20 or 21.75) is retained in the employee form for reference but is **no longer used** in rate computation.
 
 All monetary outputs are ultimately rounded to **2 decimal places (HALF_UP)**.
 
