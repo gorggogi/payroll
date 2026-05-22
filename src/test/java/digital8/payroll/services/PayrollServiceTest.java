@@ -25,12 +25,16 @@ import digital8.payroll.entities.PayrollItems;
 import digital8.payroll.entities.SssTable;
 import digital8.payroll.repositories.AttendanceRepository;
 import digital8.payroll.repositories.DeductionsRepository;
+import digital8.payroll.repositories.EmployeeAdjustmentsRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
 import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.SssTableRepository;
 import digital8.payroll.repositories.TaxTableRepository;
 import digital8.payroll.repositories.PhilhealthTableRepository;
 import digital8.payroll.repositories.PagibigTableRepository;
+import digital8.payroll.repositories.AdjustmentsRepository;
+import digital8.payroll.repositories.EmployeeScheduleAssignmentRepository;
+import digital8.payroll.repositories.WeeklyScheduleTemplateDayRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class PayrollServiceTest {
@@ -42,7 +46,11 @@ public class PayrollServiceTest {
     @Mock private PhilhealthTableRepository philhealthTableRepository;
     @Mock private PagibigTableRepository pagibigTableRepository;
     @Mock private EmployeeDeductionsRepository employeeDeductionsRepository;
+    @Mock private EmployeeAdjustmentsRepository employeeAdjustmentsRepository;
+    @Mock private AdjustmentsRepository adjustmentsRepository;
     @Mock private DeductionsRepository deductionsRepository;
+    @Mock private EmployeeScheduleAssignmentRepository employeeScheduleAssignmentRepository;
+    @Mock private WeeklyScheduleTemplateDayRepository weeklyScheduleTemplateDayRepository;
     @Mock private HolidayCalendarService holidayCalendarService;
     
     @InjectMocks

@@ -76,7 +76,6 @@ public class EmployeeViewController {
             @RequestParam String payType,
             @RequestParam java.math.BigDecimal basicSalary,
             @RequestParam(required = false) java.math.BigDecimal allowance,
-            @RequestParam(required = false) java.math.BigDecimal factorRate,
             @RequestParam(required = false) java.math.BigDecimal otMultiplier,
             @RequestParam String bank_Account,
             @RequestParam String tin,
@@ -100,11 +99,6 @@ public class EmployeeViewController {
         emp.setPayType(payType);
         emp.setBasicSalary(basicSalary);
         emp.setAllowance(allowance != null && allowance.compareTo(BigDecimal.ZERO) >= 0 ? allowance : BigDecimal.ZERO);
-        if (factorRate != null && factorRate.compareTo(BigDecimal.ZERO) > 0) {
-            emp.setFactorRate(factorRate);
-        } else {
-            emp.setFactorRate(new java.math.BigDecimal("20"));
-        }
         emp.setBank_Account(bank_Account);
         emp.setTin(tin);
         emp.setSssNumber(sssNumber);

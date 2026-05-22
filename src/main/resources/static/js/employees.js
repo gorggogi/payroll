@@ -270,16 +270,6 @@ function renderEmployeeDetail(emp) {
             </option>
         `).join('');
 
-            const factorOptions = [
-            { value: '20', label: '20 — monthly ÷ 20 (common)' },
-            { value: '21.75', label: '21.75 — DOLE-style (52×5÷12)' },
-            { value: '22', label: '22 — alternate policy' },
-            { value: '24', label: '24 — 6-day week variant' }
-        ].map (o=>`<option value="${o.value}" ${emp.factorRate == o.value ? 'selected' : ''}>
-            ${o.label}
-            </option>
-            `).join('');
-
             const otOptions = [
             { value: '1.0', label: '1.0x' },
             { value: '1.25', label: '1.25x (regular employee)' }
@@ -319,7 +309,6 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
                     <label>Allowance: <input type="number" name="allowance" value="${emp.allowance || 0}" min="0" step="0.01" /></label>
-                    <label>Pay factor: <select name="factorRate">${factorOptions}</select></label>
                     <label>OT multiplier: <select name="otMultiplier">${otOptions}</select></label>
                     <label>Department: <select name="departmentId">
                         <option value="">-- Select Department --</option>
@@ -344,6 +333,7 @@ function renderEmployeeDetail(emp) {
                         <a href="/admin/attendance?empId=${emp.employeeId}" class="btn-view-attendance" target="_blank"><i class="fa-solid fa-calendar-check"></i> View Attendance</a>
                         <a href="/payroll/${emp.employeeId}" class="btn-view-payroll" target="_blank"><i class="fa-solid fa-money-bill"></i> View Payroll</a>
                         <button type="button" id="resetPasswordBtn" class="btn-reset-pw"><i class="fa-solid fa-key"></i> Reset Password</button>
+                        <button type="button" id="deleteEmployeeBtn" class="btn-delete-emp"><i class="fa-solid fa-trash"></i> Delete</button>
                         <button type="button" id="saveEmployeeBtn" class="btn-save-emp"><i class="fa-solid fa-floppy-disk"></i>Save</button>
                     </div>
                 </form>
@@ -355,6 +345,7 @@ function renderEmployeeDetail(emp) {
             document.getElementById('closeEmployeeModal').addEventListener('click', closeEmployeeModal);
             document.getElementById('saveEmployeeBtn').addEventListener('click', function () { saveEmployee(emp.employeeId); });
             document.getElementById('resetPasswordBtn').addEventListener('click', function () { resetEmployeePassword(emp.employeeId, emp.firstName + ' ' + emp.lastName); });
+            document.getElementById('deleteEmployeeBtn').addEventListener('click', function () { deleteEmployee(emp.employeeId, emp.firstName + ' ' + emp.lastName); });
         })
         .catch(err => {
             alert('Error loading data for form: ' + err.message);
@@ -396,6 +387,48 @@ function resetEmployeePassword(employeeId, employeeName) {
         });
 }
 
+function deleteEmployee(employeeId, employeeName) {
+    const confirmed = confirm(
+        'Are you sure you want to permanently delete ' + employeeName + '?\n\n' +
+        'This will remove all related records including:\n' +
+        '- Leave requests and balances\n' +
+        '- Overtime and undertime requests\n' +
+        '- Deductions and adjustments\n' +
+        '- Payroll history\n' +
+        '- User account\n\n' +
+        'This action cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    const deleteBtn = document.getElementById('deleteEmployeeBtn');
+    if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<span class="spinner spinner--inline"></span> Deleting...';
+    }
+
+    fetch('/api/employees/' + employeeId, { method: 'DELETE' })
+        .then(function (res) {
+            if (!res.ok) {
+                throw new Error('Failed to delete employee (HTTP ' + res.status + ')');
+            }
+            return res.json();
+        })
+        .then(function () {
+            allEmployees = allEmployees.filter(function (e) { return e.employeeId !== employeeId; });
+            closeEmployeeModal();
+            filterAndDisplayEmployees();
+        })
+        .catch(function (err) {
+            alert('Error deleting employee: ' + err.message);
+        })
+        .finally(function () {
+            if (deleteBtn) {
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            }
+        });
+}
+
 function saveEmployee(employeeId) {
     const form = document.getElementById('employeeDetailForm');
     const formData = new FormData(form);
@@ -418,7 +451,6 @@ function saveEmployee(employeeId) {
         philhealthNumber: formData.get('philhealthNumber'),
         pagibigNumber: formData.get('pagibigNumber'),
         bank_Account: formData.get('bank_Account'),
-        factorRate: formData.get('factorRate') ? Number(formData.get('factorRate')) : null,
         otMultiplier: formData.get('otMultiplier') ? Number(formData.get('otMultiplier')) : null,
         holidayPayEligible: form.querySelector('[name="holidayPayEligible"]').checked,
         isAdmin: form.querySelector('[name="isAdmin"]').checked,

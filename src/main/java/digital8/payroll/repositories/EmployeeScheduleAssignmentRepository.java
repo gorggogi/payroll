@@ -35,6 +35,9 @@ public interface EmployeeScheduleAssignmentRepository extends JpaRepository<Empl
     @Transactional
     void deleteByEmployeeIdAndScheduleYearAndScheduleMonth(Integer employeeId, int scheduleYear, int scheduleMonth);
 
+    @Transactional
+    void deleteByEmployeeId(Integer employeeId);
+
     @Query("SELECT a.employeeId FROM EmployeeScheduleAssignment a WHERE a.templateId = :tid AND a.scheduleYear = :y AND a.scheduleMonth = :m")
     List<Integer> findEmployeeIdsByTemplateAndMonth(
             @Param("tid") Integer templateId, @Param("y") int scheduleYear, @Param("m") int scheduleMonth);

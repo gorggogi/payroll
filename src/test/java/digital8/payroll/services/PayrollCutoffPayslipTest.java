@@ -121,7 +121,6 @@ class PayrollCutoffPayslipTest {
         Employees emp = new Employees();
         emp.setEmploymentType("Job Order");
         emp.setBasicSalary(new BigDecimal("39000"));
-        emp.setFactorRate(new BigDecimal("20"));
         when(employeeRepository.findById(EMP_ID)).thenReturn(Optional.of(emp));
 
         // All attendance

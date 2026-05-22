@@ -73,5 +73,14 @@ public class EmployeeController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
         }
     }
-    
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEmployee(@PathVariable Integer id) {
+        boolean deleted = employeeService.deleteEmployee(id);
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(Map.of("message", "Employee deleted successfully"));
+    }
+
 }

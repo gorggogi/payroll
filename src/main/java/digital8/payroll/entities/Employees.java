@@ -133,9 +133,6 @@ public class Employees {
     @JsonIgnoreProperties({ "employee" })
     private Users user;
 
-    @Column(nullable = false, unique = false)
-    private BigDecimal factorRate;
-
     @Column(name = "holidayPayEligible", nullable = false)
     private boolean holidayPayEligible;
 
@@ -224,14 +221,6 @@ public class Employees {
 
     public String getBank_Account() {
         return bank_Account;
-    }
-
-    public BigDecimal getFactorRate() {
-        return factorRate;
-    }
-
-    public void setFactorRate(BigDecimal factorRate) {
-        this.factorRate = factorRate;
     }
 
     public void setBank_Account(String bank_Account) {

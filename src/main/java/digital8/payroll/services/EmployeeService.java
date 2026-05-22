@@ -9,6 +9,13 @@ import digital8.payroll.repositories.EmployeeRepository;
 import digital8.payroll.repositories.RolesRepository;
 import digital8.payroll.repositories.LeaveBalanceRepository;
 import digital8.payroll.repositories.LeaveTypesRepository;
+import digital8.payroll.repositories.EmployeeScheduleAssignmentRepository;
+import digital8.payroll.repositories.EmployeeAdjustmentsRepository;
+import digital8.payroll.repositories.PayrollItemsRepository;
+import digital8.payroll.repositories.LeaveRequestRepository;
+import digital8.payroll.repositories.OvertimeRequestRepository;
+import digital8.payroll.repositories.UndertimeRequestRepository;
+import digital8.payroll.repositories.EmployeeDeductionsRepository;
 import digital8.payroll.specifications.EmployeeSpecifications;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +63,27 @@ public class EmployeeService {
 
     @Autowired
     private LeaveTypesRepository leaveTypesRepository;
+
+    @Autowired
+    private LeaveRequestRepository leaveRequestRepository;
+
+    @Autowired
+    private OvertimeRequestRepository overtimeRequestRepository;
+
+    @Autowired
+    private UndertimeRequestRepository undertimeRequestRepository;
+
+    @Autowired
+    private EmployeeDeductionsRepository employeeDeductionsRepository;
+
+    @Autowired
+    private EmployeeAdjustmentsRepository employeeAdjustmentsRepository;
+
+    @Autowired
+    private PayrollItemsRepository payrollItemsRepository;
+
+    @Autowired
+    private EmployeeScheduleAssignmentRepository employeeScheduleAssignmentRepository;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -174,9 +202,6 @@ public class EmployeeService {
             positionsRepository.findById(emp.getPosition().getPositionId()).ifPresent(emp::setPosition);
         }
 
-        if (emp.getFactorRate() == null || emp.getFactorRate().compareTo(BigDecimal.ZERO) <= 0) {
-            emp.setFactorRate(new java.math.BigDecimal("20"));
-        }
         if (emp.getAllowance() == null || emp.getAllowance().compareTo(BigDecimal.ZERO) < 0) {
             emp.setAllowance(BigDecimal.ZERO);
         }
@@ -260,9 +285,6 @@ public class EmployeeService {
         if (updated.getAllowance() != null && updated.getAllowance().compareTo(BigDecimal.ZERO) >= 0) {
             existing.setAllowance(updated.getAllowance());
         }
-        if (updated.getFactorRate() != null && updated.getFactorRate().compareTo(BigDecimal.ZERO) > 0) {
-            existing.setFactorRate(updated.getFactorRate());
-        }
         if (updated.getTin() != null) existing.setTin(updated.getTin());
         if (updated.getSssNumber() != null) existing.setSssNumber(updated.getSssNumber());
         if (updated.getPhilhealthNumber() != null) existing.setPhilhealthNumber(updated.getPhilhealthNumber());
@@ -315,6 +337,27 @@ public class EmployeeService {
         if (employeeNumber == null || employeeNumber.isBlank()) return false;
         Employees other = employeeRepository.findByEmployeeNumber(employeeNumber.trim());
         return other != null && !other.getEmployeeId().equals(excludeEmployeeId);
+    }
+
+    @Transactional
+    public boolean deleteEmployee(Integer id) {
+        if (!employeeRepository.existsById(id)) {
+            return false;
+        }
+        // Delete in order: leave requests -> leave balances -> overtime requests
+        // -> undertime requests -> employee deductions -> employee adjustments
+        // -> payroll items -> schedule assignments -> user -> employee
+        leaveRequestRepository.deleteByEmployee_EmployeeId(id);
+        leaveBalanceRepository.deleteByEmployeeId(id);
+        overtimeRequestRepository.deleteByEmployee_EmployeeId(id);
+        undertimeRequestRepository.deleteByEmployee_EmployeeId(id);
+        employeeDeductionsRepository.deleteByEmployeeId(id);
+        employeeAdjustmentsRepository.deleteByEmployeeId(id);
+        payrollItemsRepository.deleteByEmployeeId(id);
+        employeeScheduleAssignmentRepository.deleteByEmployeeId(id);
+        usersRepository.findByEmployee_EmployeeId(id).ifPresent(usersRepository::delete);
+        employeeRepository.deleteById(id);
+        return true;
     }
 
     // @Transactional

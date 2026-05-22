@@ -58,7 +58,6 @@ public class PayrollService {
     private static final RoundingMode ROUND = RoundingMode.HALF_UP;
 
     // Rate derivation constants
-    private static final BigDecimal DEFAULT_PAY_FACTOR = new BigDecimal("20");
     private static final BigDecimal HOURS_PER_DAY = new BigDecimal("8");
     private static final BigDecimal MINUTES_PER_HOUR = new BigDecimal("60");
 

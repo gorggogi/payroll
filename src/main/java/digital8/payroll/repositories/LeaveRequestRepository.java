@@ -7,11 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import digital8.payroll.entities.LeaveRequests;
 
 @Repository
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequests, Integer> {
+
+    @Transactional
+    void deleteByEmployee_EmployeeId(Integer employeeId);
 
     List<LeaveRequests> findByEmployee_EmployeeIdOrderByRequestedDateDesc(Integer employeeId);
 
