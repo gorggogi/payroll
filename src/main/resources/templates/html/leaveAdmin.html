@@ -33,6 +33,42 @@
                     </button>
                 </div>
             </div>
+
+<!-- Calendar & Daily Leave Details Dashboard -->
+            <div class="calendar-dashboard">
+                <!-- Left Column: Calendar -->
+                <div class="calendar-card">
+                    <div class="calendar-header">
+                        <button type="button" id="prevMonth" class="btn-cal"><i class="fa-solid fa-chevron-left"></i></button>
+                        <h3 id="monthYear">May 2026</h3>
+                        <button type="button" id="nextMonth" class="btn-cal"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="day-name">Sun</div>
+                        <div class="day-name">Mon</div>
+                        <div class="day-name">Tue</div>
+                        <div class="day-name">Wed</div>
+                        <div class="day-name">Thu</div>
+                        <div class="day-name">Fri</div>
+                        <div class="day-name">Sat</div>
+                        <!-- Dates injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Leave Details -->
+                <div class="leave-details-card">
+                    <div class="details-header">
+                        <h3 id="selectedDateHeader">Select a date</h3>
+                        <span class="daily-count-badge" id="dailyCountBadge" style="display: none;">0 on leave</span>
+                    </div>
+                    <div id="leaveDetailsList" class="details-list">
+                        <div class="no-selection-msg">
+                            <i class="fa-regular fa-calendar-check" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                            <p>Click a highlighted date on the calendar to see who is on leave.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <!-- Pending approvals Card -->
             <div class="leave-pending">
@@ -193,6 +229,10 @@
         </section>
     </div>
     
+    <script th:inline="javascript">
+        // Expose calendarLeaveData as a JS object for leave.js
+        var calendarLeaveData = /*[[${#objectMapper.writeValueAsString(calendarLeaveData)}]]*/ {};
+    </script>
     <script src="/js/nav.js"></script>
     <script src="/js/leave.js"></script>
 </body>

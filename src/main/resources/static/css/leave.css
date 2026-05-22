@@ -621,3 +621,152 @@
 #attachmentModalBody {
     border-radius: 8px;
 }
+
+/* Calendar Dashboard Styles */
+.calendar-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.calendar-card, .leave-details-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: 1px solid #e2e8f0;
+}
+
+/* Calendar Component */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-header h3 { margin: 0; font-size: 1.25rem; color: #1e293b; }
+
+.btn-cal {
+    background: transparent;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    color: #475569;
+    transition: all 0.2s;
+}
+.btn-cal:hover { background: #f1f5f9; color: #0f172a; }
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    text-align: center;
+}
+
+.day-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #64748b;
+    padding-bottom: 0.5rem;
+}
+
+.cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    font-size: 0.9rem;
+    color: #334155;
+    transition: background 0.2s;
+    border: 1px solid transparent;
+}
+
+.cal-day:hover { background: #f8fafc; border-color: #cbd5e1; }
+.cal-day.empty { cursor: default; }
+.cal-day.empty:hover { background: transparent; border-color: transparent; }
+.cal-day.today { background: #eff6ff; font-weight: bold; color: #2563eb; }
+.cal-day.selected { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+/* Leave Marker Badge */
+.leave-marker {
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+}
+
+/* Details Pane */
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 1rem;
+}
+
+.details-header h3 { margin: 0; color: #1e293b; font-size: 1.25rem; }
+
+.daily-count-badge {
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.no-selection-msg {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #64748b;
+}
+
+.daily-leave-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 1rem;
+    background: #f8fafc;
+}
+
+.daily-leave-card .user-title {
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.daily-leave-card .leave-meta {
+    font-size: 0.85rem;
+    color: #475569;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
