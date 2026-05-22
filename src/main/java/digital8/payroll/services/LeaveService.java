@@ -3,9 +3,14 @@ package digital8.payroll.services;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import digital8.payroll.entities.Employees;
 import digital8.payroll.entities.LeaveBalance;
 import digital8.payroll.entities.LeaveBalanceId;
@@ -17,7 +22,6 @@ import digital8.payroll.repositories.LeaveBalanceRepository;
 import digital8.payroll.repositories.LeaveRequestRepository;
 import digital8.payroll.repositories.LeaveTypesRepository;
 import digital8.payroll.repositories.UsersRepository;
-import java.time.LocalDateTime;
 
 @Service
 public class LeaveService {
@@ -33,6 +37,8 @@ public class LeaveService {
     @Autowired
     private UsersRepository usersRepository;
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LeaveService.class);
+
     public List<LeaveTypes> getAllLeaveTypes(){
         return leaveTypesRepository.findAll();
     }
@@ -44,8 +50,6 @@ public class LeaveService {
     public List<LeaveRequests> getEmployeeLeaveRequests(Integer employeeId){
         return leaveRequestRepository.findByEmployee_EmployeeIdOrderByRequestedDateDesc(employeeId);
     }
-
-    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LeaveService.class);
 
     public LeaveRequests submitLeaveRequest(Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason, String reliever, String attachmentPath) {
         log.info("[LeaveService] submitLeaveRequest called with employeeId={}, leaveTypeId={}, startDate={}, endDate={}, reason={}, reliever={}, attachmentPath={}", employeeId, leaveTypeId, startDate, endDate, reason, reliever, attachmentPath);
@@ -121,6 +125,48 @@ public class LeaveService {
                 .toList();
     }
 
+    // UPDATED: Now returns a native Java Map that Thymeleaf understands directly
+    public Map<String, List<Map<String, Object>>> getCalendarLeaveData(Integer excludeEmployeeId) {
+        List<LeaveRequests> requests;
+        if (excludeEmployeeId != null) {
+            requests = leaveRequestRepository.findAll().stream()
+                .filter(req -> req.getEmployee() == null || !excludeEmployeeId.equals(req.getEmployee().getEmployeeId()))
+                .toList();
+        } else {
+            requests = leaveRequestRepository.findAll();
+        }
+
+        Map<String, List<Map<String, Object>>> leaveMap = new HashMap<>();
+
+        for (LeaveRequests req : requests) {
+            if ("Rejected".equalsIgnoreCase(req.getStatus())) continue;
+
+            LocalDate current = req.getStartDate();
+            LocalDate end = req.getEndDate();
+
+            if (current == null || end == null) continue;
+
+            while (!current.isAfter(end)) {
+                String dateStr = current.toString(); 
+
+                leaveMap.computeIfAbsent(dateStr, k -> new ArrayList<>());
+
+                Map<String, Object> dto = new HashMap<>();
+                dto.put("name", req.getEmployee().getFirstName() + " " + req.getEmployee().getLastName());
+                dto.put("empId", "EMP-" + req.getEmployee().getEmployeeId());
+                dto.put("type", req.getLeaveType().getLeaveName());
+                dto.put("reason", req.getReason());
+                dto.put("status", req.getStatus());
+
+                leaveMap.get(dateStr).add(dto);
+
+                current = current.plusDays(1);
+            }
+        }
+
+        return leaveMap;
+    }
+
     public void approveLeaveRequest(Integer requestId, Integer adminId){
         LeaveRequests request = leaveRequestRepository.findById(requestId)
         .orElseThrow(() -> new RuntimeException("Request not found"));
@@ -157,8 +203,6 @@ public class LeaveService {
 
         balance.setBalance(newBalance);
         leaveBalanceRepository.save(balance);
-
-
     }
 
     public void rejectLeaveRequest(Integer requestId, Integer adminId){
@@ -187,27 +231,22 @@ public class LeaveService {
         LeaveRequests request = leaveRequestRepository.findById(leaveRequestId)
             .orElseThrow(() -> new RuntimeException("Leave request not found"));
 
-        // Verify the request belongs to the employee
         if (!employeeId.equals(request.getEmployee().getEmployeeId())) {
             throw new RuntimeException("Unauthorized: You cannot edit another employee's leave request");
         }
 
-        // Verify the request is still in Pending status
         if (!"Pending".equals(request.getStatus())) {
             throw new RuntimeException("Cannot edit leave request with status: " + request.getStatus());
         }
 
-        // Validate and set leave type
         LeaveTypes leaveType = leaveTypesRepository.findById(leaveTypeId)
             .orElseThrow(() -> new RuntimeException("Leave Type not found"));
         request.setLeaveType(leaveType);
 
-        // Validate dates
         if (endDate.isBefore(startDate)) {
             throw new RuntimeException("End date cannot be before start date");
         }
 
-        // Validate reason
         if (reason == null || reason.trim().isEmpty()) {
             throw new RuntimeException("Reason cannot be empty");
         }
@@ -220,7 +259,6 @@ public class LeaveService {
             throw new RuntimeException("Reason cannot exceed 500 characters");
         }
 
-        // Update the request
         request.setStartDate(startDate);
         request.setEndDate(endDate);
         request.setReason(reason.trim());
