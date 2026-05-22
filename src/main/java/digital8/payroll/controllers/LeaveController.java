@@ -100,7 +100,6 @@ public class LeaveController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
-
         try {
             log.info("[LeaveController] submitLeaveRequest called with leaveTypeId={}, startDate={}, endDate={}, reason={}, reliever={}", leaveTypeId, startDate, endDate, reason, reliever);
             Users user = (Users) authentication.getPrincipal();
@@ -108,7 +107,6 @@ public class LeaveController {
 
             String attachmentPath = null;
             if (attachment != null && !attachment.isEmpty()) {
-                // Always use project root for uploads
                 String projectRoot = System.getProperty("user.dir");
                 java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "leave_attachments");
                 java.nio.file.Files.createDirectories(uploadDir);
@@ -145,6 +143,7 @@ public class LeaveController {
         model.addAttribute("emp_id", adminEmployeeId);
         String fullName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
         model.addAttribute("employeeName", fullName);
+        
         model.addAttribute("pendingRequests", leaveService.getPendingLeaveRequestsExcludingEmployee(adminEmployeeId));
         model.addAttribute("pendingCount", leaveService.getPendingCountExcludingEmployee(adminEmployeeId));
         model.addAttribute("allRequests", leaveService.getAllLeaveRequestsExcludingEmployee(adminEmployeeId, filter, search));
@@ -152,9 +151,12 @@ public class LeaveController {
         model.addAttribute("pendingUndertimeRequests", undertimeService.getPendingUndertimeRequestsExcludingEmployee(adminEmployeeId));
         model.addAttribute("pendingUndertimeCount", undertimeService.getPendingCountExcludingEmployee(adminEmployeeId));
         model.addAttribute("allUndertimeRequests", undertimeService.getAllUndertimeRequestsExcludingEmployee(adminEmployeeId, filter, search));
+        // PASSING NATIVE MAP
+        model.addAttribute("calendarLeaveData", leaveService.getCalendarLeaveData(adminEmployeeId));
         
         model.addAttribute("filter", filter);
         model.addAttribute("search", search);
+        
         return "html/leaveAdmin";
     }
 

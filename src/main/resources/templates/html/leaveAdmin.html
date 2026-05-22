@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Leave & Undertime Management - Admin</title>
     
-    <!-- Prevent caching -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -43,16 +42,46 @@
                 </a>
             </div>
 
-            <!-- Leave Section -->
-            <div id="leave-section">
+              <!-- Leave Section -->
+              <div id="leave-section">
+
+            <div class="calendar-dashboard">
+                <div class="calendar-card">
+                    <div class="calendar-header">
+                        <button type="button" id="prevMonth" class="btn-cal"><i class="fa-solid fa-chevron-left"></i></button>
+                        <h3 id="monthYear">May 2026</h3>
+                        <button type="button" id="nextMonth" class="btn-cal"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="day-name">Sun</div>
+                        <div class="day-name">Mon</div>
+                        <div class="day-name">Tue</div>
+                        <div class="day-name">Wed</div>
+                        <div class="day-name">Thu</div>
+                        <div class="day-name">Fri</div>
+                        <div class="day-name">Sat</div>
+                        </div>
+                </div>
+
+                <div class="leave-details-card">
+                    <div class="details-header">
+                        <h3 id="selectedDateHeader">Select a date</h3>
+                        <span class="daily-count-badge" id="dailyCountBadge" style="display: none;">0 on leave</span>
+                    </div>
+                    <div id="leaveDetailsList" class="details-list">
+                        <div class="no-selection-msg">
+                            <i class="fa-regular fa-calendar-check" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+                            <p>Click a highlighted date on the calendar to see who is on leave.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
-            <!-- Pending approvals Card -->
             <div class="leave-pending">
                 <h2>Pending approvals 
                 <span class="badge-count" th:text="'(' + ${pendingCount} + ')'">( 3)</span>
                 </h2>
                 
-                <!-- Success/Error Messages -->
                 <div th:if="${successMessage}" class="alert-success">
                     <p th:text="${successMessage}"></p>
                 </div>
@@ -116,18 +145,15 @@
                 </div>
             </div>
             
-            <!-- All Leave Requests Card -->
             <div class="leave-requests">
                 <h2>All Leave Requests</h2>
                 
-                <!-- Search bar -->
                 <form th:action="@{/admin/leave}" method="get" class="leave-search-form">
                     <input type="hidden" name="filter" th:value="${filter}">
                     <input type="search" name="search" th:value="${search}" placeholder="Search by employee name, leave type, or reason..." class="leave-search-input" aria-label="Search leave requests">
                     <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
                 </form>
                 
-                <!-- Filter Tabs -->
                 <div class="filter-tabs">
                     <a id="all-tab" th:href="@{/admin/leave(search=${search})}" 
                        th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
@@ -357,6 +383,131 @@
         </section>
     </div>
     
+    <script th:inline="javascript">
+        // Thymeleaf automatically serializes the Java Map to JSON when using th:inline="javascript"
+        var calendarLeaveData = /*[[${calendarLeaveData}]]*/ {};
+    </script>
+
+    <script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        // Fallback to empty object if map isn't populated
+        if (!calendarLeaveData) calendarLeaveData = {};
+
+        // To use real current date:
+        let currentDate = new Date();
+        
+        const monthYearText = document.getElementById("monthYear");
+        const calendarGrid = document.querySelector(".calendar-grid");
+        const leaveDetailsList = document.getElementById("leaveDetailsList");
+        const selectedDateHeader = document.getElementById("selectedDateHeader");
+        const dailyCountBadge = document.getElementById("dailyCountBadge");
+        
+        let selectedDateElem = null;
+
+        function renderCalendar(date) {
+            const daysHeaders = calendarGrid.querySelectorAll('.day-name');
+            calendarGrid.innerHTML = '';
+            daysHeaders.forEach(h => calendarGrid.appendChild(h));
+
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            monthYearText.innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement("div");
+                emptyDiv.classList.add("cal-day", "empty");
+                calendarGrid.appendChild(emptyDiv);
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDiv = document.createElement("div");
+                dayDiv.classList.add("cal-day");
+                dayDiv.innerText = i;
+                
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                
+                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayDiv.classList.add("today");
+                }
+
+                if (calendarLeaveData[dateString]) {
+                    const count = calendarLeaveData[dateString].length;
+                    const badge = document.createElement("span");
+                    badge.classList.add("leave-marker");
+                    badge.innerText = count;
+                    dayDiv.appendChild(badge);
+                }
+
+                dayDiv.addEventListener("click", () => {
+                    if (selectedDateElem) selectedDateElem.classList.remove("selected");
+                    dayDiv.classList.add("selected");
+                    selectedDateElem = dayDiv;
+                    
+                    showLeaveDetails(dateString, monthNames[month], i, year);
+                });
+
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        function showLeaveDetails(dateString, monthName, day, year) {
+            selectedDateHeader.innerText = `${monthName} ${day}, ${year}`;
+            
+            const leaves = calendarLeaveData[dateString] || [];
+            
+            if (leaves.length === 0) {
+                dailyCountBadge.style.display = "none";
+                leaveDetailsList.innerHTML = `
+                    <div class="no-selection-msg">
+                        <p>No employees are on leave for this date.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            dailyCountBadge.style.display = "inline-block";
+            dailyCountBadge.innerText = `${leaves.length} on leave`;
+
+            let htmlContent = '';
+            leaves.forEach(leave => {
+                htmlContent += `
+                    <div class="daily-leave-card">
+                        <div class="user-title">
+                            <span>${leave.name} <small style="color:#64748b; font-weight:normal;">(${leave.empId})</small></span>
+                            <span class="leave-type-badge">${leave.type}</span>
+                        </div>
+                        <div class="leave-meta">
+                            <strong>Reason:</strong> <span>${leave.reason || 'None provided'}</span>
+                        </div>
+                        <div class="leave-meta">
+                            <strong>Status:</strong> <span class="status-badge status-${leave.status.toLowerCase()}">${leave.status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            leaveDetailsList.innerHTML = htmlContent;
+        }
+
+        document.getElementById("prevMonth").addEventListener("click", () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar(currentDate);
+        });
+
+        document.getElementById("nextMonth").addEventListener("click", () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar(currentDate);
+        });
+
+        renderCalendar(currentDate);
+    });
+    </script>
     <script src="/js/nav.js"></script>
     <script src="/js/leave.js"></script>
     <script th:inline="javascript">
@@ -408,7 +559,6 @@
 </body>
 </html>
 
-<!-- Attachment Modal -->
 <div id="attachmentModal" class="modal" style="display:none;">
   <div class="modal-content">
     <span class="close" onclick="closeAttachmentModal()">&times;</span>
@@ -446,4 +596,3 @@ window.onclick = function(event) {
   if (event.target == modal) closeAttachmentModal();
 }
 </script>
-
