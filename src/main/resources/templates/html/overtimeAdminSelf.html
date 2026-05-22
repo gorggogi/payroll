@@ -110,18 +110,18 @@
                             <td th:text="${a.attendance_date}"></td>
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
-                            <td th:text="${a.workHoursDisplay}"></td>
-                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
+                            <td th:text="${a.workHoursWhole}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeWhole}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
                             <td th:text="${otReq != null ? otReq.totalHoursDisplay : '—'}"></td>
                             <td th:text="${otReq != null ? otReq.status : '—'}"></td>
-                            <td th:text="${a.overtimeHoursDisplay}"></td>
+                            <td th:text="${a.overtimeHoursWhole}"></td>
                         </tr>
                     </tbody>
                 </table>
-                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
-                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0'}">0</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0'}">0</strong></p>
             </div>
             <p th:if="${attendances.isEmpty()}" class="total-hours">No attendance rows for this month on your DTR yet.</p>
             <a th:if="${emp_id != null}" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">View Payroll &rarr;</a>

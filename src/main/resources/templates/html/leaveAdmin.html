@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Management - Admin</title>
+    <title>Leave & Undertime Management - Admin</title>
     
     <!-- Prevent caching -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -23,7 +23,7 @@
         
         <section>
             <div class="head">
-                <h1>Leave Management</h1>
+                <h1>Leave & Undertime Management</h1>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <button type="button" class="btn-my-leave" onclick="window.location.href='/admin/my-leave'">
                         <i class="fa-solid fa-user-clock"></i> My Leave
@@ -33,6 +33,18 @@
                     </button>
                 </div>
             </div>
+            
+            <div class="filter-tabs no-print">
+                <a id="leave-tab" href="#leave" class="active" onclick="switchTab('leave')">
+                    Leave Requests <i class="fa-solid fa-circle-exclamation" style="color: #dc3545; margin-left: 4px;" th:if="${pendingCount != null and pendingCount > 0}"></i>
+                </a>
+                <a id="undertime-tab" href="#undertime" onclick="switchTab('undertime')">
+                    Undertime Requests <i class="fa-solid fa-circle-exclamation" style="color: #dc3545; margin-left: 4px;" th:if="${pendingUndertimeCount != null and pendingUndertimeCount > 0}"></i>
+                </a>
+            </div>
+
+            <!-- Leave Section -->
+            <div id="leave-section">
             
             <!-- Pending approvals Card -->
             <div class="leave-pending">
@@ -190,11 +202,209 @@
                     </table>
                 </div>
             </div>
+            </div> <!-- End Leave Section -->
+
+            <!-- Undertime Section -->
+            <div id="undertime-section" style="display: none;">
+                <!-- Pending Undertime Approvals -->
+                <div class="leave-pending">
+                    <h2>Pending Undertime Approvals 
+                    <span class="badge-count" th:text="'(' + ${pendingUndertimeCount} + ')'">(0)</span>
+                    </h2>
+                    
+                    <div th:if="${#lists.isEmpty(pendingUndertimeRequests)}" class="no-data">
+                        <p>No pending undertime requests</p>
+                    </div>
+                    
+                    <div class="pending-requests">
+                        <div class="request-card" th:each="request : ${pendingUndertimeRequests}">
+                            <div class="request-header">
+                                <div class="employee-info">
+                                    <h3>
+                                        <span th:text="${request.employee.firstName + ' ' + request.employee.lastName}">John Doe</span>
+                                    </h3>
+                                    <span class="employee-id" th:text="'EMP-' + ${request.employee.employeeId}">EMP-001</span>
+                                </div>
+                                <span class="leave-type-badge" style="background: #f39c12; color: #fff;">Undertime</span>
+                            </div>
+                            
+                            <div class="request-details">
+                                <div class="detail-item">
+                                    <strong>Date:</strong>
+                                    <span th:text="${#temporals.format(request.requestDate, 'MMM dd, yyyy')}">Feb 20, 2026</span>
+                                    <span class="days-badge" th:text="'(' + ${request.totalHours} + ' hrs)'">(2 hrs)</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <strong>Reason:</strong>
+                                    <span th:text="${request.reason}">Medical appointment</span>
+                                </div>
+
+                                <div class="detail-item" th:if="${request.reliever != null and !request.reliever.isEmpty()}">
+                                    <strong>Reliever:</strong>
+                                    <span th:text="${request.reliever}">Jane Smith</span>
+                                </div>
+                                
+                                <div class="detail-item">
+                                    <strong>Requested:</strong>
+                                    <span th:text="${#temporals.format(request.requestedAt, 'MMM dd, yyyy hh:mm a')}">Feb 19, 2026</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Attachment:</strong>
+                                    <a th:if="${request.attachmentPath != null}"
+                                       href="#"
+                                       th:attr="onclick=|showImageModal('${request.attachmentPath}'); return false;|"
+                                       class="btn-attachment"><i class="fa-solid fa-paperclip"></i> View</a>
+                                    <span th:if="${request.attachmentPath == null}">None</span>
+                                </div>
+                            </div>
+                            
+                            <div class="request-actions">
+                                <form th:action="@{/admin/undertime/approve/{id}(id=${request.undertimeRequestId})}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn-approve" title="Approve"><i class="fas fa-check"></i></button>
+                                </form>
+                                
+                                <form th:action="@{/admin/undertime/reject/{id}(id=${request.undertimeRequestId})}" method="POST" style="display: inline;">
+                                    <input type="hidden" name="denialReason" class="denial-reason-input" />
+                                    <button type="button" class="btn-reject" title="Reject" th:onclick="'promptUndertimeReject(this)'"><i class="fas fa-times"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- All Undertime Requests Card -->
+                <div class="leave-requests">
+                    <h2>All Undertime Requests</h2>
+                    
+                    <form th:action="@{/admin/leave}" method="get" class="leave-search-form">
+                        <input type="hidden" name="filter" th:value="${filter}">
+                        <input type="search" name="search" th:value="${search}" placeholder="Search by employee name or reason..." class="leave-search-input">
+                        <button type="submit" class="btn-search"><i class="fa-solid fa-search"></i> Search</button>
+                    </form>
+                    
+                    <div class="filter-tabs">
+                        <a id="all-tab-ut" th:href="@{/admin/leave(search=${search})} + '#undertime'" 
+                           th:classappend="${filter == null or filter == 'all' ? 'active' : ''}">
+                            All
+                        </a>
+                        <a id="pending-tab-ut" th:href="@{/admin/leave(filter='pending', search=${search})} + '#undertime'" 
+                           th:classappend="${filter == 'pending' ? 'active' : ''}">
+                            Pending
+                        </a>
+                        <a id="approved-tab-ut" th:href="@{/admin/leave(filter='approved', search=${search})} + '#undertime'" 
+                           th:classappend="${filter == 'approved' ? 'active' : ''}">
+                            Approved
+                        </a>
+                        <a id="rejected-tab-ut" th:href="@{/admin/leave(filter='rejected', search=${search})} + '#undertime'" 
+                           th:classappend="${filter == 'rejected' ? 'active' : ''}">
+                            Rejected
+                        </a>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="leave-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Total Hours</th>
+                                    <th>Reason</th>
+                                    <th>Reliever</th>
+                                    <th>Status</th>
+                                    <th>Requested On</th>
+                                    <th>Attachment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(allUndertimeRequests)}">
+                                    <td colspan="8" class="no-data">
+                                        <p>No undertime requests found</p>
+                                    </td>
+                                </tr>
+                                <tr th:each="request : ${allUndertimeRequests}">
+                                    <td>
+                                        <strong th:text="${request.employee.firstName + ' ' + request.employee.lastName}">John Doe</strong>
+                                        <br>
+                                        <small th:text="'EMP-' + ${request.employee.employeeId}">EMP-001</small>
+                                    </td>
+                                    <td th:text="${#temporals.format(request.requestDate, 'MMM dd, yyyy')}">Feb 20, 2026</td>
+                                    <td>
+                                        <strong th:text="${request.totalHours} + ' hrs'">2 hrs</strong>
+                                    </td>
+                                    <td th:text="${request.reason}">Doctor appointment</td>
+                                    <td th:text="${request.reliever != null ? request.reliever : '-'}">-</td>
+                                    <td>
+                                        <span class="status-badge" 
+                                              th:classappend="${request.status == 'Approved' ? 'status-approved' : 
+                                                              (request.status == 'Rejected' ? 'status-rejected' : 'status-pending')}"
+                                              th:text="${request.status}">Pending</span>
+                                    </td>
+                                    <td th:text="${#temporals.format(request.requestedAt, 'MMM dd, yyyy hh:mm a')}">Feb 19, 2026</td>
+                                    <td>
+                                        <a th:if="${request.attachmentPath != null}"
+                                           href="#"
+                                           th:attr="onclick=|showImageModal('${request.attachmentPath}'); return false;|"
+                                           class="btn-attachment"><i class="fa-solid fa-paperclip"></i> View</a>
+                                        <span th:if="${request.attachmentPath == null}">None</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div> <!-- End Undertime Section -->
         </section>
     </div>
     
     <script src="/js/nav.js"></script>
     <script src="/js/leave.js"></script>
+    <script th:inline="javascript">
+        function switchTab(tabId) {
+            const currentActiveTab = document.querySelector('.filter-tabs a.active');
+            if (currentActiveTab && currentActiveTab.id !== tabId + '-tab') {
+                const indicator = currentActiveTab.querySelector('i.fa-circle-exclamation');
+                if (indicator) {
+                    indicator.style.display = 'none';
+                }
+            }
+
+            document.getElementById('leave-tab').classList.remove('active');
+            document.getElementById('undertime-tab').classList.remove('active');
+            document.getElementById('leave-section').style.display = 'none';
+            document.getElementById('undertime-section').style.display = 'none';
+            
+            document.getElementById(tabId + '-tab').classList.add('active');
+            document.getElementById(tabId + '-section').style.display = 'block';
+            window.location.hash = tabId;
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash === '#undertime') {
+                switchTab('undertime');
+            } else if (!window.location.hash) {
+                // If no hash provided, auto-switch to undertime if leave has 0 pending but undertime has some
+                const pendingLeave = /*[[${pendingCount != null ? pendingCount : 0}]]*/ 0;
+                const pendingUndertime = /*[[${pendingUndertimeCount != null ? pendingUndertimeCount : 0}]]*/ 0;
+                if (pendingLeave === 0 && pendingUndertime > 0) {
+                    switchTab('undertime');
+                }
+            }
+        });
+
+        function promptUndertimeReject(btn) {
+            const reason = prompt("Please provide a reason for rejecting this undertime request:");
+            if (reason !== null) {
+                if (reason.trim() === '') {
+                    alert('A rejection reason is required.');
+                    return;
+                }
+                const form = btn.closest('form');
+                form.querySelector('.denial-reason-input').value = reason;
+                form.submit();
+            }
+        }
+    </script>
 </body>
 </html>
 

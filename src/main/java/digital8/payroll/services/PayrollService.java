@@ -144,10 +144,14 @@ public class PayrollService {
     }
 
     public List<PayrollItems> computePayroll(Integer empId, String period, String monthName) {
-        return computePayroll(empId, period, monthName, null);
+        return computePayroll(empId, period, monthName, null, true);
     }
 
     public List<PayrollItems> computePayroll(Integer empId, String period, String monthName, Integer yearParam) {
+        return computePayroll(empId, period, monthName, yearParam, true);
+    }
+
+    public List<PayrollItems> computePayroll(Integer empId, String period, String monthName, Integer yearParam, boolean countDayOffHours) {
         Optional<Employees> empOpt = employeeRepository.findById(empId);
         if (empOpt.isEmpty())
             return new ArrayList<>();
@@ -205,7 +209,10 @@ public class PayrollService {
             if (d.isBefore(periodStart) || d.isAfter(periodEnd))
                 continue;
 
-            AttendanceMetrics metrics = resolveAttendanceMetrics(a);
+            AttendanceMetrics metrics = resolveAttendanceMetrics(a, countDayOffHours);
+            if (emp != null && "Fixed".equalsIgnoreCase(emp.getEmploymentType())) {
+                metrics = new AttendanceMetrics(metrics.workHours, BigDecimal.ZERO, 0, 0);
+            }
             totalWorkedHours = totalWorkedHours.add(metrics.workHours);
             totalOtHours = totalOtHours.add(metrics.overtimeHours);
             totalLateUndertimeMinutes += metrics.lateMinutes;
@@ -257,7 +264,10 @@ public class PayrollService {
                 if (!regularHolidayDates.contains(d))
                     continue;
 
-                AttendanceMetrics metrics = resolveAttendanceMetrics(a);
+                AttendanceMetrics metrics = resolveAttendanceMetrics(a, countDayOffHours);
+                if (emp != null && "Fixed".equalsIgnoreCase(emp.getEmploymentType())) {
+                    metrics = new AttendanceMetrics(metrics.workHours, BigDecimal.ZERO, 0, 0);
+                }
                 BigDecimal wh = metrics.workHours;
                 BigDecimal ot = metrics.overtimeHours;
 
@@ -432,7 +442,7 @@ public class PayrollService {
         return out;
     }
 
-    private AttendanceMetrics resolveAttendanceMetrics(Attendance attendance) {
+    private AttendanceMetrics resolveAttendanceMetrics(Attendance attendance, boolean countDayOffHours) {
         if (attendance == null) {
             return AttendanceMetrics.zero();
         }
@@ -452,11 +462,19 @@ public class PayrollService {
                     preferStoredInt(attendance.getUndertime_minutes(), 0));
 
             if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date(), attendance.getShiftOverride())) {
-                return new AttendanceMetrics(
-                        BigDecimal.ZERO.setScale(SCALE, ROUND),
-                        storedOvertime,
-                        0,
-                        0);
+                if (countDayOffHours) {
+                    return new AttendanceMetrics(
+                            rawWorkedHours,
+                            storedOvertime,
+                            0,
+                            0);
+                } else {
+                    return new AttendanceMetrics(
+                            BigDecimal.ZERO.setScale(SCALE, ROUND),
+                            storedOvertime,
+                            0,
+                            0);
+                }
             }
 
             if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {

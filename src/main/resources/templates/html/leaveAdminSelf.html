@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Leave - Admin</title>
+    <title>Leave & Undertime - Admin</title>
     
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -22,98 +22,31 @@
 
     <section>
         <div class="head" style="display: flex; align-items: center; gap: .5rem;">
-            <h1 style="flex:1;">My Leave</h1>
+            <h1 style="flex:1;">My Leave & Undertime</h1>
             <button type="button" class="btn-primary no-print" style="margin-left: 0.5rem;" onclick="openRequestLeaveModal()">
                 <i class="fa-solid fa-plus"></i> New Leave Request
+            </button>
+            <button type="button" class="btn-primary no-print" style="margin-left: 0.5rem; background-color: #f39c12;" onclick="openRequestUndertimeModal()">
+                <i class="fa-solid fa-clock"></i> New Undertime Request
             </button>
             <button type="button" class="btn-print no-print" onclick="window.print()">
                 <i class="fa-solid fa-print"></i> Print
             </button>
         </div>
 
-        <!-- Leave Balance Card -->
-        <div class="leave-card">
-            <h2>Leave Balance</h2>
-            <div class="balance-grid">
-                <div class="balance-item" th:each="balance : ${leaveBalances}">
-                    <div class="balance-info">
-                        <h3 th:text="${balance.leaveType.leaveName}">Sick Leave</h3>
-                        <p class="balance-days">
-                            <span th:text="${balance.remainingDays}">5</span> days remaining
-                        </p>
-                        <small th:text="'Total: ' + ${balance.totalDays} + ' days'">Total: 15 days</small>
-                    </div>
-                </div>
-            </div>
+        <div class="filter-tabs no-print">
+                <a id="leave-tab" href="#leave" class="active" onclick="switchTab('leave')">
+                    Leave Requests <i class="fa-solid fa-circle-exclamation" style="color: #dc3545; margin-left: 4px;" th:if="${newLeaveResponsesCount != null and newLeaveResponsesCount > 0}"></i>
+                </a>
+                <a id="undertime-tab" href="#undertime" onclick="switchTab('undertime')">
+                    Undertime Requests <i class="fa-solid fa-circle-exclamation" style="color: #dc3545; margin-left: 4px;" th:if="${newUndertimeResponsesCount != null and newUndertimeResponsesCount > 0}"></i>
+                </a>
         </div>
 
-        <!-- Request New Leave Modal -->
-        <div id="requestLeaveModal" class="leave-modal">
-            <div class="leave-modal-content">
-                <button class="modal-close" onclick="closeRequestLeaveModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
-                <h3>Request New Leave</h3>
+        <!-- Leave Section -->
+        <div id="leave-section">
 
-                <div th:if="${successMessage}" class="alert-success">
-                    <p th:text="${successMessage}"></p>
-                </div>
-                <div th:if="${errorMessage}" class="alert-error">
-                    <p th:text="${errorMessage}"></p>
-                </div>
 
-                <form action="/employee/leave/request" method="POST" enctype="multipart/form-data" onsubmit="return validateLeaveForm()">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="leaveTypeId">Leave Type: <span class="required">*</span></label>
-                            <select id="leaveTypeId" name="leaveTypeId" required>
-                                <option value="">-- Select Leave Type --</option>
-                                <option th:each="type : ${leaveTypes}"
-                                        th:value="${type.leaveTypeId}"
-                                        th:text="${type.leaveName}">Sick Leave</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="startDate">Start Date: <span class="required">*</span></label>
-                            <input type="date" id="startDate" name="startDate" required />
-                        </div>
-
-                        <div class="form-group">
-                            <label for="endDate">End Date: <span class="required">*</span></label>
-                            <input type="date" id="endDate" name="endDate" required />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reason">Reason: <span class="required">*</span></label>
-                        <textarea id="reason" name="reason" rows="4"
-                                  placeholder="Please provide a reason for your leave request..."
-                                  required></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reliever">Reliever for this leave:</label>
-                        <select id="reliever" name="reliever">
-                            <option value="">-- None --</option>
-                            <option th:each="emp : ${activeEmployees}"
-                                    th:value="${emp.employeeId}"
-                                    th:text="${emp.firstName + ' ' + emp.lastName}"></option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="attachment">Attach File (For Proof): *</label>
-                        <input type="file" id="attachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Submit Request</button>
-                        <button type="reset" class="btn-secondary">Clear</button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
         <!-- Leave History Card -->
         <div class="leave-card">
@@ -175,6 +108,129 @@
                 </table>
             </div>
         </div>
+        </div> <!-- End Leave Section -->
+
+        <!-- Undertime Section -->
+        <div id="undertime-section" style="display: none;">
+            <div class="leave-card">
+                <h2>My Undertime Requests</h2>
+                
+                <div class="table-container">
+                    <table class="leave-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Hours</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Requested On</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(undertimeRequests)}">
+                                <td colspan="6" class="no-data">
+                                    <p>No undertime requests found</p>
+                                </td>
+                            </tr>
+                            <tr th:each="request : ${undertimeRequests}">
+                                <td th:text="${#temporals.format(request.requestDate, 'MMM dd, yyyy')}">Feb 20, 2026</td>
+                                <td>
+                                    <strong th:text="${request.totalHours} + ' hrs'">2 hrs</strong>
+                                </td>
+                                <td th:text="${request.reason}">Doctor appointment</td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${request.status == 'Approved' ? 'status-approved' : 
+                                                          (request.status == 'Rejected' ? 'status-rejected' : 'status-pending')}"
+                                          th:text="${request.status}">Pending</span>
+                                </td>
+                                <td th:text="${#temporals.format(request.requestedAt, 'MMM dd, yyyy hh:mm a')}">Feb 19, 2026</td>
+                                <td style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <button type="button" 
+                                            class="btn-primary no-print edit-undertime-btn"
+                                            th:if="${request.status == 'Pending'}"
+                                            th:data-undertime-id="${request.undertimeRequestId}"
+                                            th:data-request-date="${#temporals.format(request.requestDate, 'yyyy-MM-dd')}"
+                                            th:data-total-hours="${request.totalHours}"
+                                            th:data-reason="${request.reason}"
+                                            th:data-status="${request.status}"
+                                            title="Edit undertime request">
+                                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> <!-- End Undertime Section -->
+
+        <!-- Request New Leave Modal -->
+        <div id="requestLeaveModal" class="leave-modal">
+            <div class="leave-modal-content">
+                <button class="modal-close" onclick="closeRequestLeaveModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Request New Leave</h3>
+
+                <div th:if="${successMessage}" class="alert-success">
+                    <p th:text="${successMessage}"></p>
+                </div>
+                <div th:if="${errorMessage}" class="alert-error">
+                    <p th:text="${errorMessage}"></p>
+                </div>
+
+                <form action="/employee/leave/request" method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="leaveType">Leave Type: <span class="required">*</span></label>
+                        <select id="leaveType" name="leaveTypeId" required>
+                            <option value="">-- Select Leave Type --</option>
+                            <option th:each="type : ${leaveTypes}" 
+                                    th:value="${type.leaveTypeId}" 
+                                    th:text="${type.leaveName}"></option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date: <span class="required">*</span></label>
+                            <input type="date" id="startDate" name="startDate" required />
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="endDate">End Date: <span class="required">*</span></label>
+                            <input type="date" id="endDate" name="endDate" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reason">Reason: <span class="required">*</span></label>
+                        <textarea id="reason" name="reason" rows="4"
+                                  placeholder="Please provide a reason for your leave request..."
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reliever">Reliever/Substitute for this leave:</label>
+                        <select id="reliever" name="reliever">
+                            <option value="">-- None --</option>
+                            <option th:each="emp : ${activeEmployees}"
+                                    th:value="${emp.employeeId}"
+                                    th:text="${emp.firstName + ' ' + emp.lastName}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="attachment">Attach File (Proof of Absence):</label>
+                        <input type="file" id="attachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Submit Request</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Edit Leave Modal -->
         <div id="editLeaveModal" class="leave-modal">
@@ -211,9 +267,102 @@
                         <textarea id="editReason" name="reason" rows="4" required></textarea>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="editLeaveAttachment">Update Attachment (optional):</label>
+                        <input type="file" id="editLeaveAttachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                    </div>
+                    
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" onclick="closeEditLeaveModal()">Cancel</button>
                         <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Edit Undertime Modal -->
+        <div id="editUndertimeModal" class="leave-modal">
+            <div class="leave-modal-content">
+                <button class="modal-close" onclick="closeEditUndertimeModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Edit Undertime Request</h3>
+                
+                <form id="editUndertimeForm" onsubmit="submitEditUndertimeForm(event)">
+                    <input type="hidden" id="editUndertimeId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editUndertimeDate">Date:</label>
+                            <input type="date" id="editUndertimeDate" name="requestDate" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="editUndertimeHours">Total Hours:</label>
+                            <input type="number" id="editUndertimeHours" name="totalHours" step="0.5" min="0.5" max="8" required />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editUndertimeReason">Reason:</label>
+                        <textarea id="editUndertimeReason" name="reason" rows="4" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editUndertimeAttachment">Update Attachment (optional):</label>
+                        <input type="file" id="editUndertimeAttachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeEditUndertimeModal()">Cancel</button>
+                        <button type="submit" class="btn-primary" style="background-color: #f39c12; border-color: #f39c12;">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Request New Undertime Modal -->
+        <div id="requestUndertimeModal" class="leave-modal">
+            <div class="leave-modal-content">
+                <button class="modal-close" onclick="closeRequestUndertimeModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Request Undertime</h3>
+
+                <form action="/employee/undertime/request" method="POST" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="requestDate">Date: <span class="required">*</span></label>
+                            <input type="date" id="requestDate" name="requestDate" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="totalHours">Total Hours: <span class="required">*</span></label>
+                            <input type="number" id="totalHours" name="totalHours" step="0.5" min="0.5" max="8" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="undertimeReason">Reason: <span class="required">*</span></label>
+                        <textarea id="undertimeReason" name="reason" rows="4"
+                                  placeholder="Please provide a detailed reason..."
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="undertimeReliever">Assigned Reliever (Optional):</label>
+                        <select id="undertimeReliever" name="reliever">
+                            <option value="">-- None --</option>
+                            <option th:each="emp : ${activeEmployees}"
+                                    th:value="${emp.firstName + ' ' + emp.lastName}"
+                                    th:text="${emp.firstName + ' ' + emp.lastName}"></option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="undertimeAttachment">Attach File (For Proof):</label>
+                        <input type="file" id="undertimeAttachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" style="background-color: #f39c12; border-color: #f39c12;">Submit Request</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
                     </div>
                 </form>
             </div>
@@ -223,6 +372,39 @@
 
 <script src="/js/nav.js"></script>
 <script src="/js/leave.js"></script>
+<script>
+    function openRequestUndertimeModal() {
+        document.getElementById('requestUndertimeModal').style.display = 'flex';
+    }
+    function closeRequestUndertimeModal() {
+        document.getElementById('requestUndertimeModal').style.display = 'none';
+    }
+    function switchTab(tabId) {
+        const currentActiveTab = document.querySelector('.filter-tabs a.active');
+        if (currentActiveTab && currentActiveTab.id !== tabId + '-tab') {
+            const indicator = currentActiveTab.querySelector('i.fa-circle-exclamation');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+
+        document.getElementById('leave-tab').classList.remove('active');
+        document.getElementById('undertime-tab').classList.remove('active');
+        document.getElementById('leave-section').style.display = 'none';
+        document.getElementById('undertime-section').style.display = 'none';
+        
+        document.getElementById(tabId + '-tab').classList.add('active');
+        document.getElementById(tabId + '-section').style.display = 'block';
+        window.location.hash = tabId;
+    }
+    
+    // Auto-switch based on hash
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.location.hash === '#undertime') {
+            switchTab('undertime');
+        }
+    });
+</script>
 </body>
 </html>
 

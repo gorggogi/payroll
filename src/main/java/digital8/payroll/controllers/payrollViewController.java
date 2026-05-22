@@ -60,6 +60,7 @@ public class payrollViewController {
             @RequestParam(required = false) String month,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) String period,
+            @RequestParam(required = false) Boolean countDayOffHours,
             Model model,
             Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof Users) {
@@ -91,10 +92,12 @@ public class payrollViewController {
         int selectedYear = (year != null) ? year : currentYear;
         String monthName = (month != null && !month.isBlank()) ? month : Month.of(java.time.LocalDate.now().getMonthValue()).name();
         String effectivePeriod = (period != null && !period.isBlank()) ? period : "monthly";
-        
+        boolean countDayOff = countDayOffHours == null || Boolean.TRUE.equals(countDayOffHours);
+        model.addAttribute("countDayOffHours", countDayOff);
+
         List<PayrollItems> items = null;
         try {
-            items = payrollService.computePayroll(empId, effectivePeriod, monthName, selectedYear);
+            items = payrollService.computePayroll(empId, effectivePeriod, monthName, selectedYear, countDayOff);
         } catch (digital8.payroll.exceptions.ScheduleNotAssignedException e) {
             model.addAttribute("noScheduleError", true);
             model.addAttribute("noScheduleMessage", "No schedule assigned for this employee. Assign a schedule to compute payroll.");

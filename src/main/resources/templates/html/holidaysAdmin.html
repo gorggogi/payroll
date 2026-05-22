@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
@@ -172,9 +172,6 @@
                     <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('importCsvModal')">
                         Import CSV
                     </button>
-                    <button type="button" class="holiday-fab-btn" onclick="openHolidayModal('syncGoogleModal')">
-                        Sync Google
-                    </button>
                 </div>
             </div>
             <!-- Copy Year Modal -->
@@ -227,35 +224,6 @@
                             <button type="submit">Import CSV</button>
                             <a href="/files/holidayTemplate.csv" download="holidayTemplate.csv">Download CSV
                                 Template</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div id="syncGoogleModal" class="holiday-modal">
-                <div class="holiday-modal-content">
-                    <div class="holiday-modal-header">
-                        <h3>Sync Google Calendar</h3>
-                        <button type="button" class="holiday-modal-close"
-                            onclick="closeHolidayModal('syncGoogleModal')">&times;</button>
-                    </div>
-                    <form method="post" action="/admin/holidays/sync-google">
-
-                        <div class="form-row">
-                            <div>
-                                <label for="syncYearModal">Year</label>
-                                <input id="syncYearModal" name="year" type="number" min="2000" max="2100"
-                                    th:value="${selectedYear}" required />
-                            </div>
-                            <div>
-                                <label>
-                                    <input type="checkbox" name="dryRun" value="true" />
-                                    Dry run (preview only, no DB writes)
-                                </label>
-                            </div>
-                        </div>
-                        <div class="holiday-modal-actions">
-                            <button type="button" onclick="closeHolidayModal('syncGoogleModal')">Cancel</button>
-                            <button type="submit">Sync Now</button>
                         </div>
                     </form>
                 </div>

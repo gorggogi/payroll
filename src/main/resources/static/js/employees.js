@@ -307,6 +307,7 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Employment Type: <select name="employmentType">
                         <option value="Regular" ${(emp.employmentType || '') === 'Regular' ? 'selected' : ''}>Regular</option>
+                        <option value="Fixed" ${(emp.employmentType || '') === 'Fixed' ? 'selected' : ''}>Fixed (No Late/Undertime/OT)</option>
                         <option value="Job Order" ${(emp.employmentType || '') === 'Job Order' ? 'selected' : ''}>Job Order</option>
                         <option value="Probationary" ${(emp.employmentType || '') === 'Probationary' ? 'selected' : ''}>Probationary</option>
                         <option value="Contractual" ${(emp.employmentType || '') === 'Contractual' ? 'selected' : ''}>Contractual</option>

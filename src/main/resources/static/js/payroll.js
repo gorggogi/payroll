@@ -20,7 +20,9 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
             var month = document.getElementById('month').value;
             var yearEl = document.getElementById('year');
             var year = yearEl ? yearEl.value : '';
-            var url = `/api/payroll/${empId}?period=${encodeURIComponent(period)}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`;
+            var countDayOffEl = document.getElementById('countDayOffHours');
+            var countDayOff = countDayOffEl ? countDayOffEl.value : 'true';
+            var url = `/api/payroll/${empId}?period=${encodeURIComponent(period)}&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}&countDayOffHours=${encodeURIComponent(countDayOff)}`;
 
             fetch(url)
                 .then(function(resp){
@@ -55,10 +57,11 @@ document.getElementById('computePayrollBtn').addEventListener('click', function(
                         html += '<tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>';
                         html += `<tr><td>Daily Rate</td><td>${fmt(item.dailyRate)}</td></tr>`;
                         html += `<tr><td>Hourly Rate</td><td>${fmt(item.hourlyRate)}</td></tr>`;
-                        
+                        html += `<tr><td>Per-Minute Rate <span class="rate-note">(Hourly Rate ÷ 60 mins)</span></td><td>${fmt(item.perMinuteRate)}</td></tr>`;
+
                         html += '<tr><td colspan="2" class="table-section-header"><strong>Earnings</strong></td></tr>';
-                        html += `<tr><td>Basic Pay <span class="rate-note">${item.totalWorkedHours != null ? '(' + item.totalWorkedHours + ' hrs)' : ''}</span></td><td>${fmt(item.basicPay)}</td></tr>`;
-                        html += `<tr><td>Overtime Pay <span class="rate-note">${item.totalOtHours != null ? '(' + item.totalOtHours + ' hrs)' : ''}</span></td><td>${fmt(item.overtimePay)}</td></tr>`;
+                        html += `<tr><td>Basic Pay <span class="rate-note">${item.totalWorkedHoursWhole != null ? '(' + item.totalWorkedHoursWhole + ' hrs)' : ''}</span></td><td>${fmt(item.basicPay)}</td></tr>`;
+                        html += `<tr><td>Overtime Pay <span class="rate-note">${item.totalOtHoursWhole != null ? '(' + item.totalOtHoursWhole + ' hrs)' : ''}</span></td><td>${fmt(item.overtimePay)}</td></tr>`;
                         html += `<tr><td>Holiday Pay</td><td>${fmt(item.holidayPay)}</td></tr>`;
                         html += `<tr><td>Allowances</td><td>${fmt(item.allowances)}</td></tr>`;
                         html += `<tr><td>Adjustment (Earnings)</td><td>${fmt(item.adjustmentEarnings)}</td></tr>`;

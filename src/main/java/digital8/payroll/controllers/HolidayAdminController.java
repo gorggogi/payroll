@@ -165,27 +165,4 @@ public class HolidayAdminController {
 
         return "redirect:/admin/holidays";
     }
-
-    @PostMapping("/sync-google")
-    public String syncGoogle(
-            @RequestParam Integer year,
-            @RequestParam(defaultValue = "false") boolean dryRun,
-            Authentication authentication,
-            RedirectAttributes ra) {
-
-        guardAdmin(authentication);
-
-        try {
-            HolidayAdminService.SyncResult result = holidayAdminService.syncFromGoogle(year, dryRun);
-            ra.addFlashAttribute("successMessage",
-                    "Google sync complete. Created=" + result.created()
-                            + ", Updated=" + result.updated()
-                            + ", Skipped=" + result.skipped()
-                            + ", Unmapped=" + result.unmapped());
-        } catch (IllegalArgumentException ex) {
-            ra.addFlashAttribute("errorMessage", ex.getMessage());
-        }
-
-        return "redirect:/admin/holidays?year=" + year;
-    }
 }

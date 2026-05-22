@@ -19,4 +19,11 @@ public final class HourFormatUtils {
         long remainingMinutes = Math.abs(totalMinutes % 60);
         return wholeHours + ":" + String.format(Locale.ENGLISH, "%02d", remainingMinutes);
     }
+
+    public static String formatHoursWhole(BigDecimal hours) {
+        if (hours == null || hours.compareTo(BigDecimal.ZERO) <= 0) {
+            return "0";
+        }
+        return hours.setScale(0, RoundingMode.DOWN).toPlainString();
+    }
 }

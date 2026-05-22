@@ -92,10 +92,10 @@
                         </td>
                         <td th:text="${a.timeInDisplay}"></td>
                         <td th:text="${a.timeOutDisplay}"></td>
-                        <td th:text="${a.workHoursDisplay}"></td>
+                        <td th:text="${a.workHoursWhole}"></td>
                         <td th:text="${a.late_minutes}"></td>
                         <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
-                        <td th:text="${a.overtimeHoursDisplay}"></td>
+                        <td th:text="${a.overtimeHoursWhole}"></td>
                     </tr>
                 </tbody>
             </table>
@@ -107,7 +107,7 @@
             </form>
 
             <p class="total-hours">Total Hours Rendered: <strong
-                    th:text="${totalHoursRenderedDisplay != null ? totalHoursRenderedDisplay : '0:00'}">0:00</strong>
+                    th:text="${totalHoursRenderedDisplay != null ? totalHoursRenderedDisplay : '0'}">0</strong>
             </p>
             <p class="total-hours">Total Undertime: <strong
                     th:text="${totalUndertimeMinutes != null ? totalUndertimeMinutes : 0}">0</strong> mins

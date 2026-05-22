@@ -10,11 +10,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import digital8.payroll.entities.Users;
 import digital8.payroll.services.LeaveService;
+import digital8.payroll.services.UndertimeService;
 
 @ControllerAdvice
 public class NavIndicatorAdvice {
 
     @Autowired LeaveService leaveService;
+    @Autowired UndertimeService undertimeService;
 
     @ModelAttribute("pendingLeaveCount")
     public long addPendingLeaveCount(Authentication auth){
@@ -26,7 +28,10 @@ public class NavIndicatorAdvice {
         Users user = (Users) auth.getPrincipal();
         Integer adminEmployeeId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
 
-        return leaveService.getPendingCountExcludingEmployee(adminEmployeeId);
+        long pendingLeave = leaveService.getPendingCountExcludingEmployee(adminEmployeeId);
+        long pendingUndertime = undertimeService.getPendingCountExcludingEmployee(adminEmployeeId);
+
+        return pendingLeave + pendingUndertime;
     }
 
     @ModelAttribute("respondedLeaveCount")
@@ -40,8 +45,10 @@ public class NavIndicatorAdvice {
 
         LocalDateTime lastViewed = user.getLastLeaveViewedAt();
 
-        return leaveService.getNewRespondedCountForEmployee(user.getEmployee().getEmployeeId(), lastViewed);
+        long respondedLeave = leaveService.getNewRespondedCountForEmployee(user.getEmployee().getEmployeeId(), lastViewed);
+        long respondedUndertime = undertimeService.getNewRespondedCountForEmployee(user.getEmployee().getEmployeeId(), lastViewed);
 
+        return respondedLeave + respondedUndertime;
     }
 
 }

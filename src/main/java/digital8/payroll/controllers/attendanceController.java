@@ -122,7 +122,7 @@ public class attendanceController {
                 .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
-        model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHours(totalHoursWithOt));
+        model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHoursWhole(totalHoursWithOt));
         model.addAttribute("overtimeRequestByDate",
             overtimeRequestService.latestRequestByWorkDateForMonth(selfEmpId, selectedYear, selectedMonth));
         List<OvertimeRequest> myRequests = overtimeRequestService.listForEmployeeInMonth(selfEmpId, selectedYear, selectedMonth);
@@ -647,7 +647,7 @@ public class attendanceController {
                             .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
-            model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHours(totalHoursWithOt));
+            model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHoursWhole(totalHoursWithOt));
             model.addAttribute("overtimeRequestByDate",
                     overtimeRequestService.latestRequestByWorkDateForMonth(targetEmpId, selectedYear, selectedMonth));
         }
@@ -671,7 +671,7 @@ public class attendanceController {
             model.addAttribute("totalHoursWithOvertime", BigDecimal.ZERO);
         }
         if (!model.containsAttribute("totalHoursWithOvertimeDisplay")) {
-            model.addAttribute("totalHoursWithOvertimeDisplay", "0:00");
+            model.addAttribute("totalHoursWithOvertimeDisplay", "0");
         }
         if (!model.containsAttribute("emp_id") && selfEmpId != null) {
             model.addAttribute("emp_id", selfEmpId);
@@ -1351,6 +1351,68 @@ public class attendanceController {
         }
     }
 
+    private void populateComputedWorkHours(List<Attendance> attendances) {
+        for (Attendance attendance : attendances) {
+            if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
+                continue;
+            }
+            log.debug("[POPULATE] attId={}, time_in={}, time_out={}, shiftOverride='{}'",
+                    attendance.getAttendanceId(), attendance.getTime_in(), attendance.getTime_out(),
+                    attendance.getShiftOverride());
+            BigDecimal workHours = attendance.getWork_hours();
+            Integer lateMinutes = attendance.getLate_minutes();
+            Integer undertimeMinutes = attendance.getUndertime_minutes();
+            BigDecimal overtimeHours = attendance.getOvertime_hours();
+            if (workHours == null || workHours.compareTo(BigDecimal.ZERO) <= 0) {
+                workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+            }
+
+            AttendanceMetrics metrics = new AttendanceMetrics(
+                    minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out())),
+                    BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP),
+                    0,
+                    0);
+            if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
+                ShiftMatchResult shiftMatch;
+                if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                    shiftMatch = parseShiftOverride(attendance.getShiftOverride());
+                } else {
+                    shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                }
+                log.debug("[POPULATE] attId={}, shiftMatch: allowed={}, restDay={}, shiftIn={}, shiftOut={}",
+                        attendance.getAttendanceId(), shiftMatch.allowed, shiftMatch.restDay,
+                        shiftMatch.shiftIn, shiftMatch.shiftOut);
+                if (shiftMatch.restDay) {
+                    workHours = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                    lateMinutes = 0;
+                    undertimeMinutes = 0;
+                    overtimeHours = attendance.getOvertime_hours() != null
+                            ? attendance.getOvertime_hours()
+                            : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+                } else if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
+                    metrics = computeAttendanceMetrics(
+                            attendance.getTime_in(),
+                            attendance.getTime_out(),
+                            shiftMatch.shiftIn,
+                            shiftMatch.shiftOut);
+                    workHours = metrics.workHours;
+                    lateMinutes = metrics.lateMinutes;
+                    undertimeMinutes = metrics.undertimeMinutes;
+                    overtimeHours = resolveOvertimeHours(attendance.getOvertime_hours(), metrics.overtimeHours);
+                }
+            }
+
+            attendance.setWork_hours(workHours != null
+                    ? workHours.setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+            attendance.setLate_minutes(lateMinutes != null ? Math.max(0, lateMinutes) : 0);
+            attendance.setUndertime_minutes(undertimeMinutes != null ? Math.max(0, undertimeMinutes) : 0);
+            attendance.setOvertime_hours(overtimeHours != null
+                    ? overtimeHours.setScale(2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        }
+    }
+
     private ShiftMatchResult parseShiftOverride(String override) {
         if (override == null || override.isBlank()) {
             log.warn("[PARSE_OVERRIDE] empty shift override");
@@ -1775,7 +1837,7 @@ public class attendanceController {
                     .filter(h -> h != null)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursRendered", total);
-            model.addAttribute("totalHoursRenderedDisplay", HourFormatUtils.formatHours(total));
+            model.addAttribute("totalHoursRenderedDisplay", HourFormatUtils.formatHoursWhole(total));
             int totalUndertimeMinutes = filtered.stream()
                     .map(Attendance::getUndertime_minutes)
                     .filter(m -> m != null)
@@ -1796,7 +1858,7 @@ public class attendanceController {
             model.addAttribute("totalHoursRendered", BigDecimal.ZERO);
         }
         if (!model.containsAttribute("totalHoursRenderedDisplay")) {
-            model.addAttribute("totalHoursRenderedDisplay", "0:00");
+            model.addAttribute("totalHoursRenderedDisplay", "0");
         }
         if (!model.containsAttribute("totalUndertimeMinutes")) {
             model.addAttribute("totalUndertimeMinutes", 0);

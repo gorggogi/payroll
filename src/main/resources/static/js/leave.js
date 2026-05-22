@@ -144,6 +144,27 @@ document.addEventListener('DOMContentLoaded', function() {
             openEditLeaveModal(leaveId, leaveType, startDate, endDate, reason, status);
         });
     });
+
+    document.querySelectorAll('.edit-undertime-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const undertimeId = this.getAttribute('data-undertime-id');
+            const requestDate = this.getAttribute('data-request-date');
+            const totalHours = this.getAttribute('data-total-hours');
+            const reason = this.getAttribute('data-reason');
+            const status = this.getAttribute('data-status');
+            
+            openEditUndertimeModal(undertimeId, requestDate, totalHours, reason, status);
+        });
+    });
+
+    const editUndertimeModal = document.getElementById('editUndertimeModal');
+    if (editUndertimeModal) {
+        editUndertimeModal.addEventListener('click', function(event) {
+            if (event.target === editUndertimeModal) {
+                closeEditUndertimeModal();
+            }
+        });
+    }
 });
 
 // ==================== EDIT LEAVE MODAL FUNCTIONS ====================
@@ -218,19 +239,22 @@ function submitEditLeaveForm(event) {
         return;
     }
     
+    const attachmentInput = document.getElementById('editLeaveAttachment');
+    const attachment = attachmentInput.files[0];
+    
     // Submit the form
     const formData = new FormData();
     formData.append('leaveTypeId', leaveTypeId);
     formData.append('startDate', startDate);
     formData.append('endDate', endDate);
     formData.append('reason', reason);
+    if (attachment) {
+        formData.append('attachment', attachment);
+    }
     
     fetch(`/api/employee/leave/${leaveRequestId}`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams(formData)
+        body: formData
     })
     .then(response => {
         if (!response.ok) {
@@ -242,6 +266,88 @@ function submitEditLeaveForm(event) {
         alert('Leave request updated successfully!');
         closeEditLeaveModal();
         // Reload the page to see the changes
+        window.location.reload();
+    })
+    .catch(error => {
+        alert('Error: ' + error.message);
+    });
+}
+
+// ==================== EDIT UNDERTIME MODAL FUNCTIONS ====================
+
+function openEditUndertimeModal(undertimeRequestId, requestDate, totalHours, reason, status) {
+    document.getElementById('editUndertimeId').value = undertimeRequestId;
+    document.getElementById('editUndertimeDate').value = requestDate;
+    document.getElementById('editUndertimeHours').value = totalHours;
+    document.getElementById('editUndertimeReason').value = reason;
+    
+    const isEditable = status === 'Pending';
+    
+    const dateInput = document.getElementById('editUndertimeDate');
+    const hoursInput = document.getElementById('editUndertimeHours');
+    const reasonTextarea = document.getElementById('editUndertimeReason');
+    const submitBtn = document.querySelector('#editUndertimeForm button[type="submit"]');
+    
+    dateInput.disabled = !isEditable;
+    hoursInput.disabled = !isEditable;
+    reasonTextarea.disabled = !isEditable;
+    submitBtn.disabled = !isEditable;
+    
+    document.getElementById('editUndertimeModal').classList.add('show');
+}
+
+function closeEditUndertimeModal() {
+    document.getElementById('editUndertimeModal').classList.remove('show');
+    document.getElementById('editUndertimeForm').reset();
+}
+
+function submitEditUndertimeForm(event) {
+    event.preventDefault();
+    
+    const undertimeRequestId = document.getElementById('editUndertimeId').value;
+    const requestDate = document.getElementById('editUndertimeDate').value;
+    const totalHours = document.getElementById('editUndertimeHours').value;
+    const reason = document.getElementById('editUndertimeReason').value.trim();
+    
+    if (!requestDate) {
+        alert('Please select a date');
+        return;
+    }
+    
+    if (!totalHours || totalHours < 0.5) {
+        alert('Please enter valid hours');
+        return;
+    }
+    
+    if (reason.length < 10) {
+        alert('Please provide a more detailed reason (at least 10 characters)');
+        return;
+    }
+    
+    const attachmentInput = document.getElementById('editUndertimeAttachment');
+    const attachment = attachmentInput.files[0];
+    
+    const formData = new FormData();
+    formData.append('requestDate', requestDate);
+    formData.append('totalHours', totalHours);
+    formData.append('reason', reason);
+    if (attachment) {
+        formData.append('attachment', attachment);
+    }
+    
+    fetch(`/api/employee/undertime/${undertimeRequestId}`, {
+        method: 'PUT',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to update undertime request');
+        }
+        return response.json();
+    })
+    .then(data => {
+        alert('Undertime request updated successfully!');
+        closeEditUndertimeModal();
         window.location.reload();
     })
     .catch(error => {

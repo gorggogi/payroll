@@ -3,6 +3,7 @@ package digital8.payroll.controllers;
 import digital8.payroll.entities.Users;
 import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.services.LeaveService;
+import digital8.payroll.services.UndertimeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +28,8 @@ public class LeaveController {
 
     @Autowired
     private LeaveService leaveService;
+    @Autowired
+    private UndertimeService undertimeService;
     @Autowired
     private UsersRepository usersRepository;
 
@@ -44,7 +48,15 @@ public class LeaveController {
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
         model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        model.addAttribute("undertimeRequests", undertimeService.getEmployeeUndertimeRequests(employeeId));
         model.addAttribute("activeEmployees", employeeService.filterEmployees(null, null, null, "Active", null, null, null, null, null, null));
+        
+        LocalDateTime lastViewedAt = user.getLastLeaveViewedAt();
+        long newLeaveResponsesCount = leaveService.getNewRespondedCountForEmployee(employeeId, lastViewedAt);
+        long newUndertimeResponsesCount = undertimeService.getNewRespondedCountForEmployee(employeeId, lastViewedAt);
+        model.addAttribute("newLeaveResponsesCount", newLeaveResponsesCount);
+        model.addAttribute("newUndertimeResponsesCount", newUndertimeResponsesCount);
+        
         user.setLastLeaveViewedAt(LocalDateTime.now());
         usersRepository.save(user);
 
@@ -57,12 +69,20 @@ public class LeaveController {
         Integer employeeId = user.getEmployee().getEmployeeId();
         String employeeName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
 
-        model.addAttribute("emp_id", user.getUserId());
+        model.addAttribute("emp_id", employeeId);
         model.addAttribute("employeeName", employeeName);
         model.addAttribute("leaveBalances", leaveService.getEmployeeLeaveBalance(employeeId));
         model.addAttribute("leaveTypes", leaveService.getAllLeaveTypes());
         model.addAttribute("leaveRequests", leaveService.getEmployeeLeaveRequests(employeeId));
+        model.addAttribute("undertimeRequests", undertimeService.getEmployeeUndertimeRequests(employeeId));
         model.addAttribute("activeEmployees", employeeService.filterEmployees(null, null, null, "Active", null, null, null, null, null, null));
+        
+        LocalDateTime lastViewedAt = user.getLastLeaveViewedAt();
+        long newLeaveResponsesCount = leaveService.getNewRespondedCountForEmployee(employeeId, lastViewedAt);
+        long newUndertimeResponsesCount = undertimeService.getNewRespondedCountForEmployee(employeeId, lastViewedAt);
+        model.addAttribute("newLeaveResponsesCount", newLeaveResponsesCount);
+        model.addAttribute("newUndertimeResponsesCount", newUndertimeResponsesCount);
+        
         user.setLastLeaveViewedAt(LocalDateTime.now());
         usersRepository.save(user);
 
@@ -122,12 +142,17 @@ public class LeaveController {
         Users user = (Users) authentication.getPrincipal();
         Integer adminUserId = user.getUserId();
         Integer adminEmployeeId = user.getEmployee() != null ? user.getEmployee().getEmployeeId() : null;
-        model.addAttribute("emp_id", adminUserId);
+        model.addAttribute("emp_id", adminEmployeeId);
         String fullName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
         model.addAttribute("employeeName", fullName);
         model.addAttribute("pendingRequests", leaveService.getPendingLeaveRequestsExcludingEmployee(adminEmployeeId));
         model.addAttribute("pendingCount", leaveService.getPendingCountExcludingEmployee(adminEmployeeId));
         model.addAttribute("allRequests", leaveService.getAllLeaveRequestsExcludingEmployee(adminEmployeeId, filter, search));
+        
+        model.addAttribute("pendingUndertimeRequests", undertimeService.getPendingUndertimeRequestsExcludingEmployee(adminEmployeeId));
+        model.addAttribute("pendingUndertimeCount", undertimeService.getPendingCountExcludingEmployee(adminEmployeeId));
+        model.addAttribute("allUndertimeRequests", undertimeService.getAllUndertimeRequestsExcludingEmployee(adminEmployeeId, filter, search));
+        
         model.addAttribute("filter", filter);
         model.addAttribute("search", search);
         return "html/leaveAdmin";
@@ -173,6 +198,83 @@ public class LeaveController {
         return "redirect:/admin/leave";
     }
 
+    @PostMapping("/employee/undertime/request")
+    public String submitUndertimeRequest(
+            @RequestParam LocalDate requestDate,
+            @RequestParam BigDecimal totalHours,
+            @RequestParam String reason,
+            @RequestParam(value = "reliever", required = false) String reliever,
+            @RequestParam(value = "attachment", required = false) org.springframework.web.multipart.MultipartFile attachment,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Users user = (Users) authentication.getPrincipal();
+            Integer employeeId = user.getEmployee().getEmployeeId();
+
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                String projectRoot = System.getProperty("user.dir");
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "undertime_attachments");
+                java.nio.file.Files.createDirectories(uploadDir);
+                String fileName = System.currentTimeMillis() + "_" + attachment.getOriginalFilename();
+                java.nio.file.Path filePath = uploadDir.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                attachmentPath = "uploads/undertime_attachments/" + fileName;
+            }
+
+            undertimeService.submitUndertimeRequest(employeeId, requestDate, totalHours, reason, reliever, attachmentPath);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Undertime request submitted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to submit undertime request: " + e.getMessage());
+        }
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        return isAdmin ? "redirect:/admin/my-leave#undertime" : "redirect:/employee/leave#undertime";
+    }
+
+    @PostMapping("/admin/undertime/approve/{id}")
+    public String approveUndertimeRequest(
+            @PathVariable Integer id,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Users user = (Users) authentication.getPrincipal();
+            Integer adminId = user.getUserId();
+
+            undertimeService.approveUndertimeRequest(id, adminId);
+            redirectAttributes.addFlashAttribute("successMessage", "Undertime request approved!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to approve undertime request: " + e.getMessage());
+        }
+
+        return "redirect:/admin/leave#undertime";
+    }
+
+    @PostMapping("/admin/undertime/reject/{id}")
+    public String rejectUndertimeRequest(
+            @PathVariable Integer id,
+            @RequestParam(required = false, defaultValue = "") String denialReason,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            Users user = (Users) authentication.getPrincipal();
+            Integer adminId = user.getUserId();
+
+            undertimeService.rejectUndertimeRequest(id, adminId, denialReason);
+            redirectAttributes.addFlashAttribute("successMessage", "Undertime request rejected!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to reject undertime request: " + e.getMessage());
+        }
+
+        return "redirect:/admin/leave#undertime";
+    }
+
     @PutMapping("/api/employee/leave/{id}")
     @ResponseBody
     public ResponseEntity<?> updateLeaveRequest(
@@ -181,17 +283,70 @@ public class LeaveController {
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate,
             @RequestParam String reason,
+            @RequestParam(value = "attachment", required = false) org.springframework.web.multipart.MultipartFile attachment,
             Authentication authentication) {
         
         try {
             Users user = (Users) authentication.getPrincipal();
             Integer employeeId = user.getEmployee().getEmployeeId();
             
-            leaveService.updateLeaveRequest(id, employeeId, leaveTypeId, startDate, endDate, reason);
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                String projectRoot = System.getProperty("user.dir");
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "leave_attachments");
+                java.nio.file.Files.createDirectories(uploadDir);
+                String fileName = System.currentTimeMillis() + "_" + attachment.getOriginalFilename();
+                java.nio.file.Path filePath = uploadDir.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                attachmentPath = "uploads/leave_attachments/" + fileName;
+            }
+            
+            leaveService.updateLeaveRequest(id, employeeId, leaveTypeId, startDate, endDate, reason, attachmentPath);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Leave request updated successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    @PutMapping("/api/employee/undertime/{id}")
+    @ResponseBody
+    public ResponseEntity<?> updateUndertimeRequest(
+            @PathVariable Integer id,
+            @RequestParam LocalDate requestDate,
+            @RequestParam BigDecimal totalHours,
+            @RequestParam String reason,
+            @RequestParam(value = "attachment", required = false) org.springframework.web.multipart.MultipartFile attachment,
+            Authentication authentication) {
+        
+        try {
+            Users user = (Users) authentication.getPrincipal();
+            Integer employeeId = user.getEmployee().getEmployeeId();
+            
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                String projectRoot = System.getProperty("user.dir");
+                java.nio.file.Path uploadDir = java.nio.file.Paths.get(projectRoot, "uploads", "undertime_attachments");
+                java.nio.file.Files.createDirectories(uploadDir);
+                String fileName = System.currentTimeMillis() + "_" + attachment.getOriginalFilename();
+                java.nio.file.Path filePath = uploadDir.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                attachmentPath = "uploads/undertime_attachments/" + fileName;
+            }
+            
+            undertimeService.updateUndertimeRequest(id, employeeId, requestDate, totalHours, reason, attachmentPath);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Undertime request updated successfully");
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {

@@ -25,8 +25,8 @@
         <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
             <li><a th:href="@{/admin/attendance}">Daily Time Record</a></li>
             <li>
-                <a th:href="@{/admin/leave}" title="Leave">
-                    <span class="nav-label">Leave</span>
+                <a th:href="@{/admin/leave}" title="Leave & Undertime">
+                    <span class="nav-label">Leave & Undertime</span>
                     <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Pending leave requests" aria-label="Pending leave requests" th:style="${pendingLeaveCount != null and pendingLeaveCount > 0} ? '' : 'display:none'">
                         <i class="fa-solid fa-circle-exclamation"></i>
                     </span>
@@ -46,8 +46,8 @@
         <ul sec:authorize="hasRole('EMPLOYEE')" class="nav-dropdown-menu">
             <li><a th:href="@{/employee/attendance}">Daily Time Record</a></li>
             <li>
-                <a th:href="@{/employee/leave}" title="Leave">
-                    <span class="nav-label">Leave</span>
+                <a th:href="@{/employee/leave}" title="Leave & Undertime">
+                    <span class="nav-label">Leave & Undertime</span>
                     <span id="leave-nav-indicator" data-nav-indicator="leave" class="nav-indicator" title="Responded leave requests" aria-label="Responded leave requests" th:style="${respondedLeaveCount != null and respondedLeaveCount > 0} ? '' : 'display:none'">
                         <i class="fa-solid fa-circle-exclamation"></i>
                     </span>

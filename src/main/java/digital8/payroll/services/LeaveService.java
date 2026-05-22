@@ -183,8 +183,8 @@ public class LeaveService {
         return leaveRequestRepository.countNewRespondedForEmployee(employeeId, lastViewedAt);
     }
 
-    public LeaveRequests updateLeaveRequest(Integer leaveRequestId, Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason){
-        LeaveRequests request = leaveRequestRepository.findById(leaveRequestId)
+    public LeaveRequests updateLeaveRequest(Integer requestId, Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason, String attachmentPath) {
+        LeaveRequests request = leaveRequestRepository.findById(requestId)
             .orElseThrow(() -> new RuntimeException("Leave request not found"));
 
         // Verify the request belongs to the employee
@@ -224,6 +224,10 @@ public class LeaveService {
         request.setStartDate(startDate);
         request.setEndDate(endDate);
         request.setReason(reason.trim());
+        
+        if (attachmentPath != null && !attachmentPath.isEmpty()) {
+            request.setAttachmentPath(attachmentPath);
+        }
 
         return leaveRequestRepository.save(request);
     }

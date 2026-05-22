@@ -49,6 +49,11 @@
                     <option value="semi_1" th:selected="${selectedPeriod == 'semi_1'}">Semi-monthly (1&ndash;15)</option>
                     <option value="semi_2" th:selected="${selectedPeriod == 'semi_2'}">Semi-monthly (16&ndash;end)</option>
                 </select>
+                <label for="countDayOffHours">Count rest-day hours:</label>
+                <select name="countDayOffHours" id="countDayOffHours" onchange="this.form.submit()">
+                    <option value="true" th:selected="${countDayOffHours}">Yes</option>
+                    <option value="false" th:selected="${!countDayOffHours}">No</option>
+                </select>
             </form>
 
             <div class="print-only print-header" th:if="${employee != null}">
@@ -90,12 +95,13 @@
     <tr><td>Monthly Rate</td><td th:text="${employee != null and employee.basicSalary != null ? #numbers.formatDecimal(employee.basicSalary, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Daily Rate <span class="rate-note" th:text="${workingDaysInMonth > 0 ? '(Monthly Rate ÷ ' + workingDaysInMonth + ' working days)' : ''}"></span></td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Hourly Rate <span class="rate-note">(Daily Rate ÷ 8 hours)</span></td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHoursDisplay}">0:00</td></tr>
-    <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHoursDisplay}">0:00</td></tr>
-    
+    <tr><td>Per-Minute Rate <span class="rate-note">(Hourly Rate ÷ 60 mins)</span></td><td th:text="${item.perMinuteRate != null ? #numbers.formatDecimal(item.perMinuteRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHoursWhole}">0</td></tr>
+    <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHoursWhole}">0</td></tr>
+
     <tr><td colspan="2" class="table-section-header"><strong>Earnings</strong></td></tr>
-    <tr><td>Basic Pay <span class="rate-note" th:text="${'(' + item.totalWorkedHoursDisplay + ')'}"></span></td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Overtime Pay <span class="rate-note" th:text="${'(' + item.totalOtHoursDisplay + ')'}"></span></td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Basic Pay <span class="rate-note" th:text="${'(' + item.totalWorkedHoursWhole + ' hrs)'}"></span></td><td th:text="${item.basicPay != null ? #numbers.formatDecimal(item.basicPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr><td>Overtime Pay <span class="rate-note" th:text="${'(' + item.totalOtHoursWhole + ' hrs)'}"></span></td><td th:text="${item.overtimePay != null ? #numbers.formatDecimal(item.overtimePay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Holiday Pay</td><td th:text="${item.holidayPay != null ? #numbers.formatDecimal(item.holidayPay, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Allowances</td><td th:text="${item.allowances != null ? #numbers.formatDecimal(item.allowances, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Adjustment (Earnings)</td><td th:text="${item.adjustmentEarnings != null ? #numbers.formatDecimal(item.adjustmentEarnings, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>

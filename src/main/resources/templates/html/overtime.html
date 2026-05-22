@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
@@ -182,8 +182,8 @@
                             <td th:text="${a.attendance_date}"></td>
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
-                            <td th:text="${a.workHoursDisplay}"></td>
-                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
+                            <td th:text="${a.workHoursWhole}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeWhole}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
@@ -199,8 +199,8 @@
                     </tbody>
                 </table>
 
-                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
-                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0'}">0</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0'}">0</strong></p>
                 <p>
                     <button type="submit" class="btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save DTR overtime</button>
                 </p>
@@ -228,18 +228,18 @@
                             <td th:text="${a.attendance_date}"></td>
                             <td th:text="${a.time_in}"></td>
                             <td th:text="${a.time_out}"></td>
-                            <td th:text="${a.workHoursDisplay}"></td>
-                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
+                            <td th:text="${a.workHoursWhole}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeWhole}"></td>
                             <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
                             <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.status : '-'}"></td>
-                            <td th:text="${a.overtimeHoursDisplay}"></td>
+                            <td th:text="${a.overtimeHoursWhole}"></td>
                         </tr>
                     </tbody>
                 </table>
-                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
-                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0'}">0</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0'}">0</strong></p>
             </div>
 
             <p th:if="${attendances.isEmpty()}" class="total-hours" sec:authorize="hasRole('ADMIN')">No attendance rows for this month. Record daily time first, or pick another employee / period.</p>

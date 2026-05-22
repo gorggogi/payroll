@@ -34,6 +34,7 @@ public class PayrollApiController {
             @RequestParam(required = false) String period,
             @RequestParam(required = false) String month,
             @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Boolean countDayOffHours,
             Authentication authentication) {
         if (authentication != null && authentication.getPrincipal() instanceof Users) {
             Users user = (Users) authentication.getPrincipal();
@@ -42,8 +43,8 @@ public class PayrollApiController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied.");
             }
         }
-
-        List<PayrollItems> computed = payrollService.computePayroll(empId, period, month, year);
+        boolean countDayOff = countDayOffHours == null || Boolean.TRUE.equals(countDayOffHours);
+        List<PayrollItems> computed = payrollService.computePayroll(empId, period, month, year, countDayOff);
         if (computed != null && !computed.isEmpty()) {
             return ResponseEntity.ok(computed);
         }

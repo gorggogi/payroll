@@ -137,14 +137,28 @@ public class Attendance{
         return HourFormatUtils.formatHours(work_hours);
     }
 
+    public String getWorkHoursWhole() {
+        return HourFormatUtils.formatHoursWhole(work_hours);
+    }
+
     public String getOvertimeHoursDisplay() {
         return HourFormatUtils.formatHours(overtime_hours);
+    }
+
+    public String getOvertimeHoursWhole() {
+        return HourFormatUtils.formatHoursWhole(overtime_hours);
     }
 
     public String getTotalHoursWithOvertimeDisplay() {
         BigDecimal work = work_hours != null ? work_hours : BigDecimal.ZERO;
         BigDecimal overtime = overtime_hours != null ? overtime_hours : BigDecimal.ZERO;
         return HourFormatUtils.formatHours(work.add(overtime));
+    }
+
+    public String getTotalHoursWithOvertimeWhole() {
+        BigDecimal work = work_hours != null ? work_hours : BigDecimal.ZERO;
+        BigDecimal overtime = overtime_hours != null ? overtime_hours : BigDecimal.ZERO;
+        return HourFormatUtils.formatHoursWhole(work.add(overtime));
     }
 
     public String getTimeInDisplay() {

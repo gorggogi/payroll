@@ -239,11 +239,13 @@ public class PayrollItems{
     public void setTotalWorkedHours(BigDecimal totalWorkedHours) { this.totalWorkedHours = totalWorkedHours; }
 
     public String getTotalWorkedHoursDisplay() { return HourFormatUtils.formatHours(totalWorkedHours); }
+    public String getTotalWorkedHoursWhole() { return HourFormatUtils.formatHoursWhole(totalWorkedHours); }
 
     public BigDecimal getTotalOtHours() { return totalOtHours; }
     public void setTotalOtHours(BigDecimal totalOtHours) { this.totalOtHours = totalOtHours; }
 
     public String getTotalOtHoursDisplay() { return HourFormatUtils.formatHours(totalOtHours); }
+    public String getTotalOtHoursWhole() { return HourFormatUtils.formatHoursWhole(totalOtHours); }
 
     public Integer getLateUndertimeMinutes() { return lateUndertimeMinutes; }
     public void setLateUndertimeMinutes(Integer lateUndertimeMinutes) { this.lateUndertimeMinutes = lateUndertimeMinutes; }

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import digital8.payroll.entities.Users;
 import digital8.payroll.services.LeaveService;
+import digital8.payroll.services.UndertimeService;
 
 /**
  * API for nav badge indicators. Returns a map of indicator key → show (boolean).
@@ -23,6 +24,9 @@ public class NavIndicatorController {
 
     @Autowired
     private LeaveService leaveService;
+    
+    @Autowired
+    private UndertimeService undertimeService;
 
     @GetMapping("/api/nav-indicators")
     @ResponseBody
@@ -44,14 +48,18 @@ public class NavIndicatorController {
         boolean selfResponded = false;
 
         if (employeeId != null) {
-            selfResponded = leaveService.getNewRespondedCountForEmployee(
+            selfResponded = (leaveService.getNewRespondedCountForEmployee(
                     employeeId,
                     user.getLastLeaveViewedAt()
-            ) > 0;
+            ) + undertimeService.getNewRespondedCountForEmployee(
+                    employeeId,
+                    user.getLastLeaveViewedAt()
+            )) > 0;
         }
 
         if (isAdmin) {
-            teamPending = leaveService.getPendingCountExcludingEmployee(employeeId) > 0;
+            teamPending = (leaveService.getPendingCountExcludingEmployee(employeeId) + 
+                           undertimeService.getPendingCountExcludingEmployee(employeeId)) > 0;
         }
 
         // For admins:

@@ -253,28 +253,28 @@
     width: fit-content;
 }
 
-.filter-tabs #all-tab {
+.filter-tabs #all-tab, .filter-tabs #all-tab-ut {
     background-color: black;
     color: white;
     height: fit-content;
     width: fit-content;
 }
 
-.filter-tabs #pending-tab {
+.filter-tabs #pending-tab, .filter-tabs #pending-tab-ut {
     background-color: orange;
     color: white;
     height: fit-content;
     width: fit-content;
 }
 
-.filter-tabs #approved-tab {
+.filter-tabs #approved-tab, .filter-tabs #approved-tab-ut {
     background-color: green;
     color: white;
     height: fit-content;
     width: fit-content;
 }
 
-.filter-tabs #rejected-tab {
+.filter-tabs #rejected-tab, .filter-tabs #rejected-tab-ut {
     background-color: red;
     color: white;
     height: fit-content;
