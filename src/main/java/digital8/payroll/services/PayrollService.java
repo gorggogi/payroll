@@ -214,7 +214,7 @@ public class PayrollService {
                 metrics = new AttendanceMetrics(metrics.workHours, BigDecimal.ZERO, 0, 0);
             }
             totalWorkedHours = totalWorkedHours.add(metrics.workHours);
-            totalOtHours = totalOtHours.add(metrics.overtimeHours);
+            totalOtHours = totalOtHours.add(metrics.overtimeHours.setScale(0, RoundingMode.DOWN));
             totalLateUndertimeMinutes += metrics.lateMinutes;
             totalLateUndertimeMinutes += metrics.undertimeMinutes;
         }

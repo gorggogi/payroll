@@ -114,12 +114,16 @@ public class attendanceController {
         BigDecimal totalOt = filtered.stream()
             .map(Attendance::getOvertime_hours)
             .filter(h -> h != null)
+            .map(h -> h.setScale(0, RoundingMode.DOWN))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalOvertimeHours", totalOt);
         model.addAttribute("totalOvertimeHoursDisplay", HourFormatUtils.formatHours(totalOt));
         BigDecimal totalHoursWithOt = filtered.stream()
-            .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
-                .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
+            .map(a -> {
+                BigDecimal wh = a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO;
+                BigDecimal ot = a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO;
+                return wh.add(ot.setScale(0, RoundingMode.DOWN));
+            })
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
         model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHoursWhole(totalHoursWithOt));
@@ -639,12 +643,16 @@ public class attendanceController {
             BigDecimal totalOt = filtered.stream()
                     .map(Attendance::getOvertime_hours)
                     .filter(h -> h != null)
+                    .map(h -> h.setScale(0, RoundingMode.DOWN))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalOvertimeHours", totalOt);
             model.addAttribute("totalOvertimeHoursDisplay", HourFormatUtils.formatHours(totalOt));
             BigDecimal totalHoursWithOt = filtered.stream()
-                    .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
-                            .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
+                    .map(a -> {
+                        BigDecimal wh = a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO;
+                        BigDecimal ot = a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO;
+                        return wh.add(ot.setScale(0, RoundingMode.DOWN));
+                    })
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
             model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHoursWhole(totalHoursWithOt));

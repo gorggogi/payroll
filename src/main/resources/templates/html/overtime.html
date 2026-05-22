@@ -50,12 +50,12 @@
                         <tr th:each="r : ${pendingOvertimeRequests}">
                             <td th:text="${r.employee.lastName + ', ' + r.employee.firstName}"></td>
                             <td th:text="${r.workDate}"></td>
-                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'hh:mm a') : ''}"></td>
+                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'hh:mm a') : ''}"></td>
                             <td th:text="${r.totalHoursDisplay}"></td>
                             <td th:text="${r.status}"></td>
                             <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
-                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'MMM d, yyyy hh:mm a') : ''}"></td>
                             <td>
                                 <div class="ot-actions">
                                     <form th:action="@{/admin/attendance/overtime/approve/{id}(id=${r.overtimeRequestId})}" method="post">
@@ -139,13 +139,13 @@
                         <tbody>
                             <tr th:each="r : ${myOvertimeRequests}">
                                 <td th:text="${r.workDate}"></td>
-                                <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
-                                <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                                <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'hh:mm a') : ''}"></td>
+                                <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'hh:mm a') : ''}"></td>
                                 <td th:text="${r.totalHoursDisplay}"></td>
                                 <td th:text="${r.status}"></td>
                                 <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '-'}"></td>
                                 <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
-                                <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                                <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'MMM d, yyyy hh:mm a') : ''}"></td>
                                 <td>
                                     <a th:if="${r.attachmentPath != null}" href="#" th:attr="onclick=|showOtAttachmentModal('${r.attachmentPath}'); return false;|">View</a>
                                     <span th:if="${r.attachmentPath == null}">None</span>
@@ -180,12 +180,12 @@
                     <tbody class="attendanceBody">
                         <tr th:each="a : ${attendances}" th:with="otReq=${overtimeRequestByDate.get(a.attendance_date)}">
                             <td th:text="${a.attendance_date}"></td>
-                            <td th:text="${a.time_in}"></td>
-                            <td th:text="${a.time_out}"></td>
+                            <td th:text="${a.time_in != null ? #temporals.format(a.time_in, 'hh:mm a') : ''}"></td>
+                            <td th:text="${a.time_out != null ? #temporals.format(a.time_out, 'hh:mm a') : ''}"></td>
                             <td th:text="${a.workHoursWhole}"></td>
                             <td th:text="${a.totalHoursWithOvertimeWhole}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'hh:mm a') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'hh:mm a') : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td>
@@ -226,12 +226,12 @@
                     <tbody class="attendanceBody">
                         <tr th:each="a : ${attendances}" th:with="otReq=${overtimeRequestByDate.get(a.attendance_date)}">
                             <td th:text="${a.attendance_date}"></td>
-                            <td th:text="${a.time_in}"></td>
-                            <td th:text="${a.time_out}"></td>
+                            <td th:text="${a.time_in != null ? #temporals.format(a.time_in, 'hh:mm a') : ''}"></td>
+                            <td th:text="${a.time_out != null ? #temporals.format(a.time_out, 'hh:mm a') : ''}"></td>
                             <td th:text="${a.workHoursWhole}"></td>
                             <td th:text="${a.totalHoursWithOvertimeWhole}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'hh:mm a') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'hh:mm a') : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
                             <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td th:text="${a.overtimeHoursWhole}"></td>
