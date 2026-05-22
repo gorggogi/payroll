@@ -52,6 +52,12 @@ public class LeaveRequests{
     @Column (nullable = true, unique = false)
     private LocalDateTime respondedAt;
 
+    @Column(name = "attachment_path", nullable = true, length = 500)
+    private String attachmentPath;
+
+    @Column(name = "reliever", nullable = true, length = 255)
+    private String reliever;
+
     @Transient
     public Integer getTotalDays() {
         if (startDate != null && endDate != null){
@@ -138,6 +144,22 @@ public class LeaveRequests{
 
     public void setRespondedAt(LocalDateTime respondedAt) {
         this.respondedAt = respondedAt;
+    }
+
+    public String getAttachmentPath() {
+        return attachmentPath;
+    }
+
+    public void setAttachmentPath(String attachmentPath) {
+        this.attachmentPath = attachmentPath;
+    }
+
+    public String getReliever() {
+        return reliever;
+    }
+
+    public void setReliever(String reliever) {
+        this.reliever = reliever;
     }
 
 }

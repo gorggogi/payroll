@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin File Overtime</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/homeAdmin.css" />
+    <link rel="stylesheet" href="/css/nav.css" />
+    <link rel="stylesheet" href="/css/attendance.css" />
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/css/overtime.css" />
+</head>
+<body>
+    <div class="container">
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
+        <section>
+            <div class="head">
+                <h1 style="display: flex; align-items: center; gap: 1rem;">
+                    Overtime
+                </h1>
+                <button type="button" class="btn-primary" style="margin-left:auto;" onclick="window.location.href='/admin/attendance/overtime'">
+                    <i class="fa-solid fa-arrow-right"></i> Go to Admin Overtime
+                </button>
+            </div>
+            <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
+            <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
+            <div class="ot-panel">
+                <h2><i class="fa-solid fa-file-pen"></i> File overtime</h2>
+                <p style="margin:0 0 0.75rem;font-size:0.9rem;color:#555;">Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
+                <button type="button" class="btn-primary" onclick="openOtFilingModal()">
+                    <i class="fa-solid fa-file-circle-plus"></i> File OT
+                </button>
+            </div>
+            <form method="get" th:action="${overtimeFilterAction}" id="overtimeFilterForm" class="attendance-filter">
+                <label for="month">Month</label>
+                <select name="month" id="month" onchange="this.form.submit()">
+                    <option value="1" th:selected="${selectedMonth == 1}">January</option>
+                    <option value="2" th:selected="${selectedMonth == 2}">February</option>
+                    <option value="3" th:selected="${selectedMonth == 3}">March</option>
+                    <option value="4" th:selected="${selectedMonth == 4}">April</option>
+                    <option value="5" th:selected="${selectedMonth == 5}">May</option>
+                    <option value="6" th:selected="${selectedMonth == 6}">June</option>
+                    <option value="7" th:selected="${selectedMonth == 7}">July</option>
+                    <option value="8" th:selected="${selectedMonth == 8}">August</option>
+                    <option value="9" th:selected="${selectedMonth == 9}">September</option>
+                    <option value="10" th:selected="${selectedMonth == 10}">October</option>
+                    <option value="11" th:selected="${selectedMonth == 11}">November</option>
+                    <option value="12" th:selected="${selectedMonth == 12}">December</option>
+                </select>
+                <label for="year">Year</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
+                </select>
+            </form>
+            <p th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}" class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
+            <div class="ot-requests" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+                <h2>My overtime requests</h2>
+                <table class="attendanceTable">
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Work date</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours</th>
+                            <th>Status</th>
+                            <th>Approved by</th>
+                            <th>Reason</th>
+                            <th>Submitted</th>
+                            <th>Attachment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r : ${myOvertimeRequests}">
+                            <td th:text="${r.workDate}"></td>
+                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                            <td th:text="${r.totalHoursDisplay}"></td>
+                            <td th:text="${r.status}"></td>
+                            <td th:text="${approverNameByRequestId != null && approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '—'}"></td>
+                            <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
+                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                            <td>
+                                <a th:if="${r.attachmentPath != null}" href="#" th:attr="onclick=|showOtAttachmentModal('${r.attachmentPath}'); return false;|">View</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${!attendances.isEmpty()}">
+                <table class="attendanceTable">
+                    <caption>Your DTR overtime (this month)</caption>
+                    <thead>
+                        <tr class="attendanceHeader">
+                            <th>Date</th>
+                            <th>Time in</th>
+                            <th>Time out</th>
+                            <th>Work hours</th>
+                            <th>Total hours w/ OT</th>
+                            <th>Overtime time in</th>
+                            <th>Overtime time out</th>
+                            <th>Total hours (request)</th>
+                            <th>Status</th>
+                            <th>OT on record (hrs)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="attendanceBody">
+                        <tr th:each="a : ${attendances}" th:with="otReq=${overtimeRequestByDate.get(a.attendance_date)}">
+                            <td th:text="${a.attendance_date}"></td>
+                            <td th:text="${a.time_in}"></td>
+                            <td th:text="${a.time_out}"></td>
+                            <td th:text="${a.workHoursDisplay}"></td>
+                            <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '—'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : '—'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '—'}"></td>
+                            <td th:text="${a.overtimeHoursDisplay}"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="total-hours">Total overtime this month: <strong th:text="${totalOvertimeHoursDisplay != null ? totalOvertimeHoursDisplay : '0:00'}">0:00</strong></p>
+                <p class="total-hours">Total hours with overtime this month: <strong th:text="${totalHoursWithOvertimeDisplay != null ? totalHoursWithOvertimeDisplay : '0:00'}">0:00</strong></p>
+            </div>
+            <p th:if="${attendances.isEmpty()}" class="total-hours">No attendance rows for this month on your DTR yet.</p>
+            <a th:if="${emp_id != null}" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">View Payroll &rarr;</a>
+            <div id="otFilingModal" class="ot-modal" aria-hidden="true">
+                <div class="ot-modal-content">
+                    <div class="ot-modal-head">
+                        <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
+                        <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
+                    </div>
+                    <form method="post" th:action="@{/admin/attendance/overtime/self}" enctype="multipart/form-data">
+                        <div class="ot-form-grid">
+                            <label>Work date (date OT applies to)
+                                <input type="date" name="workDate" required />
+                            </label>
+                            <label>Overtime in
+                                <input type="time" name="overtimeIn" required step="60" />
+                            </label>
+                            <label>Overtime out
+                                <input type="time" name="overtimeOut" required step="60" />
+                            </label>
+                            <label>Total hours (auto)
+                                <input type="number" id="computedTotalHours" step="0.01" min="0" readonly placeholder="Auto-calculated" />
+                            </label>
+                            <label>Reason
+                                <textarea name="reason" required maxlength="1000" placeholder="Project / task / manager request"></textarea>
+                            </label>
+                            <label>Attachment <span style="color:red">*</span>
+                                <input type="file" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" required />                                
+                                <span style="font-size:0.85em;color:#888;">Attach supporting document (image, PDF, etc.)</span>
+                            </label>
+                        </div>
+                        <p style="margin-top:1rem;">
+                            <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
+                        </p>
+                    </form>
+                </div>
+            </div>
+            <!-- Attachment Preview Modal -->
+                        <!-- Attachment Modal (copied from leave modal for consistency) -->
+<!-- Unified OT Attachment Modal (matches leaveAdmin.html) -->
+<div id="otAttachmentModal" class="ot-attachment-modal" style="display:none;">
+    <div class="ot-attachment-modal-content">
+        <span class="ot-attachment-modal-close" onclick="closeOtAttachmentModal()">&times;</span>
+        <div id="otAttachmentModalBody"></div>
+    </div>
+</div>
+        </section>
+    </div>
+    <script src="/js/nav.js"></script>
+    <script>
+        function openOtFilingModal() {
+            var modal = document.getElementById('otFilingModal');
+            if (!modal) return;
+            modal.classList.add('show');
+            modal.setAttribute('aria-hidden', 'false');
+            computeFiledOvertimeHours();
+        }
+        function closeOtFilingModal() {
+            var modal = document.getElementById('otFilingModal');
+            if (!modal) return;
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        function computeFiledOvertimeHours() {
+            var inEl = document.querySelector('input[name="overtimeIn"]');
+            var outEl = document.querySelector('input[name="overtimeOut"]');
+            var totalEl = document.getElementById('computedTotalHours');
+            if (!inEl || !outEl || !totalEl) return;
+            var i = inEl.value || "";
+            var o = outEl.value || "";
+            if (!i || !o || i.indexOf(':') < 0 || o.indexOf(':') < 0) {
+                totalEl.value = "";
+                return;
+            }
+            var ip = i.split(':');
+            var op = o.split(':');
+            if (ip.length < 2 || op.length < 2) {
+                totalEl.value = "";
+                return;
+            }
+            var inM = parseInt(ip[0], 10) * 60 + parseInt(ip[1], 10);
+            var outM = parseInt(op[0], 10) * 60 + parseInt(op[1], 10);
+            if (isNaN(inM) || isNaN(outM)) {
+                totalEl.value = "";
+                return;
+            }
+            var diff = outM - inM;
+            if (diff <= 0) diff += (24 * 60);
+            var hours = diff / 60;
+            totalEl.value = hours.toFixed(2);
+        }
+        document.addEventListener('input', function (e) {
+            if (e.target && (e.target.name === 'overtimeIn' || e.target.name === 'overtimeOut')) {
+                computeFiledOvertimeHours();
+            }
+        });
+        document.addEventListener('click', function (e) {
+            var modal = document.getElementById('otFilingModal');
+            if (modal && e.target === modal) {
+                closeOtFilingModal();
+            }
+        });
+        document.addEventListener('DOMContentLoaded', computeFiledOvertimeHours);
+    </script>
+    <!-- ...existing code... -->
+    </body>
+    <script>
+        // Unified OT Attachment Modal logic (matches leaveAdmin.html)
+        function showOtAttachmentModal(path) {
+            var modal = document.getElementById('otAttachmentModal');
+            var body = document.getElementById('otAttachmentModalBody');
+            if (!path) {
+                body.innerHTML = '<p>No attachment.</p>';
+            } else if (path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i)) {
+                body.innerHTML = '<img src="/' + path + '" alt="Attachment" style="max-width:80vw;max-height:70vh;display:block;margin:auto;">';
+            } else if (path.match(/\.pdf$/i)) {
+                body.innerHTML =
+                    '<iframe src="/' + path + '" width="800px" height="600px" style="max-width:90vw;max-height:80vh;display:block;margin:auto;border:none;"></iframe>' +
+                    '<div style="text-align:center;margin-top:1em;">'+
+                    '<a href="/' + path + '" target="_blank" download>Download PDF</a></div>';
+            } else {
+                body.innerHTML = '<a href="/' + path + '" target="_blank" download>Download Attachment</a>';
+            }
+            modal.style.display = 'flex';
+        }
+        function closeOtAttachmentModal() {
+            document.getElementById('otAttachmentModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById('otAttachmentModal');
+            if (event.target == modal) closeOtAttachmentModal();
+        }
+    </script>
+</script>
+</body>
+</html>

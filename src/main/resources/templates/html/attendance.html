@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
@@ -20,9 +20,17 @@
         <section>
             <div class="head">
                 <h1>Attendance of <span th:text="${employeeName}">User</span></h1>
-                <button type="button" class="btn-print no-print" onclick="window.print()">
-                    <i class="fa-solid fa-print"></i> Print
-                </button>
+                <div class="head-actions no-print" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button type="button" class="btn-edit-shift" id="toggleShiftEditBtn" onclick="toggleShiftEdit()">
+                        <i class="fa-solid fa-pen"></i> Edit Shift
+                    </button>
+                    <button type="button" class="btn-edit-shift save-btn" id="saveShiftBtn" style="display:none;" onclick="saveAllShiftChanges()">
+                        <i class="fa-solid fa-check"></i> Save Changes
+                    </button>
+                    <button type="button" class="btn-print" onclick="window.print()">
+                        <i class="fa-solid fa-print"></i> Print
+                    </button>
+                </div>
             </div>
 
             <form method="get" th:action="${attendanceFormAction}" id="attendanceFilterForm"
@@ -74,9 +82,16 @@
                 <tbody class="attendanceBody" th:if="${attendances}">
                     <tr th:each="a : ${attendances}">
                         <td th:text="${a.attendance_date}"></td>
-                        <td th:text="${shiftLabelByDate != null and shiftLabelByDate.get(a.attendance_date) != null ? shiftLabelByDate.get(a.attendance_date) : 'No shift'}"></td>
-                        <td th:text="${a.time_in}"></td>
-                        <td th:text="${a.time_out}"></td>
+                        <td class="shift-cell" th:data-attendance-id="${a.attendanceId}">
+                            <span class="shift-text" th:text="${shiftLabelByDate != null and shiftLabelByDate.get(a.attendance_date) != null ? shiftLabelByDate.get(a.attendance_date) : 'No shift'}"></span>
+                            <div class="shift-edit-row no-print" style="display: none; gap: 4px; align-items: center;">
+                                <input type="time" class="shift-time-in" th:data-attendance-id="${a.attendanceId}" />
+                                <span style="font-size: 11px; color: #666;">to</span>
+                                <input type="time" class="shift-time-out" th:data-attendance-id="${a.attendanceId}" />
+                            </div>
+                        </td>
+                        <td th:text="${a.timeInDisplay}"></td>
+                        <td th:text="${a.timeOutDisplay}"></td>
                         <td th:text="${a.workHoursDisplay}"></td>
                         <td th:text="${a.late_minutes}"></td>
                         <td th:text="${a.undertime_minutes != null ? a.undertime_minutes : 0}"></td>
@@ -84,6 +99,12 @@
                     </tr>
                 </tbody>
             </table>
+
+            <form id="shiftEditForm" action="/admin/attendance/shift/edit" method="post" style="display: none;">
+                <input type="hidden" name="month" th:value="${selectedMonth}" />
+                <input type="hidden" name="year" th:value="${selectedYear}" />
+                <input type="hidden" name="empId" th:value="${viewingEmployeeId}" />
+            </form>
 
             <p class="total-hours">Total Hours Rendered: <strong
                     th:text="${totalHoursRenderedDisplay != null ? totalHoursRenderedDisplay : '0:00'}">0:00</strong>
@@ -97,6 +118,96 @@
         </section>
     </div>
     <script src="/js/nav.js"></script>
+    <script>
+        let shiftEditMode = false;
+
+        function toggleShiftEdit() {
+            shiftEditMode = !shiftEditMode;
+            var btn = document.getElementById('toggleShiftEditBtn');
+            var textSpans = document.querySelectorAll('.shift-text');
+            var editRows = document.querySelectorAll('.shift-edit-row');
+            var saveBtn = document.getElementById('saveShiftBtn');
+
+            if (shiftEditMode) {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fa-solid fa-times"></i> Cancel';
+                textSpans.forEach(function(span) { span.style.display = 'none'; });
+                editRows.forEach(function(row) {
+                    row.style.display = 'flex';
+                    var shiftCell = row.closest('.shift-cell');
+                    var textEl = shiftCell ? shiftCell.querySelector('.shift-text') : null;
+                    if (textEl) {
+                        prefillShiftInputs(row, textEl.textContent.trim());
+                    }
+                });
+                saveBtn.style.display = 'inline-flex';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Shift';
+                textSpans.forEach(function(span) { span.style.display = ''; });
+                editRows.forEach(function(row) { row.style.display = 'none'; });
+                saveBtn.style.display = 'none';
+            }
+        }
+
+        function to24h(time, ampm) {
+            var parts = time.split(':');
+            var h = parseInt(parts[0], 10);
+            var m = parts[1];
+            ampm = ampm.toUpperCase();
+            if (ampm === 'PM' && h !== 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+            return (h.toString().padStart(2, '0') + ':' + m);
+        }
+
+        function saveAllShiftChanges() {
+            var form = document.getElementById('shiftEditForm');
+            var editRows = document.querySelectorAll('.shift-edit-row');
+            editRows.forEach(function(row) {
+                var attId = row.querySelector('.shift-time-in').getAttribute('data-attendance-id');
+                var timeIn = row.querySelector('.shift-time-in').value;
+                var timeOut = row.querySelector('.shift-time-out').value;
+                var attInput = document.createElement('input');
+                attInput.type = 'hidden';
+                attInput.name = 'attendanceId';
+                attInput.value = attId;
+                form.appendChild(attInput);
+                var inInput = document.createElement('input');
+                inInput.type = 'hidden';
+                inInput.name = 'shiftIn';
+                inInput.value = timeIn;
+                form.appendChild(inInput);
+                var outInput = document.createElement('input');
+                outInput.type = 'hidden';
+                outInput.name = 'shiftOut';
+                outInput.value = timeOut;
+                form.appendChild(outInput);
+            });
+            form.submit();
+        }
+
+        function prefillShiftInputs(row, shiftText) {
+            var match = shiftText.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?\s*-\s*(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+            if (match) {
+                var inH = parseInt(match[1], 10);
+                var inM = match[2];
+                var outH = parseInt(match[4], 10);
+                var outM = match[5];
+                if (match[3]) {
+                    var ampm1 = match[3].toUpperCase();
+                    if (ampm1 === 'PM' && inH !== 12) inH += 12;
+                    if (ampm1 === 'AM' && inH === 12) inH = 0;
+                }
+                if (match[6]) {
+                    var ampm2 = match[6].toUpperCase();
+                    if (ampm2 === 'PM' && outH !== 12) outH += 12;
+                    if (ampm2 === 'AM' && outH === 12) outH = 0;
+                }
+                row.querySelector('.shift-time-in').value = String(inH).padStart(2, '0') + ':' + inM;
+                row.querySelector('.shift-time-out').value = String(outH).padStart(2, '0') + ':' + outM;
+            }
+        }
+    </script>
 </body>
 
 </html>

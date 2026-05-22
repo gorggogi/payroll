@@ -1,4 +1,10 @@
 /* Overtime page specific styles extracted from inline <style> in overtime.html */
+.head{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
 
 .overtime-input { 
     width: 5.5rem; 
@@ -33,12 +39,23 @@
 
 .ot-panel { 
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .ot-panel h2 { 
-    margin: 0 0 1rem; 
     font-size: 1.1rem; 
+}
+
+.ot-panel p {
+    font-size:0.9rem;
+    color:#555;
+}
+
+.ot-requests {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .ot-form-grid { 
@@ -80,7 +97,7 @@
 }
 
 .ot-modal {
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     position: fixed;
@@ -93,13 +110,16 @@
     background: rgba(0, 0, 0, 0.45);
     padding: 2rem 1rem;
 }
+.ot-modal.show {
+    display: flex;
+}
 .ot-modal-content {
     display: flex;
     flex-direction: column;
     background: #fff;
     max-width: 30rem;
     width: 100%;
-    border-radius: 8px;
+    border-radius: 12px;
     border: 1px solid #ddd;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
     padding: 1rem 1.25rem 1.25rem;
@@ -121,4 +141,58 @@
 
 .btn-approve i, .btn-reject i {
     margin-inline: .15rem;
+}
+
+
+/* ==================== OT ATTACHMENT MODAL STYLES ==================== */
+
+/* Unified Attachment Modal Styles (matches leaveAdmin.html) */
+.ot-attachment-modal {
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ot-attachment-modal[style*="display:none"] {
+    display: none !important;
+}
+.ot-attachment-modal-content {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.ot-attachment-modal-content img,
+.ot-attachment-modal-content iframe {
+    display: block;
+    max-width: 80vw;
+    max-height: 70vh;
+    margin: auto;
+    border-radius: 8px;
+    box-shadow: none;
+}
+.ot-attachment-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    color: #333;
+    z-index: 2;
 }

@@ -141,7 +141,12 @@ public class EmployeeService {
     }
 
     public Optional<Employees> getEmployeeById(Integer id) {
-        return employeeRepository.findById(id);
+        return employeeRepository.findById(id).map(emp -> {
+            if (emp.getUser() != null && emp.getUser().getRole() != null) {
+                emp.setIsAdmin(emp.getUser().getRole().getRoleId() == 1);
+            }
+            return emp;
+        });
     }
 
     @Transactional
@@ -226,13 +231,22 @@ public class EmployeeService {
             Optional<Users> userOpt = usersRepository.findByEmployee_EmployeeId(id);
             if(userOpt.isPresent()) {
                 Users user = userOpt.get();
-            if(!user.getEmail().equals(updated.getEmail())){
-                user.setEmail(updated.getEmail());
-                usersRepository.save(user);
+                if(!user.getEmail().equals(updated.getEmail())){
+                    user.setEmail(updated.getEmail());
+                    usersRepository.save(user);
+                }
+                // Update user role based on isAdmin field if present
+                if (updated.getIsAdmin() != null) {
+                    boolean isAdmin = Boolean.TRUE.equals(updated.getIsAdmin());
+                    int roleId = isAdmin ? 1 : 2; // 1 = ADMIN, 2 = EMPLOYEE
+                    Roles newRole = rolesRepository.findById(roleId)
+                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleId));
+                    if (user.getRole() == null || !user.getRole().getRoleId().equals(roleId)) {
+                        user.setRole(newRole);
+                        usersRepository.save(user);
+                    }
+                }
             }
-
-           }
-
         }
         if (updated.getEmployeeNumber() != null) existing.setEmployeeNumber(updated.getEmployeeNumber());
         applyBiometricIdUpdate(id, existing, updated.getBiometricId());

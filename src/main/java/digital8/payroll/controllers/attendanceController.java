@@ -16,6 +16,8 @@ import digital8.payroll.repositories.WeeklyScheduleTemplateDayRepository;
 import digital8.payroll.repositories.WeeklyScheduleTemplateRepository;
 import digital8.payroll.services.OvertimeRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.Authentication;
@@ -60,6 +62,130 @@ import java.util.stream.Collectors;
 
 @Controller
 public class attendanceController {
+    private static final Logger log = LoggerFactory.getLogger(attendanceController.class);
+        @GetMapping("/admin/attendance/overtime/self")
+        public String adminSelfOvertimePage(
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            HttpServletRequest request,
+            Model model,
+            Authentication authentication) {
+        boolean isAdmin = authentication != null
+            && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        if (!isAdmin) {
+            return "redirect:/login";
+        }
+        Integer selfEmpId = null;
+        Employees selfEmp = null;
+        if (authentication != null && authentication.getPrincipal() instanceof Users) {
+            Users currentUser = (Users) authentication.getPrincipal();
+            if (currentUser.getEmployee() != null) {
+            selfEmp = currentUser.getEmployee();
+            selfEmpId = selfEmp.getEmployeeId();
+            }
+        }
+        if (selfEmpId == null || selfEmp == null) {
+            return "redirect:/admin/attendance/overtime";
+        }
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        int selectedYear = year != null ? year : currentYear;
+        int selectedMonth = (month != null && month >= 1 && month <= 12) ? month : currentMonth;
+        model.addAttribute("selectedMonth", selectedMonth);
+        model.addAttribute("selectedYear", selectedYear);
+        String monthName = Month.of(selectedMonth).toString().charAt(0)
+            + Month.of(selectedMonth).toString().substring(1).toLowerCase();
+        model.addAttribute("captionMonthYear", monthName + " " + selectedYear);
+        List<Integer> years = new ArrayList<>();
+        for (int y = currentYear - 5; y <= currentYear + 2; y++) {
+            years.add(y);
+        }
+        model.addAttribute("years", years);
+        List<Attendance> all = attendanceRepository.findByEmployeeIdOrderByDateDesc(selfEmpId);
+        List<Attendance> filtered = all.stream()
+            .filter(a -> a.getAttendance_date() != null
+                && a.getAttendance_date().getMonthValue() == selectedMonth
+                && a.getAttendance_date().getYear() == selectedYear)
+            .collect(Collectors.toList());
+        populateComputedWorkHours(filtered);
+        model.addAttribute("attendances", filtered);
+        model.addAttribute("employeeName", selfEmp.getFirstName() + " " + selfEmp.getLastName());
+        model.addAttribute("emp_id", selfEmpId);
+        BigDecimal totalOt = filtered.stream()
+            .map(Attendance::getOvertime_hours)
+            .filter(h -> h != null)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("totalOvertimeHours", totalOt);
+        model.addAttribute("totalOvertimeHoursDisplay", HourFormatUtils.formatHours(totalOt));
+        BigDecimal totalHoursWithOt = filtered.stream()
+            .map(a -> (a.getWork_hours() != null ? a.getWork_hours() : BigDecimal.ZERO)
+                .add(a.getOvertime_hours() != null ? a.getOvertime_hours() : BigDecimal.ZERO))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("totalHoursWithOvertime", totalHoursWithOt);
+        model.addAttribute("totalHoursWithOvertimeDisplay", HourFormatUtils.formatHours(totalHoursWithOt));
+        model.addAttribute("overtimeRequestByDate",
+            overtimeRequestService.latestRequestByWorkDateForMonth(selfEmpId, selectedYear, selectedMonth));
+        List<OvertimeRequest> myRequests = overtimeRequestService.listForEmployeeInMonth(selfEmpId, selectedYear, selectedMonth);
+        model.addAttribute("myOvertimeRequests", myRequests);
+        model.addAttribute("approverNameByRequestId", overtimeRequestService.approverNameByRequestId(myRequests));
+        model.addAttribute("self_emp_id", selfEmpId);
+        return "html/overtimeAdminSelf";
+        }
+
+        @PostMapping("/admin/attendance/overtime/self")
+        public String submitAdminSelfOvertimeRequest(
+            @RequestParam LocalDate workDate,
+            @RequestParam String overtimeIn,
+            @RequestParam String overtimeOut,
+            @RequestParam String reason,
+            @RequestParam("attachment") MultipartFile attachment,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+            if (!(authentication.getPrincipal() instanceof Users)) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Not signed in.");
+                return "redirect:/index";
+            }
+            Users user = (Users) authentication.getPrincipal();
+            if (user.getEmployee() == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "No employee profile linked.");
+                return "redirect:/adminHome";
+            }
+            if (workDate == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Work date is required.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
+            LocalTime in = parseLocalTime(overtimeIn);
+            LocalTime out = parseLocalTime(overtimeOut);
+            if (in == null || out == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Invalid overtime in or out time.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
+            if (attachment == null || attachment.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Attachment is required.");
+                return "redirect:/admin/attendance/overtime/self";
+            }
+            try {
+                // Save file
+                String uploadsDir = "uploads/ot_attachments";
+                java.nio.file.Path uploadsPath = java.nio.file.Paths.get(uploadsDir);
+                if (!java.nio.file.Files.exists(uploadsPath)) {
+                    java.nio.file.Files.createDirectories(uploadsPath);
+                }
+                String originalFilename = attachment.getOriginalFilename();
+                String safeFilename = java.util.UUID.randomUUID() + "_" + (originalFilename != null ? originalFilename.replaceAll("[^a-zA-Z0-9._-]", "_") : "attachment");
+                java.nio.file.Path filePath = uploadsPath.resolve(safeFilename);
+                attachment.transferTo(filePath);
+
+                String attachmentPath = filePath.toString().replace("\\", "/");
+                overtimeRequestService.submitWithAttachment(
+                    user.getEmployee().getEmployeeId(), workDate, in, out, reason, attachmentPath);
+                redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            }
+            return "redirect:/admin/attendance/overtime/self";
+        }
     private static final String TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY = "timeAdjustmentsPreviewRows";
     private static final String TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY = "timeAdjustmentsCountDayOffHours";
 
@@ -149,6 +275,7 @@ public class attendanceController {
             }
             if (selected != null) {
                 selectedTemplateName = selected.getTemplateName() != null ? selected.getTemplateName() : "";
+                model.addAttribute("selectedTemplateIndefinite", selected.isIndefinite());
                 model.addAttribute("weeklyScheduleRows", buildTemplateDayRows(selectedTemplateId));
                 model.addAttribute("assignedEmployeeIds", employeeScheduleAssignmentRepository.findEmployeeIdsByTemplateAndMonth(
                         selectedTemplateId, selected.getScheduleYear(), selected.getScheduleMonth()));
@@ -165,11 +292,31 @@ public class attendanceController {
         return "html/shifting";
     }
 
+    @PostMapping("/admin/attendance/schedule-template/toggle-indefinite")
+    public String toggleIndefiniteScheduleTemplate(
+            @RequestParam("templateId") Integer templateId,
+            @RequestParam(value = "indefinite", defaultValue = "false") boolean indefinite,
+            RedirectAttributes redirectAttributes) {
+
+        WeeklyScheduleTemplate tpl = weeklyScheduleTemplateRepository.findById(templateId).orElse(null);
+        if (tpl == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Schedule class not found.");
+            return "redirect:/admin/attendance/shifts";
+        }
+        
+        tpl.setIndefinite(indefinite);
+        weeklyScheduleTemplateRepository.save(tpl);
+        
+        redirectAttributes.addFlashAttribute("successMessage", "Schedule updated.");
+        return redirectForShifting(tpl.getScheduleYear(), tpl.getScheduleMonth(), templateId);
+    }
+
     @PostMapping("/admin/attendance/schedule-template/create")
     public String createScheduleTemplate(
             @RequestParam("templateName") String templateName,
             @RequestParam("scheduleYear") Integer scheduleYear,
             @RequestParam("scheduleMonth") Integer scheduleMonth,
+            @RequestParam(value = "indefinite", defaultValue = "false") boolean indefinite,
             RedirectAttributes redirectAttributes) {
 
         if (templateName == null || templateName.trim().isEmpty()) {
@@ -185,6 +332,7 @@ public class attendanceController {
         t.setTemplateName(unquote(templateName.trim()));
         t.setScheduleYear(scheduleYear);
         t.setScheduleMonth(scheduleMonth);
+        t.setIndefinite(indefinite);
         weeklyScheduleTemplateRepository.save(t);
         redirectAttributes.addFlashAttribute("successMessage", "Schedule class created.");
         return redirectForShifting(scheduleYear, scheduleMonth, t.getTemplateId());
@@ -244,6 +392,29 @@ public class attendanceController {
         }
 
         return redirectForShifting(sy, sm, templateId);
+    }
+
+    @PostMapping("/admin/attendance/schedule-template/unassign")
+    public String unassignScheduleTemplateEmployee(
+            @RequestParam("templateId") Integer templateId,
+            @RequestParam("employeeId") Integer employeeId,
+            RedirectAttributes redirectAttributes) {
+
+        WeeklyScheduleTemplate tpl = weeklyScheduleTemplateRepository.findById(templateId).orElse(null);
+        if (tpl == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Schedule class not found.");
+            return "redirect:/admin/attendance/shifts";
+        }
+
+        try {
+            employeeScheduleAssignmentRepository.deleteByEmployeeIdAndScheduleYearAndScheduleMonth(
+                    employeeId, tpl.getScheduleYear(), tpl.getScheduleMonth());
+            redirectAttributes.addFlashAttribute("successMessage", "Employee unassigned.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to unassign employee: " + e.getMessage());
+        }
+
+        return redirectForShifting(tpl.getScheduleYear(), tpl.getScheduleMonth(), templateId);
     }
 
     @PostMapping("/admin/attendance/schedule-template/assign")
@@ -342,25 +513,35 @@ public class attendanceController {
         String v = unquote(raw.trim());
         if (v.isEmpty()) return null;
 
-        // Accept HH:mm or HH:mm:ss (also ISO when provided)
-        try {
-            return LocalTime.parse(v);
-        } catch (DateTimeParseException ignored) {
-            DateTimeFormatter[] formatters = new DateTimeFormatter[]{
-                    DateTimeFormatter.ofPattern("H:mm"),
-                    DateTimeFormatter.ofPattern("HH:mm"),
-                    DateTimeFormatter.ofPattern("H:mm:ss"),
-                    DateTimeFormatter.ofPattern("HH:mm:ss"),
-            };
-            for (DateTimeFormatter f : formatters) {
-                try {
-                    return LocalTime.parse(v, f);
-                } catch (DateTimeParseException ignored2) {
-                    // keep trying
-                }
+        DateTimeFormatter[] formatters = new DateTimeFormatter[]{
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm"),
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm:ss"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+        };
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalTime.parse(v, f);
+            } catch (DateTimeParseException ignored) {
             }
-            return null;
         }
+        String ampm = v.replaceAll(".*?(AM|PM).*", "$1").toUpperCase();
+        if (ampm.equals("AM") || ampm.equals("PM")) {
+            String timeOnly = v.replaceAll("(AM|PM)", "").trim();
+            String[] hm = timeOnly.split(":");
+            if (hm.length >= 2) {
+                int h = Integer.parseInt(hm[0].trim());
+                int m = hm[1].trim().length() > 0 ? Integer.parseInt(hm[1].trim().split("[^0-9]")[0]) : 0;
+                if (ampm.equals("PM") && h != 12) h += 12;
+                if (ampm.equals("AM") && h == 12) h = 0;
+                return LocalTime.of(h, m);
+            }
+        }
+        return null;
     }
 
     private String unquote(String v) {
@@ -373,6 +554,7 @@ public class attendanceController {
         }
         return s;
     }
+
     @GetMapping({"/admin/attendance/overtime", "/employee/attendance/overtime"})
     public String overtimePage(
             @RequestParam(required = false) Integer month,
@@ -384,10 +566,14 @@ public class attendanceController {
 
         model.addAttribute("overtimeFilterAction", request.getRequestURI());
         boolean isAdmin = authentication != null
-                && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            && authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"));
         model.addAttribute("isAdmin", isAdmin);
         model.addAttribute("overtimeSaveAction", "/admin/attendance/overtime/save");
-        model.addAttribute("overtimeRequestAction", "/employee/attendance/overtime/request");
+        if (isAdmin) {
+            model.addAttribute("overtimeRequestAction", "/admin/attendance/overtime/save");
+        } else {
+            model.addAttribute("overtimeRequestAction", "/employee/attendance/overtime/request");
+        }
 
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
@@ -503,11 +689,13 @@ public class attendanceController {
             model.addAttribute("approverNameByRequestId", Map.<Integer, String>of());
         }
 
-        if (isAdmin && authentication != null && authentication.getPrincipal() instanceof Users) {
+        boolean adminOvertimePage = isAdmin && request.getRequestURI().startsWith("/admin");
+        model.addAttribute("adminOvertimePage", adminOvertimePage);
+        if (adminOvertimePage && authentication != null && authentication.getPrincipal() instanceof Users) {
             Users u = (Users) authentication.getPrincipal();
             Integer adminEmpId = u.getEmployee() != null ? u.getEmployee().getEmployeeId() : null;
             model.addAttribute("pendingOvertimeRequests",
-                    overtimeRequestService.listPendingExcludingEmployeeInMonth(adminEmpId, selectedYear, selectedMonth));
+                    overtimeRequestService.listPendingExcludingEmployee(adminEmpId));
         } else {
             model.addAttribute("pendingOvertimeRequests", List.<OvertimeRequest>of());
         }
@@ -1099,6 +1287,9 @@ public class attendanceController {
             if (attendance == null || attendance.getTime_in() == null || attendance.getTime_out() == null) {
                 continue;
             }
+            log.debug("[POPULATE] attId={}, time_in={}, time_out={}, shiftOverride='{}'",
+                    attendance.getAttendanceId(), attendance.getTime_in(), attendance.getTime_out(),
+                    attendance.getShiftOverride());
             BigDecimal workHours = attendance.getWork_hours();
             Integer lateMinutes = attendance.getLate_minutes();
             Integer undertimeMinutes = attendance.getUndertime_minutes();
@@ -1113,7 +1304,15 @@ public class attendanceController {
                     0,
                     0);
             if (attendance.getEmployeeId() != null && attendance.getAttendance_date() != null) {
-                ShiftMatchResult shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                ShiftMatchResult shiftMatch;
+                if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                    shiftMatch = parseShiftOverride(attendance.getShiftOverride());
+                } else {
+                    shiftMatch = validateAgainstShift(attendance.getEmployeeId(), attendance.getAttendance_date());
+                }
+                log.debug("[POPULATE] attId={}, shiftMatch: allowed={}, restDay={}, shiftIn={}, shiftOut={}",
+                        attendance.getAttendanceId(), shiftMatch.allowed, shiftMatch.restDay,
+                        shiftMatch.shiftIn, shiftMatch.shiftOut);
                 if (shiftMatch.restDay) {
                     if (countDayOffHours) {
                         workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
@@ -1149,6 +1348,55 @@ public class attendanceController {
             attendance.setOvertime_hours(overtimeHours != null
                     ? overtimeHours.setScale(2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP));
+        }
+    }
+
+    private ShiftMatchResult parseShiftOverride(String override) {
+        if (override == null || override.isBlank()) {
+            log.warn("[PARSE_OVERRIDE] empty shift override");
+            return ShiftMatchResult.denied("empty shift override");
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+                "(\\d{1,2}:\\d{2}(?::\\d{2})?)\\s*(AM|PM)?\\s*-\\s*(\\d{1,2}:\\d{2}(?::\\d{2})?)\\s*(AM|PM)?",
+                java.util.regex.Pattern.CASE_INSENSITIVE).matcher(override.trim());
+        if (!m.matches()) {
+            log.warn("[PARSE_OVERRIDE] invalid format: '{}'", override);
+            return ShiftMatchResult.denied("invalid shift override format: " + override);
+        }
+        String inRaw = m.group(1);
+        String outRaw = m.group(3);
+        String ampmIn = m.group(2);
+        String ampmOut = m.group(4);
+        LocalTime shiftIn = parseShiftTime(inRaw, ampmIn);
+        LocalTime shiftOut = parseShiftTime(outRaw, ampmOut);
+        log.debug("[PARSE_OVERRIDE] override='{}', shiftIn={}, shiftOut={}", override, shiftIn, shiftOut);
+        if (shiftIn == null || shiftOut == null) {
+            return ShiftMatchResult.denied("unparseable shift override times: " + override);
+        }
+        return ShiftMatchResult.allowed(override, shiftIn, shiftOut);
+    }
+
+    private LocalTime parseShiftTime(String time, String ampm) {
+        if (time == null) return null;
+        time = time.trim();
+        if (time.isEmpty()) return null;
+        if (ampm != null && !ampm.isBlank()) {
+            time = time + " " + ampm.trim();
+        }
+        return parseLocalTime(time);
+    }
+
+    private String formatShiftLabel12h(String label24h) {
+        if (label24h == null || label24h.isBlank()) return label24h;
+        try {
+            String[] parts = label24h.split("\\s*-\\s*");
+            if (parts.length != 2) return label24h;
+            LocalTime in = parseLocalTime(parts[0].trim());
+            LocalTime out = parseLocalTime(parts[1].trim());
+            if (in == null || out == null) return label24h;
+            return in.format(DateTimeFormatter.ofPattern("hh:mm a")) + " - " + out.format(DateTimeFormatter.ofPattern("hh:mm a"));
+        } catch (Exception e) {
+            return label24h;
         }
     }
 
@@ -1247,6 +1495,7 @@ public class attendanceController {
             @RequestParam String overtimeIn,
             @RequestParam String overtimeOut,
             @RequestParam String reason,
+            @RequestParam(value = "attachment", required = false) MultipartFile attachment,
             Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
@@ -1272,8 +1521,27 @@ public class attendanceController {
             return redirectOvertime(false, y, m, null);
         }
         try {
-            overtimeRequestService.submit(
-                    user.getEmployee().getEmployeeId(), workDate, in, out, reason);
+            String attachmentPath = null;
+            if (attachment != null && !attachment.isEmpty()) {
+                // Save file to uploads/ot_attachments/ in the project directory
+                String uploadDir = System.getProperty("user.dir") + "/uploads/ot_attachments/";
+                java.nio.file.Path uploadPath = java.nio.file.Paths.get(uploadDir);
+                if (!java.nio.file.Files.exists(uploadPath)) {
+                    java.nio.file.Files.createDirectories(uploadPath);
+                }
+                String originalFilename = attachment.getOriginalFilename();
+                String ext = "";
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    ext = originalFilename.substring(originalFilename.lastIndexOf('.'));
+                }
+                String fileName = "ot_" + user.getEmployee().getEmployeeId() + "_" + System.currentTimeMillis() + ext;
+                java.nio.file.Path filePath = uploadPath.resolve(fileName);
+                attachment.transferTo(filePath.toFile());
+                // Save only the relative path for DB/storage
+                attachmentPath = "uploads/ot_attachments/" + fileName;
+            }
+            overtimeRequestService.submitWithAttachment(
+                user.getEmployee().getEmployeeId(), workDate, in, out, reason, attachmentPath);
             redirectAttributes.addFlashAttribute("successMessage", "Overtime request submitted for approval.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
@@ -1490,8 +1758,12 @@ public class attendanceController {
                 if (attendanceDate == null) {
                     continue;
                 }
-                ShiftMatchResult shiftMatch = validateAgainstShift(targetEmpId, attendanceDate);
-                shiftLabelByDate.put(attendanceDate, shiftMatch.allowed ? shiftMatch.shiftLabel : shiftMatch.reason);
+                if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                    shiftLabelByDate.put(attendanceDate, formatShiftLabel12h(attendance.getShiftOverride()));
+                } else {
+                    ShiftMatchResult shiftMatch = validateAgainstShift(targetEmpId, attendanceDate);
+                    shiftLabelByDate.put(attendanceDate, shiftMatch.allowed ? shiftMatch.shiftLabel : shiftMatch.reason);
+                }
             }
             model.addAttribute("attendances", filtered);
             model.addAttribute("shiftLabelByDate", shiftLabelByDate);
@@ -1530,5 +1802,52 @@ public class attendanceController {
             model.addAttribute("totalUndertimeMinutes", 0);
         }
         return "html/attendance";
+    }
+
+    @PostMapping("/admin/attendance/shift/edit")
+    public String editAttendanceShift(
+            @RequestParam(value = "attendanceId", required = false) List<Integer> attendanceIds,
+            @RequestParam(value = "shiftIn", required = false) List<String> shiftIns,
+            @RequestParam(value = "shiftOut", required = false) List<String> shiftOuts,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer empId,
+            RedirectAttributes ra,
+            HttpServletRequest request) {
+
+        if (attendanceIds != null) {
+            for (int i = 0; i < attendanceIds.size(); i++) {
+                Integer attId = attendanceIds.get(i);
+                String shiftIn = shiftIns != null && i < shiftIns.size() ? shiftIns.get(i) : null;
+                String shiftOut = shiftOuts != null && i < shiftOuts.size() ? shiftOuts.get(i) : null;
+
+                log.debug("[SHIFT_SAVE] attId={}, shiftIn='{}', shiftOut='{}'", attId, shiftIn, shiftOut);
+
+                Attendance attendance = attendanceRepository.findById(attId)
+                        .orElseThrow(() -> new IllegalArgumentException("Attendance not found: " + attId));
+
+                String shiftLabel = null;
+                if (shiftIn != null && !shiftIn.isBlank() && shiftOut != null && !shiftOut.isBlank()) {
+                    shiftLabel = shiftIn + " - " + shiftOut;
+                }
+                log.debug("[SHIFT_SAVE] attId={}, shiftLabel='{}'", attId, shiftLabel);
+                attendance.setShiftOverride(shiftLabel);
+                attendanceRepository.save(attendance);
+                populateComputedWorkHours(List.of(attendance));
+                attendanceRepository.save(attendance);
+                log.debug("[SHIFT_SAVE] attId={}, after recalc: late={}, undertime={}, overtime={}, workHours={}",
+                        attId, attendance.getLate_minutes(), attendance.getUndertime_minutes(),
+                        attendance.getOvertime_hours(), attendance.getWork_hours());
+            }
+        }
+
+        ra.addFlashAttribute("successMessage", "Shift updated successfully.");
+
+        StringBuilder redirectUrl = new StringBuilder("/admin/attendance");
+        String sep = "?";
+        if (month != null) { redirectUrl.append(sep).append("month=").append(month); sep = "&"; }
+        if (year != null)  { redirectUrl.append(sep).append("year=").append(year);  sep = "&"; }
+        if (empId != null) { redirectUrl.append(sep).append("empId=").append(empId); }
+        return "redirect:" + redirectUrl;
     }
 }

@@ -81,6 +81,14 @@
                                 <strong>Requested:</strong>
                                 <span th:text="${#temporals.format(request.requestedDate, 'MMM dd, yyyy')}">Feb 19, 2026</span>
                             </div>
+                            <div class="detail-item">
+                                <strong>Attachment:</strong>
+                                <a th:if="${request.attachmentPath != null}"
+                                   href="#"
+                                   th:attr="onclick=|showImageModal('${request.attachmentPath}'); return false;|"
+                                   class="btn-attachment"><i class="fa-solid fa-paperclip"></i> View</a>
+                                <span th:if="${request.attachmentPath == null}">None</span>
+                            </div>
                         </div>
                         
                         <div class="request-actions">
@@ -139,11 +147,12 @@
                                 <th>Reason</th>
                                 <th>Status</th>
                                 <th>Requested On</th>
+                                <th>Attachment</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr th:if="${#lists.isEmpty(allRequests)}">
-                                <td colspan="8" class="no-data">
+                                <td colspan="9" class="no-data">
                                     <p>No leave requests found</p>
                                 </td>
                             </tr>
@@ -169,6 +178,13 @@
                                           th:text="${request.status}">Pending</span>
                                 </td>
                                 <td th:text="${#temporals.format(request.requestedDate, 'MMM dd, yyyy')}">Feb 19, 2026</td>
+                                <td>
+                                    <a th:if="${request.attachmentPath != null}"
+                                       href="#"
+                                       th:attr="onclick=|showImageModal('${request.attachmentPath}'); return false;|"
+                                       class="btn-attachment"><i class="fa-solid fa-paperclip"></i> View</a>
+                                    <span th:if="${request.attachmentPath == null}">None</span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -181,4 +197,43 @@
     <script src="/js/leave.js"></script>
 </body>
 </html>
+
+<!-- Attachment Modal -->
+<div id="attachmentModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeAttachmentModal()">&times;</span>
+    <div id="attachmentModalBody"></div>
+  </div>
+</div>
+<style>
+.modal { position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; overflow: auto; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; }
+.modal-content { background: #fff; padding: 2rem; border-radius: 8px; max-width: 90vw; max-height: 90vh; overflow: auto; position: relative; }
+.close { position: absolute; top: 1rem; right: 1rem; font-size: 2rem; cursor: pointer; }
+</style>
+<script>
+function showImageModal(path) {
+  var modal = document.getElementById('attachmentModal');
+  var body = document.getElementById('attachmentModalBody');
+  if (!path) {
+    body.innerHTML = '<p>No attachment.</p>';
+  } else if (path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i)) {
+    body.innerHTML = '<img src="/' + path + '" alt="Attachment" style="max-width:80vw;max-height:70vh;display:block;margin:auto;">';
+  } else if (path.match(/\.pdf$/i)) {
+    body.innerHTML =
+      '<iframe src="/' + path + '" width="800px" height="600px" style="max-width:90vw;max-height:80vh;display:block;margin:auto;border:none;"></iframe>' +
+      '<div style="text-align:center;margin-top:1em;">'+
+      '<a href="/' + path + '" target="_blank" download>Download PDF</a></div>';
+  } else {
+    body.innerHTML = '<a href="/' + path + '" target="_blank" download>Download Attachment</a>';
+  }
+  modal.style.display = 'flex';
+}
+function closeAttachmentModal() {
+  document.getElementById('attachmentModal').style.display = 'none';
+}
+window.onclick = function(event) {
+  var modal = document.getElementById('attachmentModal');
+  if (event.target == modal) closeAttachmentModal();
+}
+</script>
 

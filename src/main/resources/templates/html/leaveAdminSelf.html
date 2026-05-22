@@ -21,8 +21,11 @@
     <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
 
     <section>
-        <div class="head">
-            <h1>My Leave</h1>
+        <div class="head" style="display: flex; align-items: center; gap: .5rem;">
+            <h1 style="flex:1;">My Leave</h1>
+            <button type="button" class="btn-primary no-print" style="margin-left: 0.5rem;" onclick="openRequestLeaveModal()">
+                <i class="fa-solid fa-plus"></i> New Leave Request
+            </button>
             <button type="button" class="btn-print no-print" onclick="window.print()">
                 <i class="fa-solid fa-print"></i> Print
             </button>
@@ -44,54 +47,72 @@
             </div>
         </div>
 
-        <!-- Request New Leave Card -->
-        <div class="leave-card no-print">
-            <h2>Request New Leave</h2>
+        <!-- Request New Leave Modal -->
+        <div id="requestLeaveModal" class="leave-modal">
+            <div class="leave-modal-content">
+                <button class="modal-close" onclick="closeRequestLeaveModal()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+                <h3>Request New Leave</h3>
 
-            <div th:if="${successMessage}" class="alert-success">
-                <p th:text="${successMessage}"></p>
-            </div>
-            <div th:if="${errorMessage}" class="alert-error">
-                <p th:text="${errorMessage}"></p>
-            </div>
+                <div th:if="${successMessage}" class="alert-success">
+                    <p th:text="${successMessage}"></p>
+                </div>
+                <div th:if="${errorMessage}" class="alert-error">
+                    <p th:text="${errorMessage}"></p>
+                </div>
 
-            <form action="/employee/leave/request" method="POST" onsubmit="return validateLeaveForm()">
-                <div class="form-row">
+                <form action="/employee/leave/request" method="POST" enctype="multipart/form-data" onsubmit="return validateLeaveForm()">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="leaveTypeId">Leave Type: <span class="required">*</span></label>
+                            <select id="leaveTypeId" name="leaveTypeId" required>
+                                <option value="">-- Select Leave Type --</option>
+                                <option th:each="type : ${leaveTypes}"
+                                        th:value="${type.leaveTypeId}"
+                                        th:text="${type.leaveName}">Sick Leave</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date: <span class="required">*</span></label>
+                            <input type="date" id="startDate" name="startDate" required />
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDate">End Date: <span class="required">*</span></label>
+                            <input type="date" id="endDate" name="endDate" required />
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="leaveTypeId">Leave Type: <span class="required">*</span></label>
-                        <select id="leaveTypeId" name="leaveTypeId" required>
-                            <option value="">-- Select Leave Type --</option>
-                            <option th:each="type : ${leaveTypes}"
-                                    th:value="${type.leaveTypeId}"
-                                    th:text="${type.leaveName}">Sick Leave</option>
+                        <label for="reason">Reason: <span class="required">*</span></label>
+                        <textarea id="reason" name="reason" rows="4"
+                                  placeholder="Please provide a reason for your leave request..."
+                                  required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reliever">Reliever for this leave:</label>
+                        <select id="reliever" name="reliever">
+                            <option value="">-- None --</option>
+                            <option th:each="emp : ${activeEmployees}"
+                                    th:value="${emp.employeeId}"
+                                    th:text="${emp.firstName + ' ' + emp.lastName}"></option>
                         </select>
                     </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="startDate">Start Date: <span class="required">*</span></label>
-                        <input type="date" id="startDate" name="startDate" required />
-                    </div>
 
                     <div class="form-group">
-                        <label for="endDate">End Date: <span class="required">*</span></label>
-                        <input type="date" id="endDate" name="endDate" required />
+                        <label for="attachment">Attach File (For Proof): *</label>
+                        <input type="file" id="attachment" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx" />
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="reason">Reason: <span class="required">*</span></label>
-                    <textarea id="reason" name="reason" rows="4"
-                              placeholder="Please provide a reason for your leave request..."
-                              required></textarea>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Submit Request</button>
-                    <button type="reset" class="btn-secondary">Clear</button>
-                </div>
-            </form>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Submit Request</button>
+                        <button type="reset" class="btn-secondary">Clear</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Leave History Card -->

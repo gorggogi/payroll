@@ -45,11 +45,14 @@ public class LeaveService {
         return leaveRequestRepository.findByEmployee_EmployeeIdOrderByRequestedDateDesc(employeeId);
     }
 
-    public LeaveRequests submitLeaveRequest(Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason){
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LeaveService.class);
+
+    public LeaveRequests submitLeaveRequest(Integer employeeId, Integer leaveTypeId, LocalDate startDate, LocalDate endDate, String reason, String reliever, String attachmentPath) {
+        log.info("[LeaveService] submitLeaveRequest called with employeeId={}, leaveTypeId={}, startDate={}, endDate={}, reason={}, reliever={}, attachmentPath={}", employeeId, leaveTypeId, startDate, endDate, reason, reliever, attachmentPath);
         Employees employee = employeesRepository.findById(employeeId)
-        .orElseThrow(() -> new RuntimeException("Employee not found"));
+            .orElseThrow(() -> new RuntimeException("Employee not found"));
         LeaveTypes leaveType = leaveTypesRepository.findById(leaveTypeId)
-        .orElseThrow(() -> new RuntimeException("Leave Type not found"));
+            .orElseThrow(() -> new RuntimeException("Leave Type not found"));
 
         LeaveRequests request = new LeaveRequests();
         request.setEmployee(employee);
@@ -57,10 +60,14 @@ public class LeaveService {
         request.setStartDate(startDate);
         request.setEndDate(endDate);
         request.setReason(reason);
+        request.setReliever(reliever);
+        request.setAttachmentPath(attachmentPath);
         request.setStatus("Pending");
         request.setRequestedDate(LocalDate.now());
 
-        return leaveRequestRepository.save(request);
+        LeaveRequests saved = leaveRequestRepository.save(request);
+        log.info("[LeaveService] leaveRequestRepository.save returned: {}", saved != null ? saved.getLeaveRequestId() : null);
+        return saved;
     }
 
     public List<LeaveRequests> getPendingLeaveRequests(){

@@ -70,6 +70,18 @@ function formatDate(date) {
 }
 
 
+// ==================== REQUEST LEAVE MODAL FUNCTIONS ====================
+function openRequestLeaveModal() {
+    document.getElementById('requestLeaveModal').classList.add('show');
+}
+
+function closeRequestLeaveModal() {
+    document.getElementById('requestLeaveModal').classList.remove('show');
+    // Optionally reset the form
+    const form = document.querySelector('#requestLeaveModal form');
+    if (form) form.reset();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
@@ -101,12 +113,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
     
-    // Close modal when clicking outside of it
-    const modal = document.getElementById('editLeaveModal');
-    if (modal) {
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
+    // Close modals when clicking outside of them
+    const editModal = document.getElementById('editLeaveModal');
+    if (editModal) {
+        editModal.addEventListener('click', function(event) {
+            if (event.target === editModal) {
                 closeEditLeaveModal();
+            }
+        });
+    }
+    const requestModal = document.getElementById('requestLeaveModal');
+    if (requestModal) {
+        requestModal.addEventListener('click', function(event) {
+            if (event.target === requestModal) {
+                closeRequestLeaveModal();
             }
         });
     }

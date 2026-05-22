@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/css/attendance.css" />
     <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
     <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
-        <link rel="stylesheet" href="/css/overtime.css" />
+    <link rel="stylesheet" href="/css/overtime.css" />
 </head>
 <body>
     <div class="container">
@@ -18,13 +18,18 @@
 
         <section>
             <div class="head">
-                <h1>Overtime of <span th:if="${employeeName != null and !employeeName.isEmpty()}"><span th:text="${employeeName}">Name</span></span></h1>
+                <h1>
+                    Overtime
+                </h1>
+                <button th:if="${isAdmin}" th:onclick="window.location.href='/admin/attendance/overtime/self'" class="btn-primary my-overtime-btn">
+                    <i class="fa-solid fa-file-circle-plus"></i> My Overtime
+                </button>
             </div>
 
             <p th:if="${successMessage}" class="flash-msg success" th:text="${successMessage}"></p>
             <p th:if="${errorMessage}" class="flash-msg error" th:text="${errorMessage}"></p>
 
-            <div sec:authorize="hasRole('ADMIN')" class="ot-panel" th:if="${pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
+            <div class="ot-requests" th:if="${adminOvertimePage and pendingOvertimeRequests != null and !pendingOvertimeRequests.isEmpty()}">
                 <h2>Pending overtime requests</h2>
                 <table class="attendanceTable">
                     <thead>
@@ -38,6 +43,7 @@
                             <th>Reason</th>
                             <th>Requested</th>
                             <th></th>
+                            <th>Attachment</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,49 +66,24 @@
                                     </form>
                                 </div>
                             </td>
+                            <td>
+                                <a th:if="${r.attachmentPath != null}" href="#" th:attr="onclick=|showOtAttachmentModal('${r.attachmentPath}'); return false;|">View</a>
+                                <span th:if="${r.attachmentPath == null}">None</span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <p th:if="${adminOvertimePage and (pendingOvertimeRequests == null or pendingOvertimeRequests.isEmpty())}" class="total-hours" style="margin-top:0.5rem;">No pending overtime requests.</p>
 
-            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel">
+            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${!adminOvertimePage}">
                 <h2><i class="fa-solid fa-file-pen"></i> File overtime</h2>
-                <p style="margin:0 0 0.75rem;font-size:0.9rem;color:#555;">Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
+                <p>Submit overtime in/out, total hours, and reason. A supervisor will approve and apply it to your daily time record for that date.</p>
                 <button type="button" class="btn-primary" onclick="openOtFilingModal()">
                     <i class="fa-solid fa-file-circle-plus"></i> File OT
                 </button>
             </div>
 
-            <div id="otFilingModal" class="ot-modal" aria-hidden="true" sec:authorize="hasRole('EMPLOYEE')">
-                <div class="ot-modal-content">
-                    <div class="ot-modal-head">
-                        <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
-                        <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
-                    </div>
-                    <form method="post" th:action="${overtimeRequestAction}">
-                        <div class="ot-form-grid">
-                            <label>Work date (date OT applies to)
-                                <input type="date" name="workDate" required />
-                            </label>
-                            <label>Overtime in
-                                <input type="time" name="overtimeIn" required step="60" />
-                            </label>
-                            <label>Overtime out
-                                <input type="time" name="overtimeOut" required step="60" />
-                            </label>
-                            <label>Total hours (auto)
-                                <input type="number" id="computedTotalHours" step="0.01" min="0" readonly placeholder="Auto-calculated" />
-                            </label>
-                            <label>Reason
-                                <textarea name="reason" required maxlength="1000" placeholder="Project / task / manager request"></textarea>
-                            </label>
-                        </div>
-                        <p style="margin-top:1rem;">
-                            <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
-                        </p>
-                    </form>
-                </div>
-            </div>
             <form method="get" th:action="${overtimeFilterAction}" id="overtimeFilterForm" class="attendance-filter">
                 <label for="empId" sec:authorize="hasRole('ADMIN')">Employee</label>
                 <select sec:authorize="hasRole('ADMIN')" name="empId" id="empId" onchange="this.form.submit()">
@@ -131,39 +112,49 @@
                     <option th:each="y : ${years}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
                 </select>
             </form>
-            <p sec:authorize="hasRole('EMPLOYEE')" th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}" class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
 
-            <div sec:authorize="hasRole('EMPLOYEE')" class="ot-panel" th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+            <div class="ot-requests" th:if="${!adminOvertimePage}">
                 <h2>My overtime requests</h2>
-                <table class="attendanceTable">
-                    <thead>
-                        <tr class="attendanceHeader">
-                            <th>Work date</th>
-                            <th>Overtime time in</th>
-                            <th>Overtime time out</th>
-                            <th>Total hours</th>
-                            <th>Status</th>
-                            <th>Approved by</th>
-                            <th>Reason</th>
-                            <th>Submitted</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="r : ${myOvertimeRequests}">
-                            <td th:text="${r.workDate}"></td>
-                            <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
-                            <td th:text="${r.totalHoursDisplay}"></td>
-                            <td th:text="${r.status}"></td>
-                            <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : 'â€”'}"></td>
-                            <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
-                            <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <th:block th:if="${myOvertimeRequests == null}">
+                    <p class="total-hours" style="margin-top:0.5rem;">No overtime data available.</p>
+                </th:block>
+                <th:block th:if="${myOvertimeRequests != null and myOvertimeRequests.isEmpty()}">
+                    <p class="total-hours" style="margin-top:0.5rem;">You have not submitted any overtime requests yet.</p>
+                </th:block>
+                <th:block th:if="${myOvertimeRequests != null and !myOvertimeRequests.isEmpty()}">
+                    <table class="attendanceTable">
+                        <thead>
+                            <tr class="attendanceHeader">
+                                <th>Work date</th>
+                                <th>Overtime time in</th>
+                                <th>Overtime time out</th>
+                                <th>Total hours</th>
+                                <th>Status</th>
+                                <th>Approved by</th>
+                                <th>Reason</th>
+                                <th>Submitted</th>
+                                <th>Attachment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="r : ${myOvertimeRequests}">
+                                <td th:text="${r.workDate}"></td>
+                                <td th:text="${r.overtimeIn != null ? #temporals.format(r.overtimeIn, 'HH:mm') : ''}"></td>
+                                <td th:text="${r.overtimeOut != null ? #temporals.format(r.overtimeOut, 'HH:mm') : ''}"></td>
+                                <td th:text="${r.totalHoursDisplay}"></td>
+                                <td th:text="${r.status}"></td>
+                                <td th:text="${approverNameByRequestId != null and approverNameByRequestId.get(r.overtimeRequestId) != null ? approverNameByRequestId.get(r.overtimeRequestId) : '-'}"></td>
+                                <td class="reason-cell" th:title="${r.reason}" th:text="${r.reason}"></td>
+                                <td th:text="${r.requestedAt != null ? #temporals.format(r.requestedAt, 'yyyy-MM-dd HH:mm') : ''}"></td>
+                                <td>
+                                    <a th:if="${r.attachmentPath != null}" href="#" th:attr="onclick=|showOtAttachmentModal('${r.attachmentPath}'); return false;|">View</a>
+                                    <span th:if="${r.attachmentPath == null}">None</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </th:block>
             </div>
-
-            
 
             <form method="post" th:action="${overtimeSaveAction}" th:if="${isAdmin and !attendances.isEmpty()}">
                 <input type="hidden" name="year" th:value="${selectedYear}" />
@@ -193,10 +184,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.workHoursDisplay}"></td>
                             <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td>
                                 <label th:for="|ot_${a.attendanceId}|" class="visually-hidden">Overtime on DTR</label>
                                 <input class="overtime-input" type="number" step="0.25" min="0"
@@ -239,10 +230,10 @@
                             <td th:text="${a.time_out}"></td>
                             <td th:text="${a.workHoursDisplay}"></td>
                             <td th:text="${a.totalHoursWithOvertimeDisplay}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : 'â€”'}"></td>
-                            <td th:text="${otReq != null ? otReq.status : 'â€”'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeIn != null ? #temporals.format(otReq.overtimeIn, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null and otReq.overtimeOut != null ? #temporals.format(otReq.overtimeOut, 'HH:mm') : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.totalHoursDisplay : '-'}"></td>
+                            <td th:text="${otReq != null ? otReq.status : '-'}"></td>
                             <td th:text="${a.overtimeHoursDisplay}"></td>
                         </tr>
                     </tbody>
@@ -257,19 +248,102 @@
             <a th:if="${emp_id != null}" th:href="@{/payroll/{id}(id=${emp_id})}" href="#" class="card-link">View Payroll &rarr;</a>
         </section>
     </div>
+
+    <div id="otFilingModal" class="ot-modal" aria-hidden="true" sec:authorize="hasRole('EMPLOYEE')">
+        <div class="ot-modal-content">
+            <div class="ot-modal-head">
+                <h2 style="margin:0;"><i class="fa-solid fa-file-pen"></i> File overtime</h2>
+                <button type="button" class="ot-modal-close" aria-label="Close overtime filing modal" onclick="closeOtFilingModal()">&times;</button>
+            </div>
+            <form method="post" th:action="@{/employee/attendance/overtime/request}" enctype="multipart/form-data">
+                <input type="hidden" name="year" th:value="${selectedYear}" th:if="${isAdmin}" />
+                <input type="hidden" name="month" th:value="${selectedMonth}" th:if="${isAdmin}" />
+                <input type="hidden" name="empId" th:value="${viewingEmployeeId}" th:if="${isAdmin}" />
+                <div class="ot-form-grid">
+                    <label>Work date (date OT applies to)
+                        <input type="date" name="workDate" required />
+                    </label>
+                    <label>Overtime in
+                        <input type="time" name="overtimeIn" required step="60" />
+                    </label>
+                    <label>Overtime out
+                        <input type="time" name="overtimeOut" required step="60" />
+                    </label>
+                    <label>Total hours (auto)
+                        <input type="number" id="computedTotalHours" step="0.01" min="0" readonly placeholder="Auto-calculated" />
+                    </label>
+                    <label>Reason
+                        <textarea name="reason" required maxlength="1000" placeholder="Project / task / manager request"></textarea>
+                    </label>
+                    <label>Attachment
+                        <input type="file" name="attachment" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt" />
+                        <span style="font-size:0.85em;color:#888;">Attach supporting document (image, PDF, etc.)</span>
+                    </label>
+                </div>
+                <p style="margin-top:1rem;">
+                    <button type="submit" class="btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit request</button>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Unified OT Attachment Modal (matches leaveAdmin.html) -->
+    <div id="otAttachmentModal" class="ot-attachment-modal" style="display:none;">
+      <div class="ot-attachment-modal-content">
+        <span class="ot-attachment-modal-close" onclick="closeOtAttachmentModal()">&times;</span>
+        <div id="otAttachmentModalBody"></div>
+      </div>
+    </div>
+
     <script src="/js/nav.js"></script>
+    <script>
+            // Unified OT Attachment Modal logic (matches leaveAdmin.html)
+            function showOtAttachmentModal(path) {
+                var modal = document.getElementById('otAttachmentModal');
+                var body = document.getElementById('otAttachmentModalBody');
+                if (!path) {
+                    body.innerHTML = '<p>No attachment.</p>';
+                } else if (path.match(/\.(jpg|jpeg|png|gif|webp|png)$/i)) {
+                    body.innerHTML = '<img src="/' + path + '" alt="Attachment" style="max-width:80vw;max-height:70vh;display:block;margin:auto;">';
+                } else if (path.match(/\.pdf$/i)) {
+                    body.innerHTML =
+                        '<iframe src="/' + path + '" width="800px" height="600px" style="max-width:90vw;max-height:80vh;display:block;margin:auto;border:none;"></iframe>' +
+                        '<div style="text-align:center;margin-top:1em;">'+
+                        '<a href="/' + path + '" target="_blank" download>Download PDF</a></div>';
+                } else {
+                    body.innerHTML = '<a href="/' + path + '" target="_blank" download>Download Attachment</a>';
+                }
+                modal.style.display = 'flex';
+            }
+            function closeOtAttachmentModal() {
+                document.getElementById('otAttachmentModal').style.display = 'none';
+            }
+            window.onclick = function(event) {
+                var modal = document.getElementById('otAttachmentModal');
+                if (event.target == modal) closeOtAttachmentModal();
+            }
+    </script>
+    <script>
+        document.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (form.method && form.method.toLowerCase() === 'post' && form.action && form.action.endsWith('/admin/attendance/overtime')) {
+                e.preventDefault();
+                alert('This page does not support POST. Please contact your administrator.');
+            }
+        }, true);
+    </script>
     <script>
         function openOtFilingModal() {
             var modal = document.getElementById('otFilingModal');
             if (!modal) return;
-            modal.style.display = 'block';
+                modal.classList.add('show');
             modal.setAttribute('aria-hidden', 'false');
             computeFiledOvertimeHours();
         }
         function closeOtFilingModal() {
             var modal = document.getElementById('otFilingModal');
             if (!modal) return;
-            modal.style.display = 'none';
+                modal.classList.remove('show');
             modal.setAttribute('aria-hidden', 'true');
         }
         function computeFiledOvertimeHours() {
@@ -315,4 +389,3 @@
     </script>
 </body>
 </html>
-

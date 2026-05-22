@@ -1,96 +1,96 @@
-.attendanceTable{
+.attendanceTable {
     width: 100%;
     margin-top: 1rem;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
-.attendanceTable caption{
+.attendanceTable caption {
     margin-bottom: 1rem;
     text-align: left;
 }
 
 .attendanceTable th,
-.attendanceTable td{
+.attendanceTable td {
     border: 1px solid #000;
     padding: 0.5rem 0.75rem;
     text-align: left;
     vertical-align: middle;
 }
 
-.attendanceHeader th{
+.attendanceHeader th {
     background: #f5f5f5;
     font-weight: 600;
 }
 
-.attendanceBody tr:nth-child(even){
+.attendanceBody tr:nth-child(even) {
     background: #fafafa;
 }
 
-.attendanceTable{
+.attendanceTable {
     margin-left: 0;
 }
 
-.payroll-filters { 
-    margin-bottom: 1.5rem; 
+.payroll-filters {
+    margin-bottom: 1.5rem;
     display: flex;
-    gap: .75rem; 
+    gap: .75rem;
     align-items: center;
     width: 100%;
 }
 
-.payroll-filters select { 
+.payroll-filters select {
     width: 100%;
 }
 
-.payslip-table .gross-row td { 
-    border-top: 2px solid #333; 
-    padding-top: 0.5rem; 
+.payslip-table .gross-row td {
+    border-top: 2px solid #333;
+    padding-top: 0.5rem;
 }
 
-.payslip-table .deduct-row td { 
-    border-top: 1px solid #ccc; 
+.payslip-table .deduct-row td {
+    border-top: 1px solid #ccc;
 }
 
-.payslip-table .net-row td { 
-    border-top: 2px solid #333; 
-    font-weight: 700; 
-    padding-top: 0.5rem; 
+.payslip-table .net-row td {
+    border-top: 2px solid #333;
+    font-weight: 700;
+    padding-top: 0.5rem;
 }
 
-.payslip-table td.other-breakdown { 
-    padding-left: 1.25rem; 
+.payslip-table td.other-breakdown {
+    padding-left: 1.25rem;
 }
 
-.no-payroll { 
-    color: #666; 
-    margin-top: 1rem; 
+.no-payroll {
+    color: #666;
+    margin-top: 1rem;
 }
 
-.attendance-filter { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.75rem; 
-    flex-wrap: wrap; 
-    margin-bottom: 1rem; 
+.attendance-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
 }
 
-.attendance-filter label { 
-    font-weight: 600; 
+.attendance-filter label {
+    font-weight: 600;
 }
 
-.attendance-filter select { 
-    padding: 0.35rem 0.5rem; 
-    border-radius: 4px; 
+.attendance-filter select {
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
 }
 
-.total-hours { 
-    margin-top: 1rem; 
-    font-size: 1rem; 
+.total-hours {
+    margin-top: 1rem;
+    font-size: 1rem;
 }
 
-.total-hours strong { 
-    margin-left: 0.25rem; 
+.total-hours strong {
+    margin-left: 0.25rem;
 }
 
 /* Payroll sub-tabs (Payroll | Deductions | Adjustments) */
@@ -101,6 +101,7 @@
     border-bottom: 1px solid #ddd;
     padding-bottom: 0;
 }
+
 .payroll-subnav a {
     padding: 0.5rem 1rem;
     text-decoration: none;
@@ -108,10 +109,12 @@
     border-radius: 6px 6px 0 0;
     font-weight: 500;
 }
+
 .payroll-subnav a:hover {
     background: #f0f0f0;
     color: #333;
 }
+
 .payroll-subnav a.active {
     background: var(--primary-light, #0066cc);
     color: white;
@@ -133,11 +136,250 @@
 }
 
 .attendanceTable.payslip-table td.table-section-header:hover {
-    background-color: #e8e4f5 !important;  /* same as normal state — no visible change */
+    background-color: #e8e4f5 !important;
+    /* same as normal state — no visible change */
     color: #1a1a1a !important;
 }
 
 /* Payslip column headers: Earnings / Deductions | Amount (PHP) */
 .payslip-table .attendanceHeader th {
-    font-size: 1.130rem;   /* try 1rem, 1.15rem, 1.2rem */
+    font-size: 1.130rem;
+    /* try 1rem, 1.15rem, 1.2rem */
+}
+
+/* Print-only elements: hidden on screen */
+.print-only {
+    display: none !important;
+}
+
+.print-date {
+    font-size: 0.95rem;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* ==================== PRINT STYLES ==================== */
+@media print {
+
+    /* Minimise page margins to maximise usable area */
+    @page {
+        size: portrait;
+        margin: 8mm;
+    }
+
+    /* Strip background & fixed dimensions from body */
+    body {
+        background: white !important;
+        height: auto !important;
+        width: 100% !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Flatten the flex layout — hide nav, let section fill full width */
+    .container {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+
+    nav {
+        display: none !important;
+    }
+
+    section {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Hide non-printable UI elements */
+    .no-print,
+    .btn-print,
+    .payroll-filters,
+    .payroll-subnav {
+        display: none !important;
+    }
+
+    /* Show print-only elements */
+    .print-only {
+        display: block !important;
+    }
+
+    .print-header {
+        margin-bottom: 6pt !important;
+    }
+
+    /* Logo and title block — centered */
+    .print-logo-block {
+        text-align: center !important;
+        margin-bottom: 6pt !important;
+    }
+
+    .print-logo {
+        max-height: 60pt !important;
+        width: auto !important;
+        display: inline-block !important;
+        margin-bottom: 2pt !important;
+    }
+
+    .print-title {
+        font-size: 13pt !important;
+        font-weight: 700 !important;
+        margin: 0 !important;
+        color: #31315c !important;
+        letter-spacing: 2pt;
+    }
+
+    /* Employee details table */
+    .print-employee-details {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 9pt !important;
+        margin-bottom: 6pt !important;
+    }
+
+    .print-employee-details td {
+        padding: 3pt 6pt !important;
+        border: 1px solid #ccc !important;
+        background: white !important;
+        color: #000 !important;
+        vertical-align: top !important;
+    }
+
+    .print-employee-details .detail-section-header {
+        background: #ddd !important;
+        color: #000 !important;
+        font-weight: 600 !important;
+        font-size: 9pt !important;
+        padding: 3pt 6pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .print-employee-details .detail-label {
+        font-weight: 600 !important;
+        background: #f7f6ff !important;
+        width: 15% !important;
+        white-space: nowrap !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .print-employee-details .detail-value {
+        width: 35% !important;
+    }
+
+    /* Period info line */
+    .print-period-line {
+        font-size: 9pt !important;
+        margin: 0 0 4pt 0 !important;
+        padding: 4pt 0 !important;
+        border-top: 1px solid #999 !important;
+        border-bottom: 1px solid #999 !important;
+        color: #000 !important;
+    }
+
+    .print-period-line strong {
+        margin-right: 8pt !important;
+    }
+
+    /* ---- Payslip table – compact for single-page fit ---- */
+    .payslip-wrap {
+        width: 100% !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .attendanceTable.payslip-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        font-size: 9pt !important;
+        border-collapse: collapse !important;
+    }
+
+    .attendanceTable.payslip-table caption {
+        font-size: 10pt !important;
+        margin-bottom: 2pt !important;
+        text-align: left;
+    }
+
+    .attendanceTable.payslip-table tr {
+        page-break-inside: avoid;
+    }
+
+    .attendanceTable th,
+    .attendanceTable td {
+        border: 1px solid #ccc !important;
+        padding: 3pt 6pt !important;
+        background: white !important;
+        color: #000 !important;
+        line-height: 1.3 !important;
+    }
+
+    .attendanceHeader th {
+        background: #ddd !important;
+        color: #000 !important;
+        font-size: 9pt !important;
+        font-weight: 600 !important;
+        padding: 3pt 6pt !important;
+        border: 1px solid #ccc !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .attendanceTable.payslip-table td.table-section-header {
+        background-color: #e8e4f5 !important;
+        font-size: 9.5pt !important;
+        padding: 3pt 4pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .payslip-table .net-row td {
+        border-top: 2pt solid #666 !important;
+        font-weight: 700;
+    }
+
+    .payslip-table .gross-row td {
+        border-top: 1px solid #ccc !important;
+    }
+
+    .payslip-table .deduct-row td {
+        border-top: 1pt solid #ccc !important;
+    }
+
+    .payslip-table .service-fee-row td {
+        padding: 2pt 4pt !important;
+    }
+
+    .rate-note {
+        font-size: 8pt !important;
+    }
+
+    /* Remove hover effects in print */
+    tr td:hover {
+        background-color: white !important;
+    }
+
+    li:hover {
+        background-color: transparent !important;
+    }
+
+    /* Footer date — pinned to bottom right of page */
+    .print-footer-date {
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        font-size: 8pt !important;
+        color: #666 !important;
+        margin: 0 !important;
+    }
 }

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Deductions - Admin</title>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/homeAdmin.css">
+    <link rel="stylesheet" href="/css/nav.css">
+    <link rel="stylesheet" href="/css/deductions.css">
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
+
+    <section>
+        <div class="head">
+            <h1>My Deductions</h1>
+            <button type="button" class="btn-print no-print" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Print
+            </button>
+        </div>
+
+        <!-- Deduction Balance Cards -->
+        <div class="deduction-section">
+            <div class="deduction-card leave-card">
+                <h2>Deduction Balance</h2>
+                <div class="balance-grid">
+                    <div class="balance-item">
+                        <div class="balance-info">
+                            <h3>Outstanding Obligation</h3>
+                            <p class="balance-days">
+                                <span th:text="${deductionOutstandingObligation}">0.00</span> PHP
+                            </p>
+                            <small>Total committed amount for all deductions</small>
+                        </div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-info">
+                            <h3>Monthly Cutoff</h3>
+                            <p class="balance-days">
+                                <span th:text="${deductionMonthlyCutoff}">0.00</span> PHP
+                            </p>
+                            <small>Amount to be deducted this cutoff</small>
+                        </div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-info">
+                            <h3>Outstanding Balance</h3>
+                            <p class="balance-days">
+                                <span th:text="${deductionOutstandingBalance}">0.00</span> PHP
+                            </p>
+                            <small>Remaining unpaid amount for all deductions</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-head deduction-section-head">
+                <h2 class="no-print"><i class="fa-solid fa-user-minus"></i> My deductions</h2>
+            </div>
+
+            <!-- Filters -->
+            <form th:action="@{${deductionsFormAction}}" method="get" class="deduction-search-form">
+                <div class="filter-search">
+                    <select name="filterMonth" class="deduction-filter-select" aria-label="Month">
+                        <option value="">Month</option>
+                        <option th:each="m, iterStat : ${filterMonthNames}" th:value="${iterStat.count}" th:text="${m}" th:selected="${filterMonth != null and filterMonth == iterStat.count}"></option>
+                    </select>
+                    <select name="filterYear" class="deduction-filter-select" aria-label="Year">
+                        <option value="">Year</option>
+                        <option th:each="y : ${filterYears}" th:value="${y}" th:text="${y}" th:selected="${filterYear != null and filterYear == y}"></option>
+                    </select>
+                    <select name="filterType" class="deduction-filter-select" aria-label="Filter by type">
+                        <option value="">All types</option>
+                        <option value="Loan" th:selected="${filterType == 'Loan'}">Loan</option>
+                        <option value="Advance" th:selected="${filterType == 'Advance'}">Advance</option>
+                        <option value="Union" th:selected="${filterType == 'Union'}">Union</option>
+                        <option value="Other" th:selected="${filterType == 'Other'}">Other</option>
+                    </select>
+                    <select name="filterRecurring" class="deduction-filter-select" aria-label="Filter by recurring">
+                        <option value="">All</option>
+                        <option value="yes" th:selected="${filterRecurring == 'yes'}">Recurring</option>
+                        <option value="no" th:selected="${filterRecurring == 'no'}">One-time</option>
+                    </select>
+                    <button type="submit" class="btn-search no-print"><i class="fa-solid fa-search"></i> Search</button>
+                </div>
+            </form>
+
+            <!-- Deductions Table -->
+            <table class="attendanceTable deduction-table" th:if="${assignmentRows != null and !assignmentRows.isEmpty()}">
+                <thead>
+                    <tr class="attendanceHeader">
+                        <th>Deduction</th><th>Type</th><th>Amount</th><th>Recurring</th><th>Cutoff</th><th>Start</th><th>End</th>
+                    </tr>
+                </thead>
+                <tbody class="attendanceBody">
+                    <tr th:each="row : ${assignmentRows}">
+                        <td th:text="${row.deductionName}"></td>
+                        <td th:text="${row.deductionType}"></td>
+                        <td th:text="${row.amount != null ? #numbers.formatDecimal(row.amount, 1, 'POINT', 2, 'COMMA') : ''}"></td>
+                        <td th:text="${row.recurring ? 'Yes' : 'No'}"></td>
+                        <td th:text="${row.deductionCutoff == 'SEMI_1' ? '1st (1-15)' : (row.deductionCutoff == 'BOTH' ? 'Both' : '2nd (16-end)')}"></td>
+                        <td th:text="${row.startDate}"></td>
+                        <td th:text="${row.endDate}"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <p th:if="${assignmentRows != null and !assignmentRows.isEmpty()}" class="deduction-table-help">Recurring = deducted each pay period between Start and End. In Payroll, pick Year + Month to see deductions for that period.</p>
+            <p th:if="${assignmentRows == null or assignmentRows.isEmpty()}" class="no-data">No deductions assigned to you.</p>
+        </div>
+    </section>
+</div>
+
+<script src="/js/nav.js"></script>
+</body>
+</html>

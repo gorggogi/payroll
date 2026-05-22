@@ -45,6 +45,16 @@ import jakarta.persistence.Transient;
         "payType"
 })
 public class Employees {
+        @Transient
+        private Boolean isAdmin;
+
+        public Boolean getIsAdmin() {
+            return isAdmin;
+        }
+
+        public void setIsAdmin(Boolean isAdmin) {
+            this.isAdmin = isAdmin;
+        }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
 

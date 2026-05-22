@@ -35,6 +35,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Month;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,6 +47,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import digital8.payroll.entities.Holiday;
+import digital8.payroll.exceptions.ScheduleNotAssignedException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -65,6 +68,10 @@ public class PayrollService {
     // Statutory deduction constants
     private static final BigDecimal PAGIBIG_RATE = new BigDecimal("0.02");
     private static final BigDecimal PHILHEALTH_RATE = new BigDecimal("0.025");
+
+    // Premium base cap (HR policy: salary-splitting for employees under 30,000)
+    private static final BigDecimal PREMIUM_SALARY_THRESHOLD = new BigDecimal("30000");
+    private static final BigDecimal PREMIUM_BASE_CAP = new BigDecimal("20000");
 
     // Simplified withholding tax formula constants
     private static final BigDecimal TAX_RATE_SIMPLIFIED = new BigDecimal("0.10");
@@ -150,29 +157,36 @@ public class PayrollService {
         BigDecimal monthlyAllowance = emp.getAllowance() != null ? emp.getAllowance() : BigDecimal.ZERO;
 
         // --- 1. Rate Derivation ---
-        // Daily/Hourly rates for base salary stay anchored on basic salary.
-        BigDecimal factor = emp.getFactorRate();
-        if (factor == null || factor.compareTo(BigDecimal.ZERO) <= 0) {
-            factor = DEFAULT_PAY_FACTOR;
-        }
-        BigDecimal dailyRate = monthlyRate.divide(factor, 6, ROUND);
-        BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
-        BigDecimal perMinuteRate = hourlyRate.divide(MINUTES_PER_HOUR, 6, ROUND);
-        // --- 2. Determine pay period ---
-        Month month = null;
+        // Resolve the pay period month/year early so we can count working days.
+        Month rateMonth = null;
         if (monthName != null && !monthName.isBlank()) {
-            try {
-                month = Month.valueOf(monthName.toUpperCase());
-            } catch (Exception e) {
-                month = null;
-            }
+            try { rateMonth = Month.valueOf(monthName.toUpperCase()); } catch (Exception ignored) {}
         }
-        int year = (yearParam != null) ? yearParam : LocalDate.now().getYear();
-        if (month == null) {
-            month = LocalDate.now().getMonth();
+        int rateYear = (yearParam != null) ? yearParam : LocalDate.now().getYear();
+        if (rateMonth == null) rateMonth = LocalDate.now().getMonth();
+        YearMonth rateYm = YearMonth.of(rateYear, rateMonth);
+
+        // Count actual scheduled working days in the month from the employee's shift template.
+        // If no schedule is assigned, throw a warning so HR knows to assign one.
+        int workingDaysInMonth = computeWorkingDaysInMonth(empId, rateYm);
+        if (workingDaysInMonth <= 0) {
+            throw new ScheduleNotAssignedException(
+                "Employee ID " + empId + " has no schedule assignment for "
+                + rateYm.getMonth().getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.ENGLISH)
+                + " " + rateYm.getYear()
+                + ". Please assign a shift schedule before computing payroll."
+            );
         }
 
-        YearMonth ym = YearMonth.of(year, month);
+        BigDecimal effectiveDivisor = new BigDecimal(workingDaysInMonth);
+        BigDecimal dailyRate = monthlyRate.divide(effectiveDivisor, 6, ROUND);
+        BigDecimal hourlyRate = dailyRate.divide(HOURS_PER_DAY, 6, ROUND);
+        BigDecimal perMinuteRate = hourlyRate.divide(MINUTES_PER_HOUR, 6, ROUND);
+        BigDecimal roundedHourlyRate = hourlyRate.setScale(SCALE, ROUND);
+        // --- 2. Determine pay period ---
+        // rateYm was already resolved above for rate derivation; reuse it here.
+        int year = rateYm.getYear();
+        YearMonth ym = rateYm;
         PayPeriod pp = resolvePayPeriod(period, ym);
         LocalDate periodStart = pp.start;
         LocalDate periodEnd = pp.end;
@@ -254,7 +268,7 @@ public class PayrollService {
             }
 
             // Premium for worked regular-holiday hours: +1x hourly (to make total 2x)
-            holidayPay = holidayPay.add(hourlyRate.multiply(regularHolidayWorkedHours));
+            holidayPay = holidayPay.add(roundedHourlyRate.multiply(regularHolidayWorkedHours));
 
             // Pay for unworked regular holidays: +1x daily rate
             for (LocalDate hd : regularHolidayDates) {
@@ -267,16 +281,16 @@ public class PayrollService {
 
         }
         // --- 4. Compute Earnings ---
-        // Basic Pay = Hourly Rate × Total Hours
-        BigDecimal basicPay = hourlyRate.multiply(totalWorkedHours).setScale(SCALE, ROUND);
+        // Basic Pay = Rounded Hourly Rate × Total Hours
+        BigDecimal basicPay = roundedHourlyRate.multiply(totalWorkedHours).setScale(SCALE, ROUND);
 
-        // Overtime Pay = Hourly Rate × Total OT Hours × OT Multiplier
+        // Overtime Pay = Rounded Hourly Rate × Total OT Hours × OT Multiplier
         // Use per-employee override if set; fall back to system defaults by employment type
         BigDecimal employeeOtMultiplier = emp.getOtMultiplier();
         BigDecimal otMultiplier = (employeeOtMultiplier != null && employeeOtMultiplier.compareTo(BigDecimal.ZERO) > 0)
             ? employeeOtMultiplier
             : OT_MULTIPLIER_DEFAULT;
-        BigDecimal overtimePay = hourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
+        BigDecimal overtimePay = roundedHourlyRate.multiply(totalOtHours).multiply(otMultiplier).setScale(SCALE, ROUND);
 
         // Adjustment Earnings — from employee_adjustments where adjustmentType = 'EARNINGS'
         BigDecimal[] adjSplit = computeAdjustmentsSplit(empId, periodStart, periodEnd, period);
@@ -321,8 +335,10 @@ public class PayrollService {
         BigDecimal serviceFee = totalEarnings.subtract(totalNonStatutoryDeductions).setScale(SCALE, ROUND);
 
         // --- 6. Compute Statutory Deductions ---
-        // Statutory stays based on basic salary only.
-        BigDecimal premiumBase = monthlyRate;
+        // HR policy: employees earning below 30,000 have premium base capped at 20,000
+        BigDecimal premiumBase = monthlyRate.compareTo(PREMIUM_SALARY_THRESHOLD) < 0
+            ? monthlyRate.min(PREMIUM_BASE_CAP)
+            : monthlyRate;
 
         BigDecimal sss;
         BigDecimal philhealth;
@@ -370,7 +386,7 @@ public class PayrollService {
 
         // Rate breakdown
         item.setDailyRate(dailyRate.setScale(SCALE, ROUND));
-        item.setHourlyRate(hourlyRate.setScale(SCALE, ROUND));
+        item.setHourlyRate(roundedHourlyRate);
         item.setPerMinuteRate(perMinuteRate.setScale(SCALE, ROUND));
 
         // Hours
@@ -435,12 +451,28 @@ public class PayrollService {
                     preferStoredInt(attendance.getLate_minutes(), 0),
                     preferStoredInt(attendance.getUndertime_minutes(), 0));
 
-            if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date())) {
+            if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date(), attendance.getShiftOverride())) {
                 return new AttendanceMetrics(
                         BigDecimal.ZERO.setScale(SCALE, ROUND),
                         storedOvertime,
                         0,
                         0);
+            }
+
+            if (attendance.getShiftOverride() != null && !attendance.getShiftOverride().isBlank()) {
+                ShiftOverrideResult overrideResult = parseShiftOverride(attendance.getShiftOverride());
+                if (overrideResult != null) {
+                    AttendanceMetrics computed = computeAttendanceMetrics(
+                            timeIn,
+                            timeOut,
+                            overrideResult.shiftIn,
+                            overrideResult.shiftOut);
+                    return new AttendanceMetrics(
+                            computed.workHours,
+                            resolveOvertimeHours(attendance.getOvertime_hours(), computed.overtimeHours),
+                            computed.lateMinutes,
+                            computed.undertimeMinutes);
+                }
             }
 
             Optional<WeeklyScheduleTemplateDay> shiftDayOpt = findAssignedShiftDay(
@@ -464,14 +496,66 @@ public class PayrollService {
         return fallback;
     }
 
-    private boolean isRestDay(Integer employeeId, LocalDate date) {
-        if (employeeId == null || date == null) {
-            return false;
+    private static final class ShiftOverrideResult {
+        final LocalTime shiftIn;
+        final LocalTime shiftOut;
+        ShiftOverrideResult(LocalTime shiftIn, LocalTime shiftOut) {
+            this.shiftIn = shiftIn;
+            this.shiftOut = shiftOut;
         }
+    }
+
+    private ShiftOverrideResult parseShiftOverride(String override) {
+        if (override == null || override.isBlank()) return null;
+        try {
+            String[] parts = override.trim().split("\\s*-\\s*");
+            if (parts.length != 2) return null;
+            LocalTime in = parseLocalTime(parts[0].trim());
+            LocalTime out = parseLocalTime(parts[1].trim());
+            if (in == null || out == null) return null;
+            return new ShiftOverrideResult(in, out);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private LocalTime parseLocalTime(String raw) {
+        if (raw == null) return null;
+        String v = raw.trim();
+        if (v.isEmpty()) return null;
+        DateTimeFormatter[] formatters = new DateTimeFormatter[]{
+                DateTimeFormatter.ofPattern("HH:mm"),
+                DateTimeFormatter.ofPattern("H:mm"),
+                DateTimeFormatter.ofPattern("HH:mm:ss"),
+                DateTimeFormatter.ofPattern("H:mm:ss"),
+                DateTimeFormatter.ofPattern("hh:mm a"),
+                DateTimeFormatter.ofPattern("h:mm a"),
+        };
+        for (DateTimeFormatter f : formatters) {
+            try {
+                return LocalTime.parse(v, f);
+            } catch (DateTimeParseException ignored) {}
+        }
+        String ampm = v.replaceAll(".*?(AM|PM).*", "$1").toUpperCase();
+        if (ampm.equals("AM") || ampm.equals("PM")) {
+            String timeOnly = v.replaceAll("(AM|PM)", "").trim();
+            String[] hm = timeOnly.split(":");
+            if (hm.length >= 2) {
+                int h = Integer.parseInt(hm[0].trim());
+                int m = hm[1].trim().length() > 0 ? Integer.parseInt(hm[1].trim().split("[^0-9]")[0]) : 0;
+                if (ampm.equals("PM") && h != 12) h += 12;
+                if (ampm.equals("AM") && h == 12) h = 0;
+                return LocalTime.of(h, m);
+            }
+        }
+        return null;
+    }
+
+    private boolean isRestDay(Integer employeeId, LocalDate date, String shiftOverride) {
+        if (employeeId == null || date == null) return false;
+        if (shiftOverride != null && !shiftOverride.isBlank()) return false;
         Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, date);
-        if (assignmentOpt.isEmpty()) {
-            return false;
-        }
+        if (assignmentOpt.isEmpty()) return false;
         return weeklyScheduleTemplateDayRepository.findByTemplateIdAndDayOfWeek(
                 assignmentOpt.get().getTemplateId(),
                 date.getDayOfWeek().getValue())
@@ -516,6 +600,49 @@ public class PayrollService {
         }
         return employeeScheduleAssignmentRepository.findLatestAssignmentOnOrBefore(
                 employeeId, date.getYear(), date.getMonthValue());
+    }
+
+    /**
+     * Counts the number of scheduled working (non-rest) days in the given month
+     * for the employee, using their WeeklyScheduleTemplateDay assignment.
+     *
+     * <p>Returns 0 if no schedule assignment exists for the employee in that month.
+     * The caller is responsible for deciding what to do in that case (warn, fallback, etc.).
+     */
+    public int computeWorkingDaysInMonth(Integer employeeId, YearMonth ym) {
+        // Resolve the assignment using the first day of the month as the reference date.
+        LocalDate firstOfMonth = ym.atDay(1);
+        Optional<EmployeeScheduleAssignment> assignmentOpt = resolveShiftAssignment(employeeId, firstOfMonth);
+        if (assignmentOpt.isEmpty()) {
+            return 0;
+        }
+
+        Integer templateId = assignmentOpt.get().getTemplateId();
+        List<WeeklyScheduleTemplateDay> templateDays =
+                weeklyScheduleTemplateDayRepository.findByTemplateIdOrderByDayOfWeekAsc(templateId);
+        if (templateDays == null || templateDays.isEmpty()) {
+            return 0;
+        }
+
+        // Build a fast lookup: dayOfWeek (1=Mon..7=Sun) → isRestDay
+        Map<Integer, Boolean> restDayByDow = templateDays.stream()
+                .collect(Collectors.toMap(
+                        WeeklyScheduleTemplateDay::getDayOfWeek,
+                        WeeklyScheduleTemplateDay::isRestDay,
+                        (a, b) -> a));
+
+        // Count calendar days in the month that are not rest days.
+        int count = 0;
+        int lengthOfMonth = ym.lengthOfMonth();
+        for (int day = 1; day <= lengthOfMonth; day++) {
+            LocalDate date = ym.atDay(day);
+            int dow = date.getDayOfWeek().getValue(); // 1=Monday .. 7=Sunday
+            Boolean isRest = restDayByDow.get(dow);
+            if (isRest == null || !isRest) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private AttendanceMetrics computeAttendanceMetrics(
@@ -769,10 +896,15 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
-            sum = sum.add(ed.getAmount());
+            BigDecimal amount = ed.getAmount();
+                if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+                sum = sum.add(amount);
         }
         return sum.setScale(SCALE, ROUND);
     }
@@ -803,7 +935,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             // Resolve type from catalog
             String adjType = "Earnings";
@@ -846,7 +979,8 @@ public class PayrollService {
                 if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             } else {
                 if (ea.getStartDate() == null || ea.getStartDate().isAfter(periodEnd)
-                        || ea.getStartDate().isBefore(periodStart)) continue;
+                        || ea.getEndDate() == null || ea.getEndDate().isBefore(periodStart)) continue;
+                if (!matchesCutoff(period, ea.getApplyOnCutoff(), "BOTH")) continue;
             }
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             // Resolve name from type catalog (mirrors getDeductionsBreakdown)
@@ -893,8 +1027,9 @@ public class PayrollService {
                 if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             } else {
                 if (ed.getStartDate() == null || ed.getStartDate().isAfter(periodEnd)
-                        || ed.getStartDate().isBefore(periodStart))
+                        || ed.getEndDate() == null || ed.getEndDate().isBefore(periodStart))
                     continue;
+                if (!matchesCutoff(period, ed.getDeductionCutoff(), "SEMI_2")) continue;
             }
             String name = "Other";
             if (ed.getDeductionId() != null) {
@@ -903,10 +1038,13 @@ public class PayrollService {
                     name = d.getDeductionName();
                 }
             }
-
             DeductionBreakdownItem item = new DeductionBreakdownItem();
             item.setDeductionName(name);
-            item.setAmount(ed.getAmount().setScale(SCALE, ROUND));
+            BigDecimal amount = ed.getAmount();
+            if ("monthly".equalsIgnoreCase(period) && "BOTH".equalsIgnoreCase(ed.getDeductionCutoff())) {
+                amount = amount.multiply(BigDecimal.valueOf(2));
+            }
+            item.setAmount(amount.setScale(SCALE, ROUND));
             result.add(item);
         }
         return result;

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Table;
@@ -48,6 +49,9 @@ public class Attendance{
 
     @Column (nullable = false, unique = false)
     private String status;
+
+    @Column (name = "shift_override", nullable = true)
+    private String shiftOverride;
 
     public Integer getUndertime_minutes() {
         return undertime_minutes;
@@ -141,6 +145,24 @@ public class Attendance{
         BigDecimal work = work_hours != null ? work_hours : BigDecimal.ZERO;
         BigDecimal overtime = overtime_hours != null ? overtime_hours : BigDecimal.ZERO;
         return HourFormatUtils.formatHours(work.add(overtime));
+    }
+
+    public String getTimeInDisplay() {
+        if (time_in == null) return "";
+        return time_in.format(DateTimeFormatter.ofPattern("hh:mm a"));
+    }
+
+    public String getTimeOutDisplay() {
+        if (time_out == null) return "";
+        return time_out.format(DateTimeFormatter.ofPattern("hh:mm a"));
+    }
+
+    public String getShiftOverride() {
+        return shiftOverride;
+    }
+
+    public void setShiftOverride(String shiftOverride) {
+        this.shiftOverride = shiftOverride;
     }
 
 }
