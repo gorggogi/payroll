@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import digital8.payroll.repositories.UsersRepository;
+import digital8.payroll.repositories.DepartmentsRepository;
+import digital8.payroll.repositories.PositionsRepository;
 import digital8.payroll.entities.Users;
 
 @Controller
@@ -17,6 +19,10 @@ public class homeController {
 
     @Autowired
     private UsersRepository usersRepository;
+    @Autowired
+    private DepartmentsRepository departmentsRepository;
+    @Autowired
+    private PositionsRepository positionsRepository;
 
     @GetMapping({"/", "/index"})
     public String loginPage(Authentication authentication) {
@@ -105,6 +111,8 @@ public class homeController {
                 }
             });
         }
+        model.addAttribute("departments", departmentsRepository.findAll());
+        model.addAttribute("positions", positionsRepository.findAll());
         return "html/employees";
     }
 

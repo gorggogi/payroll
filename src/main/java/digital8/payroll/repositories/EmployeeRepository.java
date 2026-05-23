@@ -2,6 +2,7 @@ package digital8.payroll.repositories;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import digital8.payroll.entities.Departments;
 import digital8.payroll.entities.Employees;
@@ -38,5 +39,14 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>, J
     List<Employees> findByBasicSalaryBetween(BigDecimal minSalary, BigDecimal maxSalary);
     List<Employees> findByBasicSalaryGreaterThanEqual(BigDecimal minSalary);
     List<Employees> findByBasicSalaryLessThanEqual(BigDecimal maxSalary);
+
+    @Query("SELECT DISTINCT e.employmentStatus FROM Employees e WHERE e.employmentStatus IS NOT NULL ORDER BY e.employmentStatus")
+    List<String> findDistinctEmploymentStatuses();
+
+    @Query("SELECT DISTINCT e.employmentType FROM Employees e WHERE e.employmentType IS NOT NULL ORDER BY e.employmentType")
+    List<String> findDistinctEmploymentTypes();
+
+    @Query("SELECT DISTINCT e.payType FROM Employees e WHERE e.payType IS NOT NULL ORDER BY e.payType")
+    List<String> findDistinctPayTypes();
 
 }

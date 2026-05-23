@@ -59,11 +59,7 @@
                                 </label>
                                 <select id="filterDepartment">
                                     <option value="">All Departments</option>
-                                    <option value="1">HR</option>
-                                    <option value="2">IT</option>
-                                    <option value="3">Finance</option>
-                                    <option value="4">Sales</option>
-                                    <option value="5">Operations</option>
+                                    <option th:each="d : ${departments}" th:value="${d.departmentId}" th:text="${d.departmentName}"></option>
                                 </select>
                             </div>
 
@@ -73,12 +69,7 @@
                                 </label>
                                 <select id="filterPosition">
                                     <option value="">All Positions</option>
-                                    <option value="1">Manager</option>
-                                    <option value="2">Software Engineer</option>
-                                    <option value="3">Accountant</option>
-                                    <option value="4">HR Specialist</option>
-                                    <option value="5">Sales Representative</option>
-                                    <option value="6">Operations Coordinator</option>
+                                    <option th:each="p : ${positions}" th:value="${p.positionId}" th:text="${p.positionName}"></option>
                                 </select>
                             </div>
 
@@ -103,6 +94,7 @@
                                 <select id="filterType">
                                     <option value="">All Types</option>
                                     <option value="Regular">Regular</option>
+                                    <option value="Fixed">Fixed (No Late/Undertime/OT)</option>
                                     <option value="Job Order">Job Order</option>
                                     <option value="Probationary">Probationary</option>
                                     <option value="Contractual">Contractual</option>
@@ -115,8 +107,8 @@
                                 </label>
                                 <select id="filterPayType">
                                     <option value="">All Pay Types</option>
-                                    <option value="Monthly">Monthly</option>
-                                    <option value="Semi-monthly">Semi-monthly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="semi-monthly">Semi-monthly</option>
                                 </select>
                             </div>
 
