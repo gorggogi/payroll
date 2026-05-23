@@ -299,11 +299,10 @@ body.light {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    width: 50%;
 }
 
 .rate-val .form-control {
-    width: 80%;
+    width: 150px;
 }
 
 .rate-val button {
