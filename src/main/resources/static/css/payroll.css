@@ -251,7 +251,7 @@
 
     .print-employee-details td {
         padding: 3pt 6pt !important;
-        border: 1px solid #ccc !important;
+        border: 1pt solid #ccc !important;
         background: white !important;
         color: #000 !important;
         vertical-align: top !important;
@@ -321,7 +321,7 @@
 
     .attendanceTable th,
     .attendanceTable td {
-        border: 1px solid #ccc !important;
+        border: 1pt solid #ccc !important;
         padding: 3pt 6pt !important;
         background: white !important;
         color: #000 !important;
@@ -334,7 +334,7 @@
         font-size: 9pt !important;
         font-weight: 600 !important;
         padding: 3pt 6pt !important;
-        border: 1px solid #ccc !important;
+        border: 1pt solid #ccc !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
@@ -353,7 +353,7 @@
     }
 
     .payslip-table .gross-row td {
-        border-top: 1px solid #ccc !important;
+        border-top: 1pt solid #ccc !important;
     }
 
     .payslip-table .deduct-row td {

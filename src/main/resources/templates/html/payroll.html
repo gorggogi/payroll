@@ -71,8 +71,8 @@
                     <tr>
                         <td class="detail-label">Employee Name</td>
                         <td class="detail-value" th:text="${employeeName}">—</td>
-                        <td class="detail-label">Address</td>
-                        <td class="detail-value" th:text="${employee.address != null ? employee.address : '—'}">—</td>
+                        <td class="detail-label">Designation</td>
+                        <td class="detail-value" th:text="${employee.position != null ? employee.position.positionName : '—'}">—</td>
                     </tr>
                 </table>
 
@@ -93,9 +93,6 @@
                     <tbody class="attendanceBody" th:each="item, iterStat : ${payrollItems}" th:if="${iterStat.first}">
     <tr><td colspan="2" class="table-section-header"><strong>Rates</strong></td></tr>
     <tr><td>Monthly Rate</td><td th:text="${employee != null and employee.basicSalary != null ? #numbers.formatDecimal(employee.basicSalary, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Daily Rate <span class="rate-note" th:text="${workingDaysInMonth > 0 ? '(Monthly Rate ÷ ' + workingDaysInMonth + ' working days)' : ''}"></span></td><td th:text="${item.dailyRate != null ? #numbers.formatDecimal(item.dailyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Hourly Rate <span class="rate-note">(Daily Rate ÷ 8 hours)</span></td><td th:text="${item.hourlyRate != null ? #numbers.formatDecimal(item.hourlyRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr><td>Per-Minute Rate <span class="rate-note">(Hourly Rate ÷ 60 mins)</span></td><td th:text="${item.perMinuteRate != null ? #numbers.formatDecimal(item.perMinuteRate, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr><td>Total Worked Hours</td><td th:text="${item.totalWorkedHoursWhole}">0</td></tr>
     <tr><td>Total Overtime Hours</td><td th:text="${item.totalOtHoursWhole}">0</td></tr>
 
@@ -111,7 +108,7 @@
     <tr><td>Late/Undertime Deduction <span class="rate-note" th:text="${item.lateUndertimeMinutes != null ? '(' + item.lateUndertimeMinutes + ' mins)' : ''}"></span></td><td th:text="${item.lateUndertimeDeduction != null ? #numbers.formatDecimal(item.lateUndertimeDeduction, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr th:each="bd : ${otherDeductionsBreakdown}" th:if="${otherDeductionsBreakdown != null and !otherDeductionsBreakdown.isEmpty()}"><td><span th:text="${bd.deductionName}">â€”</span></td><td th:text="${bd.amount != null ? #numbers.formatDecimal(bd.amount, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
     <tr class="deduct-row"><td><strong>Total Non-Statutory Deductions</strong></td><td th:text="${item.otherDeductions != null ? #numbers.formatDecimal(item.otherDeductions, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
-    <tr class="service-fee-row"><td><strong>Service Fee</strong></td><td th:text="${item.serviceFee != null ? #numbers.formatDecimal(item.serviceFee, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
+    <tr class="service-fee-row"><td><strong>Total</strong></td><td th:text="${item.serviceFee != null ? #numbers.formatDecimal(item.serviceFee, 1, 'COMMA', 2, 'POINT') : '0.00'}">0.00</td></tr>
 
     <tr><td colspan="2" class="table-section-header"><strong>Statutory Contributions</strong></td></tr>
     <tr>
