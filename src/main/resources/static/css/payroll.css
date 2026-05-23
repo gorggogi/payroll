@@ -43,6 +43,10 @@
     width: 100%;
 }
 
+.payroll-filters label {
+    white-space: nowrap;
+}
+
 .payslip-table .gross-row td {
     border-top: 2px solid #333;
     padding-top: 0.5rem;

@@ -14,8 +14,11 @@ import digital8.payroll.services.PremiumTableService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 @Controller
 @RequestMapping("/admin/tables/premium")
@@ -131,6 +134,105 @@ public class PremiumTableAdminController {
         premiumTableService.savePagibigRate(year, rate);
         redirectAttributes.addAttribute("year", year);
         redirectAttributes.addAttribute("tab", "pagibig");
+        return "redirect:/admin/tables/premium";
+    }
+
+    // ==================== COPY YEAR ====================
+
+    @PostMapping("/copy-year")
+    public String copyYear(@RequestParam Integer sourceYear,
+                           @RequestParam Integer targetYear,
+                           @RequestParam(required = false, defaultValue = "sss") String tab,
+                           RedirectAttributes redirectAttributes) {
+
+        List<String> successes = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        // SSS
+        try {
+            int count = premiumTableService.copySssYear(sourceYear, targetYear);
+            successes.add("SSS: copied " + count + " brackets.");
+        } catch (IllegalArgumentException e) {
+            errors.add("SSS: " + e.getMessage());
+        }
+
+        // Tax
+        try {
+            int count = premiumTableService.copyTaxYear(sourceYear, targetYear);
+            successes.add("Tax: copied " + count + " brackets.");
+        } catch (IllegalArgumentException e) {
+            errors.add("Tax: " + e.getMessage());
+        }
+
+        // PhilHealth
+        try {
+            int count = premiumTableService.copyPhilhealthYear(sourceYear, targetYear);
+            successes.add("PhilHealth: copied " + count + " record(s).");
+        } catch (IllegalArgumentException e) {
+            errors.add("PhilHealth: " + e.getMessage());
+        }
+
+        // Pag-IBIG
+        try {
+            int count = premiumTableService.copyPagibigYear(sourceYear, targetYear);
+            successes.add("Pag-IBIG: copied " + count + " record(s).");
+        } catch (IllegalArgumentException e) {
+            errors.add("Pag-IBIG: " + e.getMessage());
+        }
+
+        if (!successes.isEmpty()) {
+            redirectAttributes.addFlashAttribute("successMessage", String.join(" ", successes));
+        }
+        if (!errors.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", String.join(" ", errors));
+        }
+
+        redirectAttributes.addAttribute("year", targetYear);
+        redirectAttributes.addAttribute("tab", tab);
+        return "redirect:/admin/tables/premium";
+    }
+
+    // ==================== IMPORT CSV ====================
+
+    @PostMapping("/sss/import")
+    public String importSssCsv(@RequestParam("file") MultipartFile file,
+                               @RequestParam("effectiveYear") Integer year,
+                               RedirectAttributes redirectAttributes) {
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please upload a CSV file.");
+            redirectAttributes.addAttribute("year", year);
+            redirectAttributes.addAttribute("tab", "sss");
+            return "redirect:/admin/tables/premium";
+        }
+        try {
+            int created = premiumTableService.importSssCsv(file.getInputStream(), year);
+            redirectAttributes.addFlashAttribute("successMessage", "Imported " + created + " SSS brackets from CSV.");
+        } catch (IllegalArgumentException | IOException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "SSS import failed: " + e.getMessage());
+        }
+        redirectAttributes.addAttribute("year", year);
+        redirectAttributes.addAttribute("tab", "sss");
+        return "redirect:/admin/tables/premium";
+    }
+
+    @PostMapping("/tax/import")
+    public String importTaxCsv(@RequestParam("file") MultipartFile file,
+                               @RequestParam("effectiveYear") Integer year,
+                               RedirectAttributes redirectAttributes) {
+        if (file == null || file.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Please upload a CSV file.");
+            redirectAttributes.addAttribute("year", year);
+            redirectAttributes.addAttribute("tab", "tax");
+            return "redirect:/admin/tables/premium";
+        }
+        try {
+            int created = premiumTableService.importTaxCsv(file.getInputStream(), year);
+            redirectAttributes.addFlashAttribute("successMessage", "Imported " + created + " Tax brackets from CSV.");
+        } catch (IllegalArgumentException | IOException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Tax import failed: " + e.getMessage());
+        }
+        redirectAttributes.addAttribute("year", year);
+        redirectAttributes.addAttribute("tab", "tax");
         return "redirect:/admin/tables/premium";
     }
 }

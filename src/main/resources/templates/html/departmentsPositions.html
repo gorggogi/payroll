@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/homeAdmin.css">
+    <link rel="stylesheet" href="/css/nav.css">
+    <link rel="icon" type="image/webp" th:href="@{/images/cropped-D8-black-4.webp}">
+    <script src="https://kit.fontawesome.com/b80e3de11b.js" crossorigin="anonymous"></script>
+    <title>Departments and Positions</title>
+    <style>
+        .split-view {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .split-column {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .split-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <nav th:replace="~{html/fragments/nav :: sidebar}"></nav>
+
+        <section>
+            <div class="head">
+                <h1>Departments and Positions</h1>
+            </div>
+
+            <div class="split-view">
+                <!-- Departments Section -->
+                <div class="split-column">
+                    <div class="split-header">
+                        <h2>Departments</h2>
+                        <button class="btn-add" onclick="addDepartment()"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
+                    <table id="departmentsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Department Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Positions Section -->
+                <div class="split-column">
+                    <div class="split-header">
+                        <h2>Positions</h2>
+                        <button class="btn-add" onclick="addPosition()"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
+                    <table id="positionsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Position Name</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/nav.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadDepartments();
+            loadPositions();
+        });
+
+        function loadDepartments() {
+            fetch('/api/departments')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#departmentsTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(d => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${d.departmentId}</td>
+                                <td>${d.departmentName}</td>
+                                <td>
+                                    <button class="btn-edit" onclick="editDepartment(${d.departmentId}, '${d.departmentName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                                    <button class="btn-delete" onclick="deleteDepartment(${d.departmentId})"><i class="fa-solid fa-trash"></i> Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        function loadPositions() {
+            fetch('/api/positions')
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.querySelector('#positionsTable tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(p => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${p.positionId}</td>
+                                <td>${p.positionName}</td>
+                                <td>
+                                    <button class="btn-edit" onclick="editPosition(${p.positionId}, '${p.positionName}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                                    <button class="btn-delete" onclick="deletePosition(${p.positionId})"><i class="fa-solid fa-trash"></i> Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+
+        function addDepartment() {
+            const name = prompt('Enter new department name:');
+            if (!name) return;
+
+            fetch('/api/departments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ departmentName: name })
+            })
+            .then(res => {
+                if (res.ok) {
+                    loadDepartments();
+                } else {
+                    alert('Error adding department.');
+                }
+            });
+        }
+
+        function addPosition() {
+            const name = prompt('Enter new position name:');
+            if (!name) return;
+
+            fetch('/api/positions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positionName: name })
+            })
+            .then(res => {
+                if (res.ok) {
+                    loadPositions();
+                } else {
+                    alert('Error adding position.');
+                }
+            });
+        }
+
+        function deleteDepartment(id) {
+            if (!confirm('Are you sure you want to delete this department?')) return;
+
+            fetch(`/api/departments/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        loadDepartments();
+                    } else {
+                        res.text().then(text => alert(text));
+                    }
+                });
+        }
+
+        function deletePosition(id) {
+            if (!confirm('Are you sure you want to delete this position?')) return;
+
+            fetch(`/api/positions/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        loadPositions();
+                    } else {
+                        res.text().then(text => alert(text));
+                    }
+                });
+        }
+
+        function editDepartment(id, currentName) {
+            const newName = prompt('Enter new department name:', currentName);
+            if (!newName || newName === currentName) return;
+
+            fetch(`/api/departments/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ departmentName: newName })
+            })
+            .then(res => {
+                if (res.ok) {
+                    loadDepartments();
+                } else {
+                    alert('Error updating department.');
+                }
+            });
+        }
+
+        function editPosition(id, currentName) {
+            const newName = prompt('Enter new position name:', currentName);
+            if (!newName || newName === currentName) return;
+
+            fetch(`/api/positions/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ positionName: newName })
+            })
+            .then(res => {
+                if (res.ok) {
+                    loadPositions();
+                } else {
+                    alert('Error updating position.');
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

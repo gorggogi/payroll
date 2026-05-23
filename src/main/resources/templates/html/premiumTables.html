@@ -42,6 +42,14 @@
                 </div>
             </div>
 
+            <!-- Flash Messages -->
+            <div th:if="${successMessage}" class="alert-success" style="padding: 10px 16px; margin-bottom: 12px; border-radius: 6px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">
+                <p th:text="${successMessage}" style="margin: 0;"></p>
+            </div>
+            <div th:if="${errorMessage}" class="alert-error" style="padding: 10px 16px; margin-bottom: 12px; border-radius: 6px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                <p th:text="${errorMessage}" style="margin: 0;"></p>
+            </div>
+
             <!-- Tabs Navigation -->
             <div class="tabs-margin">
                 <div class="tabs">
@@ -254,7 +262,97 @@
                 </div>
 
             </div>
+
+            <!-- Bottom Action Bar (Copy Year + Import CSV) -->
+            <div class="premium-fab-bar" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; margin-bottom: 8px;">
+                <button type="button" class="btn btn-secondary" onclick="openPremiumModal('copyYearModal')">
+                    <i class='bx bx-copy'></i> Copy Previous Year
+                </button>
+                <button type="button" class="btn btn-secondary" id="importCsvBtn" onclick="openImportCsvModal()">
+                    <i class='bx bx-upload'></i> Import CSV
+                </button>
+            </div>
         </section>
+
+        <!-- Copy Year Modal -->
+        <div id="copyYearModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Copy Previous Year</h3>
+                    <span class="modal-close" onclick="closePremiumModal('copyYearModal')">&times;</span>
+                </div>
+                <form method="post" th:action="@{/admin/tables/premium/copy-year}">
+                    <input type="hidden" name="tab" id="copyYearTab" th:value="${activeTab}" />
+                    <div class="modal-body">
+                        <p style="font-size: 13px; color: #6c757d; margin-top: 0;">This will copy <strong>all</strong> premium tables (SSS, Tax, PhilHealth, Pag-IBIG) from the source year to the target year.</p>
+                        <div class="form-group">
+                            <label for="copySourceYear">Source Year</label>
+                            <input id="copySourceYear" name="sourceYear" type="number" min="2000" max="2100" required
+                                   class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <label for="copyTargetYear">Target Year</label>
+                            <input id="copyTargetYear" name="targetYear" type="number" min="2000" max="2100" required
+                                   class="form-control" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closePremiumModal('copyYearModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Copy Year</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Import SSS CSV Modal -->
+        <div id="importSssCsvModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Import SSS CSV</h3>
+                    <span class="modal-close" onclick="closePremiumModal('importSssCsvModal')">&times;</span>
+                </div>
+                <form method="post" th:action="@{/admin/tables/premium/sss/import}" enctype="multipart/form-data">
+                    <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="sssCsvFile">CSV File</label>
+                            <input id="sssCsvFile" type="file" name="file" accept=".csv" required class="form-control" />
+                        </div>
+                        <small style="color: #6c757d;">Format: range_from, range_to, employee_share, employer_share</small>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/files/sssTemplate.csv" download="sssTemplate.csv" class="btn btn-secondary" style="text-decoration: none;">Download Template</a>
+                        <button type="button" class="btn btn-secondary" onclick="closePremiumModal('importSssCsvModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Import CSV</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Import Tax CSV Modal -->
+        <div id="importTaxCsvModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Import Tax CSV</h3>
+                    <span class="modal-close" onclick="closePremiumModal('importTaxCsvModal')">&times;</span>
+                </div>
+                <form method="post" th:action="@{/admin/tables/premium/tax/import}" enctype="multipart/form-data">
+                    <input type="hidden" name="effectiveYear" th:value="${currentYear}" />
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="taxCsvFile">CSV File</label>
+                            <input id="taxCsvFile" type="file" name="file" accept=".csv" required class="form-control" />
+                        </div>
+                        <small style="color: #6c757d;">Format: pay_frequency, compensation_from, compensation_to, additional_tax, tax_rate</small>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="/files/taxTemplate.csv" download="taxTemplate.csv" class="btn btn-secondary" style="text-decoration: none;">Download Template</a>
+                        <button type="button" class="btn btn-secondary" onclick="closePremiumModal('importTaxCsvModal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Import CSV</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- SSS Modal -->
         <div id="sssModal" class="modal">

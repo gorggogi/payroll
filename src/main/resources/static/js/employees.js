@@ -304,8 +304,7 @@ function renderEmployeeDetail(emp) {
                     </select></label>
                     <label>Pay Type: <select name="payType">
                         <option value="monthly" ${(emp.payType || '').toLowerCase() === 'monthly' ? 'selected' : ''}>Monthly</option>
-                        <option value="daily" ${(emp.payType || '').toLowerCase() === 'daily' ? 'selected' : ''}>Daily</option>
-                        <option value="hourly" ${(emp.payType || '').toLowerCase() === 'hourly' ? 'selected' : ''}>Hourly</option>
+                        <option value="semi-monthly" ${(emp.payType || '').toLowerCase() === 'semi-monthly' ? 'selected' : ''}>Semi-monthly</option>
                     </select></label>
                     <label>Basic Salary: <input type="number" name="basicSalary" value="${emp.basicSalary || ''}" /></label>
                     <label>Allowance: <input type="number" name="allowance" value="${emp.allowance || 0}" min="0" step="0.01" /></label>

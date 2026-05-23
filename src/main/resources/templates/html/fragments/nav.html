@@ -79,6 +79,7 @@
         <ul sec:authorize="hasRole('ADMIN')" class="nav-dropdown-menu">
             <li><a th:href="@{/admin/holidays}">Holidays</a></li>
             <li><a th:href="@{/admin/tables/premium}">Premium Tables</a></li>
+            <li><a th:href="@{/admin/departments-positions}">Departments &amp; Positions</a></li>
         </ul>
 
         <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin/settings}" title="Settings">

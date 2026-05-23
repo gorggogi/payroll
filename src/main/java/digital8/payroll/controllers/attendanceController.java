@@ -1246,16 +1246,50 @@ public class attendanceController {
         }
         long actualEnd = actualStart + actualDuration;
 
-        long regularMinutes = Math.max(0L, Math.min(actualEnd, shiftEnd) - Math.max(actualStart, shiftStart));
-        long lateMinutes = Math.max(0L, Math.min(actualStart, shiftEnd) - shiftStart);
-        long undertimeMinutes = Math.max(0L, shiftEnd - Math.max(actualEnd, shiftStart));
-        long overtimeMinutes = Math.max(0L, actualEnd - Math.max(shiftEnd, actualStart));
+        long regularStart = Math.max(actualStart, shiftStart);
+        long regularEnd = Math.min(actualEnd, shiftEnd);
+        long regularMinutes = Math.max(0L, regularEnd - regularStart);
+
+        long lateStart = shiftStart;
+        long lateEnd = Math.min(actualStart, shiftEnd);
+        long lateMinutes = Math.max(0L, lateEnd - lateStart);
+
+        long undertimeStart = Math.max(actualEnd, shiftStart);
+        long undertimeEnd = shiftEnd;
+        long undertimeMinutes = Math.max(0L, undertimeEnd - undertimeStart);
+
+        long overtimeStart = Math.max(shiftEnd, actualStart);
+        long overtimeEnd = actualEnd;
+        long overtimeMinutes = Math.max(0L, overtimeEnd - overtimeStart);
+
+        // --- LUNCH DEDUCTION (12:00 PM - 1:00 PM) ---
+        long lunchStart = normalizeMinuteToTarget(LocalTime.of(12, 0), shiftStart);
+        long lunchEnd = lunchStart + 60;
+
+        regularMinutes -= computeOverlap(regularStart, regularEnd, lunchStart, lunchEnd);
+        lateMinutes -= computeOverlap(lateStart, lateEnd, lunchStart, lunchEnd);
+        undertimeMinutes -= computeOverlap(undertimeStart, undertimeEnd, lunchStart, lunchEnd);
+        overtimeMinutes -= computeOverlap(overtimeStart, overtimeEnd, lunchStart, lunchEnd);
 
         return new AttendanceMetrics(
-                minutesToHours(regularMinutes),
-                minutesToHours(overtimeMinutes),
-                safeIntMinutes(lateMinutes),
-                safeIntMinutes(undertimeMinutes));
+                minutesToHours(Math.max(0L, regularMinutes)),
+                minutesToHours(Math.max(0L, overtimeMinutes)),
+                safeIntMinutes(Math.max(0L, lateMinutes)),
+                safeIntMinutes(Math.max(0L, undertimeMinutes)));
+    }
+
+    private long computeOverlap(long periodStart, long periodEnd, long lunchStart, long lunchEnd) {
+        if (periodEnd <= periodStart) return 0L;
+        return Math.max(0L, Math.min(periodEnd, lunchEnd) - Math.max(periodStart, lunchStart));
+    }
+
+    private long clockMinutesBetweenDeductLunch(LocalTime start, LocalTime end) {
+        long duration = clockMinutesBetween(start, end);
+        if (duration <= 0) return 0L;
+        long actualStart = start.toSecondOfDay() / 60L;
+        long actualEnd = actualStart + duration;
+        long lunchStart = normalizeMinuteToTarget(LocalTime.of(12, 0), actualStart);
+        return duration - computeOverlap(actualStart, actualEnd, lunchStart, lunchStart + 60);
     }
 
     private int safeIntMinutes(long minutes) {
@@ -1303,11 +1337,11 @@ public class attendanceController {
             Integer undertimeMinutes = attendance.getUndertime_minutes();
             BigDecimal overtimeHours = attendance.getOvertime_hours();
             if (workHours == null || workHours.compareTo(BigDecimal.ZERO) <= 0) {
-                workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+                workHours = minutesToHours(clockMinutesBetweenDeductLunch(attendance.getTime_in(), attendance.getTime_out()));
             }
 
             AttendanceMetrics metrics = new AttendanceMetrics(
-                    minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out())),
+                    minutesToHours(clockMinutesBetweenDeductLunch(attendance.getTime_in(), attendance.getTime_out())),
                     BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP),
                     0,
                     0);
@@ -1372,11 +1406,11 @@ public class attendanceController {
             Integer undertimeMinutes = attendance.getUndertime_minutes();
             BigDecimal overtimeHours = attendance.getOvertime_hours();
             if (workHours == null || workHours.compareTo(BigDecimal.ZERO) <= 0) {
-                workHours = minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out()));
+                workHours = minutesToHours(clockMinutesBetweenDeductLunch(attendance.getTime_in(), attendance.getTime_out()));
             }
 
             AttendanceMetrics metrics = new AttendanceMetrics(
-                    minutesToHours(clockMinutesBetween(attendance.getTime_in(), attendance.getTime_out())),
+                    minutesToHours(clockMinutesBetweenDeductLunch(attendance.getTime_in(), attendance.getTime_out())),
                     BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP),
                     0,
                     0);
@@ -1840,12 +1874,15 @@ public class attendanceController {
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
             model.addAttribute("emp_id", targetEmpId); // currently viewed employee
             model.addAttribute("emp_payType", targetEmp.getPayType());
+            // Sum truncated work hours per row (matching what HR requires and what's displayed)
             BigDecimal total = filtered.stream()
-                    .map(Attendance::getWork_hours)
-                    .filter(h -> h != null)
+                    .map(a -> a.getWork_hours() != null
+                            ? HourFormatUtils.formatHoursWhole(a.getWork_hours())
+                            : "0")
+                    .map(h -> h != null ? new BigDecimal(h) : BigDecimal.ZERO)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("totalHoursRendered", total);
-            model.addAttribute("totalHoursRenderedDisplay", HourFormatUtils.formatHoursWhole(total));
+            model.addAttribute("totalHoursRenderedDisplay", total.stripTrailingZeros().toPlainString());
             int totalUndertimeMinutes = filtered.stream()
                     .map(Attendance::getUndertime_minutes)
                     .filter(m -> m != null)

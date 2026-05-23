@@ -20,7 +20,45 @@ function switchThemeTab(tabId) {
     
     // Update the hidden input in the form so it persists on reload
     document.getElementById('activeTabField').value = tabId;
+
+    // Update import CSV button visibility (only for SSS/Tax tabs)
+    updateImportCsvVisibility(tabId);
 }
+
+// ==================== COPY YEAR & IMPORT CSV MODALS ====================
+
+function openPremiumModal(id) {
+    document.getElementById(id).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closePremiumModal(id) {
+    document.getElementById(id).style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function openImportCsvModal() {
+    const activeTab = document.getElementById('activeTabField').value;
+    if (activeTab === 'sss') {
+        openPremiumModal('importSssCsvModal');
+    } else if (activeTab === 'tax') {
+        openPremiumModal('importTaxCsvModal');
+    }
+}
+
+function updateImportCsvVisibility(tabId) {
+    const importBtn = document.getElementById('importCsvBtn');
+    if (importBtn) {
+        // Only show Import CSV for SSS and Tax tabs (bracket-based tables)
+        importBtn.style.display = (tabId === 'sss' || tabId === 'tax') ? '' : 'none';
+    }
+}
+
+// On page load, set import CSV button visibility based on active tab
+document.addEventListener('DOMContentLoaded', function() {
+    const activeTab = document.getElementById('activeTabField').value || 'sss';
+    updateImportCsvVisibility(activeTab);
+});
 
 // SSS Modal Functions
 function openSssModal(id = '', min = '', max = '', empShare = '', erShare = '') {
@@ -59,15 +97,14 @@ function closeTaxModal() {
 
 // Click anywhere outside of modal to close
 window.onclick = function(event) {
-    const sssModal = document.getElementById('sssModal');
-    const taxModal = document.getElementById('taxModal');
-    
-    if (event.target == sssModal) {
-        sssModal.style.display = 'none';
-    }
-    if (event.target == taxModal) {
-        taxModal.style.display = 'none';
-    }
+    const modals = ['sssModal', 'taxModal', 'copyYearModal', 'importSssCsvModal', 'importTaxCsvModal'];
+    modals.forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal && event.target === modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    });
 }
 
 /* ==================== BULK EDIT AND DELETE LOGIC ==================== */

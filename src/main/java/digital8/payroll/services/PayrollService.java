@@ -212,7 +212,7 @@ public class PayrollService {
             if (emp != null && "Fixed".equalsIgnoreCase(emp.getEmploymentType())) {
                 metrics = new AttendanceMetrics(metrics.workHours, BigDecimal.ZERO, 0, 0);
             }
-            totalWorkedHours = totalWorkedHours.add(metrics.workHours);
+            totalWorkedHours = totalWorkedHours.add(metrics.workHours.setScale(0, RoundingMode.DOWN));
             totalOtHours = totalOtHours.add(metrics.overtimeHours.setScale(0, RoundingMode.DOWN));
             totalLateUndertimeMinutes += metrics.lateMinutes;
             totalLateUndertimeMinutes += metrics.undertimeMinutes;
@@ -273,7 +273,7 @@ public class PayrollService {
                 // Optional safety: only count if there are positive hours
                 // if (wh.add(ot).compareTo(BigDecimal.ZERO) <= 0) continue;
 
-                regularHolidayWorkedHours = regularHolidayWorkedHours.add(wh).add(ot);
+                regularHolidayWorkedHours = regularHolidayWorkedHours.add(wh.setScale(0, RoundingMode.DOWN)).add(ot.setScale(0, RoundingMode.DOWN));
             }
 
             // Premium for worked regular-holiday hours: +1x hourly (to make total 2x)
@@ -450,7 +450,7 @@ public class PayrollService {
         LocalTime timeIn = attendance.getTime_in();
         LocalTime timeOut = attendance.getTime_out();
         if (timeIn != null && timeOut != null) {
-            BigDecimal rawWorkedHours = minutesToHours(clockMinutesBetween(timeIn, timeOut));
+            BigDecimal rawWorkedHours = minutesToHours(clockMinutesBetweenDeductLunch(timeIn, timeOut));
             BigDecimal storedOvertime = preferStoredDecimal(
                     attendance.getOvertime_hours(),
                     BigDecimal.ZERO.setScale(SCALE, ROUND));
@@ -463,7 +463,7 @@ public class PayrollService {
             if (isRestDay(attendance.getEmployeeId(), attendance.getAttendance_date(), attendance.getShiftOverride())) {
                 if (countDayOffHours) {
                     return new AttendanceMetrics(
-                            rawWorkedHours,
+                            minutesToHours(clockMinutesBetween(timeIn, timeOut)),
                             storedOvertime,
                             0,
                             0);
@@ -685,16 +685,41 @@ public class PayrollService {
         }
         long actualEnd = actualStart + actualDuration;
 
-        long regularMinutes = Math.max(0L, Math.min(actualEnd, shiftEnd) - Math.max(actualStart, shiftStart));
-        long lateMinutes = Math.max(0L, Math.min(actualStart, shiftEnd) - shiftStart);
-        long undertimeMinutes = Math.max(0L, shiftEnd - Math.max(actualEnd, shiftStart));
-        long overtimeMinutes = Math.max(0L, actualEnd - Math.max(shiftEnd, actualStart));
+        long regularStart = Math.max(actualStart, shiftStart);
+        long regularEnd = Math.min(actualEnd, shiftEnd);
+        long regularMinutes = Math.max(0L, regularEnd - regularStart);
+
+        long lateStart = shiftStart;
+        long lateEnd = Math.min(actualStart, shiftEnd);
+        long lateMinutes = Math.max(0L, lateEnd - lateStart);
+
+        long undertimeStart = Math.max(actualEnd, shiftStart);
+        long undertimeEnd = shiftEnd;
+        long undertimeMinutes = Math.max(0L, undertimeEnd - undertimeStart);
+
+        long overtimeStart = Math.max(shiftEnd, actualStart);
+        long overtimeEnd = actualEnd;
+        long overtimeMinutes = Math.max(0L, overtimeEnd - overtimeStart);
+
+        // --- LUNCH DEDUCTION (12:00 PM - 1:00 PM) ---
+        long lunchStart = normalizeMinuteToTarget(LocalTime.of(12, 0), shiftStart);
+        long lunchEnd = lunchStart + 60;
+
+        regularMinutes -= computeOverlap(regularStart, regularEnd, lunchStart, lunchEnd);
+        lateMinutes -= computeOverlap(lateStart, lateEnd, lunchStart, lunchEnd);
+        undertimeMinutes -= computeOverlap(undertimeStart, undertimeEnd, lunchStart, lunchEnd);
+        overtimeMinutes -= computeOverlap(overtimeStart, overtimeEnd, lunchStart, lunchEnd);
 
         return new AttendanceMetrics(
-                minutesToHours(regularMinutes),
-                minutesToHours(overtimeMinutes),
-                safeIntMinutes(lateMinutes),
-                safeIntMinutes(undertimeMinutes));
+                minutesToHours(Math.max(0L, regularMinutes)),
+                minutesToHours(Math.max(0L, overtimeMinutes)),
+                safeIntMinutes(Math.max(0L, lateMinutes)),
+                safeIntMinutes(Math.max(0L, undertimeMinutes)));
+    }
+
+    private long computeOverlap(long periodStart, long periodEnd, long lunchStart, long lunchEnd) {
+        if (periodEnd <= periodStart) return 0L;
+        return Math.max(0L, Math.min(periodEnd, lunchEnd) - Math.max(periodStart, lunchStart));
     }
 
     private BigDecimal preferStoredDecimal(BigDecimal stored, BigDecimal computed) {
@@ -731,6 +756,15 @@ public class PayrollService {
             minutes += 24L * 60L;
         }
         return minutes;
+    }
+
+    private long clockMinutesBetweenDeductLunch(LocalTime start, LocalTime end) {
+        long duration = clockMinutesBetween(start, end);
+        if (duration <= 0) return 0L;
+        long actualStart = start.toSecondOfDay() / 60L;
+        long actualEnd = actualStart + duration;
+        long lunchStart = normalizeMinuteToTarget(LocalTime.of(12, 0), actualStart);
+        return duration - computeOverlap(actualStart, actualEnd, lunchStart, lunchStart + 60);
     }
 
     private long normalizeMinuteToTarget(LocalTime time, long targetMinute) {

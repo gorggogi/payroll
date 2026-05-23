@@ -79,6 +79,7 @@
                             <option value="">Select department</option>
                             <option th:each="d : ${departments}" th:value="${d.departmentId}"
                                 th:text="${d.departmentName}"></option>
+                            <option value="ADD_NEW">-- Add New Department --</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -87,6 +88,7 @@
                             <option value="">Select position</option>
                             <option th:each="p : ${positions}" th:value="${p.positionId}" th:text="${p.positionName}">
                             </option>
+                            <option value="ADD_NEW">-- Add New Position --</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -111,8 +113,7 @@
                         <label for="payType">Pay Type *</label>
                         <select id="payType" name="payType" required>
                             <option value="monthly">Monthly</option>
-                            <option value="daily">Daily</option>
-                            <option value="hourly">Hourly</option>
+                            <option value="semi-monthly">Semi-monthly</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -172,6 +173,61 @@
         </section>
     </div>
     <script src="/js/nav.js"></script>
+    <script>
+        document.getElementById('departmentId').addEventListener('change', function() {
+            if (this.value === 'ADD_NEW') {
+                const newDeptName = prompt('Enter new department name:');
+                if (newDeptName) {
+                    fetch('/api/departments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ departmentName: newDeptName })
+                    })
+                    .then(res => {
+                        if(res.ok) return res.json();
+                        throw new Error('Failed to create department');
+                    })
+                    .then(data => {
+                        const newOption = new Option(data.departmentName, data.departmentId, true, true);
+                        this.insertBefore(newOption, this.querySelector('option[value="ADD_NEW"]'));
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                        this.value = '';
+                    });
+                } else {
+                    this.value = '';
+                }
+            }
+        });
+
+        document.getElementById('positionId').addEventListener('change', function() {
+            if (this.value === 'ADD_NEW') {
+                const newPosName = prompt('Enter new position name:');
+                if (newPosName) {
+                    fetch('/api/positions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ positionName: newPosName })
+                    })
+                    .then(res => {
+                        if(res.ok) return res.json();
+                        throw new Error('Failed to create position');
+                    })
+                    .then(data => {
+                        const newOption = new Option(data.positionName, data.positionId, true, true);
+                        this.insertBefore(newOption, this.querySelector('option[value="ADD_NEW"]'));
+                    })
+                    .catch(err => {
+                        alert(err.message);
+                        this.value = '';
+                    });
+                } else {
+                    this.value = '';
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

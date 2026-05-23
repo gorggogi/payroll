@@ -20,6 +20,8 @@ public interface EmployeeRepository extends JpaRepository<Employees, Integer>, J
     boolean existsByEmployeeNumber(String employeeNumber);
     boolean existsByBiometricId(String biometricId);
     Optional<Employees> findByBiometricId(String biometricId);
+    boolean existsByDepartment_DepartmentId(Integer departmentId);
+    boolean existsByPosition_PositionId(Integer positionId);
 
     // Optional: 
     List<Employees> findByDepartment(Departments department);
