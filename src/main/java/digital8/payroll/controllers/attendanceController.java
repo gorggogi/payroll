@@ -1872,8 +1872,9 @@ public class attendanceController {
             model.addAttribute("attendances", filtered);
             model.addAttribute("shiftLabelByDate", shiftLabelByDate);
             model.addAttribute("employeeName", targetEmp.getFirstName() + " " + targetEmp.getLastName());
-            model.addAttribute("emp_id", targetEmpId); // currently viewed employee
-            model.addAttribute("emp_payType", targetEmp.getPayType());
+        model.addAttribute("emp_id", targetEmpId); // currently viewed employee
+        model.addAttribute("emp_payType", targetEmp.getPayType());
+        model.addAttribute("isAdmin", isAdmin);
             // Sum truncated work hours per row (matching what HR requires and what's displayed)
             BigDecimal total = filtered.stream()
                     .map(a -> a.getWork_hours() != null
