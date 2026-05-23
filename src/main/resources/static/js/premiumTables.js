@@ -48,9 +48,14 @@ function openImportCsvModal() {
 
 function updateImportCsvVisibility(tabId) {
     const importBtn = document.getElementById('importCsvBtn');
+    const copyBtn = document.getElementById('copyYearBtn');
+    const show = (tabId === 'sss' || tabId === 'tax');
+    
     if (importBtn) {
-        // Only show Import CSV for SSS and Tax tabs (bracket-based tables)
-        importBtn.style.display = (tabId === 'sss' || tabId === 'tax') ? '' : 'none';
+        importBtn.style.display = show ? '' : 'none';
+    }
+    if (copyBtn) {
+        copyBtn.style.display = show ? '' : 'none';
     }
 }
 
