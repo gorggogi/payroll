@@ -139,7 +139,7 @@ public class LeaveService {
         Map<String, List<Map<String, Object>>> leaveMap = new HashMap<>();
 
         for (LeaveRequests req : requests) {
-            if ("Rejected".equalsIgnoreCase(req.getStatus())) continue;
+            if (!"Approved".equalsIgnoreCase(req.getStatus())) continue;
 
             LocalDate current = req.getStartDate();
             LocalDate end = req.getEndDate();
