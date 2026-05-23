@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 import digital8.payroll.entities.Users;
+import digital8.payroll.repositories.UsersRepository;
 import digital8.payroll.services.LeaveService;
 import digital8.payroll.services.UndertimeService;
 
@@ -17,6 +18,7 @@ public class NavIndicatorAdvice {
 
     @Autowired LeaveService leaveService;
     @Autowired UndertimeService undertimeService;
+    @Autowired UsersRepository usersRepository;
 
     @ModelAttribute("pendingLeaveCount")
     public long addPendingLeaveCount(Authentication auth){
@@ -37,12 +39,12 @@ public class NavIndicatorAdvice {
     @ModelAttribute("respondedLeaveCount")
     public long addRespondedLeaveCount(Authentication auth){    
         if (auth == null || !(auth.getPrincipal() instanceof Users)) return 0L;
-        if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) return 0L;
 
-        Users user = (Users) auth.getPrincipal();
+        Users sessionUser = (Users) auth.getPrincipal();
 
-        if (user.getEmployee() == null) return 0L;
+        if (sessionUser.getEmployee() == null) return 0L;
 
+        Users user = usersRepository.findById(sessionUser.getUserId()).orElse(sessionUser);
         LocalDateTime lastViewed = user.getLastLeaveViewedAt();
 
         long respondedLeave = leaveService.getNewRespondedCountForEmployee(user.getEmployee().getEmployeeId(), lastViewed);
