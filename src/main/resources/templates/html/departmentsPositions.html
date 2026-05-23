@@ -123,7 +123,7 @@
                             <tr>
                                 <td>${d.departmentId}</td>
                                 <td>${d.departmentName}</td>
-                                <td>
+                                <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
                                     <button class="btn-edit" onclick="editDepartment(${d.departmentId}, '${d.departmentName}')"><i class="fa-solid fa-pen"></i> Edit</button>
                                     <button class="btn-delete" onclick="deleteDepartment(${d.departmentId})"><i class="fa-solid fa-trash"></i> Delete</button>
                                 </td>
@@ -144,7 +144,7 @@
                             <tr>
                                 <td>${p.positionId}</td>
                                 <td>${p.positionName}</td>
-                                <td>
+                                <td style="text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end;">
                                     <button class="btn-edit" onclick="editPosition(${p.positionId}, '${p.positionName}')"><i class="fa-solid fa-pen"></i> Edit</button>
                                     <button class="btn-delete" onclick="deletePosition(${p.positionId})"><i class="fa-solid fa-trash"></i> Delete</button>
                                 </td>
