@@ -39,7 +39,8 @@ public class LeaveController {
     @GetMapping("/employee/leave")
     public String employeeLeavePage(Model model, Authentication authentication) {
       
-        Users user = (Users) authentication.getPrincipal();
+        Users sessionUser = (Users) authentication.getPrincipal();
+        Users user = usersRepository.findById(sessionUser.getUserId()).orElse(sessionUser);
         Integer employeeId = user.getEmployee().getEmployeeId();
         String employeeName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
 
@@ -57,7 +58,11 @@ public class LeaveController {
         model.addAttribute("newLeaveResponsesCount", newLeaveResponsesCount);
         model.addAttribute("newUndertimeResponsesCount", newUndertimeResponsesCount);
         
-        user.setLastLeaveViewedAt(LocalDateTime.now());
+        // Update BOTH the session principal and DB so NavIndicatorAdvice / NavIndicatorController
+        // (which read from the session principal) see the updated timestamp immediately.
+        LocalDateTime now = LocalDateTime.now();
+        sessionUser.setLastLeaveViewedAt(now);
+        user.setLastLeaveViewedAt(now);
         usersRepository.save(user);
 
         return "html/leaveEmployee";
@@ -65,7 +70,8 @@ public class LeaveController {
 
     @GetMapping("/admin/my-leave")
     public String adminSelfLeavePage(Model model, Authentication authentication) {
-        Users user = (Users) authentication.getPrincipal();
+        Users sessionUser = (Users) authentication.getPrincipal();
+        Users user = usersRepository.findById(sessionUser.getUserId()).orElse(sessionUser);
         Integer employeeId = user.getEmployee().getEmployeeId();
         String employeeName = user.getEmployee().getFirstName() + " " + user.getEmployee().getLastName();
 
@@ -83,7 +89,11 @@ public class LeaveController {
         model.addAttribute("newLeaveResponsesCount", newLeaveResponsesCount);
         model.addAttribute("newUndertimeResponsesCount", newUndertimeResponsesCount);
         
-        user.setLastLeaveViewedAt(LocalDateTime.now());
+        // Update BOTH the session principal and DB so NavIndicatorAdvice / NavIndicatorController
+        // (which read from the session principal) see the updated timestamp immediately.
+        LocalDateTime now = LocalDateTime.now();
+        sessionUser.setLastLeaveViewedAt(now);
+        user.setLastLeaveViewedAt(now);
         usersRepository.save(user);
 
         return "html/leaveAdminSelf";

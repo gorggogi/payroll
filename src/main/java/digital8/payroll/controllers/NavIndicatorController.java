@@ -34,7 +34,8 @@ public class NavIndicatorController {
         Map<String, Boolean> out = new LinkedHashMap<>();
 
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof Users)) {
-            out.put("leave", false);
+            out.put("leave-team", false);
+            out.put("leave-self", false);
             // out.put("deductions", false);  // add when needed
             return out;
         }
@@ -62,15 +63,13 @@ public class NavIndicatorController {
                            undertimeService.getPendingCountExcludingEmployee(employeeId)) > 0;
         }
 
-        // For admins:
-        // - "leave" drives the main Leave nav item:
-        //      lights up when there are team pending requests OR this admin's own
-        //      requests have been approved/rejected.
-        // - "leaveSelf" drives the My Leave link (their own approvals/rejections)
+        // - "leave-team" drives the admin's Leave nav item (pending team requests OR own responded)
+        // - "leave-self" drives the My Leave link (admin's own approvals/rejections)
         // For employees:
-        // - "leave" is their own approvals/rejections
-        out.put("leave", isAdmin ? (teamPending || selfResponded) : selfResponded);
-        out.put("leaveSelf", selfResponded);
+        // - "leave-self" is their own approvals/rejections
+        // (there is no "leave-team" for employees -- it will be absent from the response)
+        out.put("leave-team", teamPending || selfResponded);
+        out.put("leave-self", selfResponded);
 
         // Deductions (example for future): out.put("deductions", deductionService.hasUnread(...));
 

@@ -392,6 +392,11 @@
         var indicators = document.querySelectorAll('[data-nav-indicator]');
         if (!indicators.length) return;
 
+        // Detect role from the DOM -- the nav fragment uses sec:authorize, so
+        // only the relevant role's menu items are present in the rendered HTML.
+        var isAdmin = !!document.querySelector('[data-nav-indicator="leave-team"]');
+        var isEmployee = !!document.querySelector('[data-nav-indicator="leave-self"]');
+
         var lastLeaveTeam = null;
         var lastLeaveSelf = null;
 
@@ -400,25 +405,32 @@
                 .then(function (res) { return res.ok ? res.json() : null; })
                 .then(function (data) {
                     if (!data || typeof data !== 'object') return;
+
                     indicators.forEach(function (el) {
                         var key = el.getAttribute('data-nav-indicator');
-                        if (key && typeof data[key] === 'boolean') {
+                        if (!key) return;
+
+                        // Skip "leave-team" for employees (only admins have that span).
+                        if (key === 'leave-team' && !isAdmin) return;
+
+                        if (typeof data[key] === 'boolean') {
                             el.style.display = data[key] ? '' : 'none';
                         }
                     });
 
-                    // If we're on a leave page and the relevant indicator just turned on,
-                    // reload once so the pending list / history reflect the new state.
+                    // Reload the page when a new indicator flips from off → on so the
+                    // leave/undertime list reflects fresh state without an explicit refresh.
                     var path = window.location.pathname || '';
-                    var leaveTeam = typeof data.leave === 'boolean' ? data.leave : null;
-                    var leaveSelf = typeof data.leaveSelf === 'boolean' ? data.leaveSelf : null;
+                    var leaveTeam = typeof data['leave-team'] === 'boolean' ? data['leave-team'] : null;
+                    var leaveSelf = typeof data['leave-self'] === 'boolean' ? data['leave-self'] : null;
 
-                    if (path === '/admin/leave' && leaveTeam !== null) {
+                    // On admin leave pages (/admin/leave and /admin/my-leave), track leaveTeam state.
+                    if ((path === '/admin/leave' || path === '/admin/my-leave') && leaveTeam !== null) {
                         if (lastLeaveTeam === false && leaveTeam === true) {
                             window.location.reload();
                         }
                         lastLeaveTeam = leaveTeam;
-                    } else if ((path === '/admin/my-leave' || path === '/employee/leave') && leaveSelf !== null) {
+                    } else if (path === '/employee/leave' && leaveSelf !== null) {
                         if (lastLeaveSelf === false && leaveSelf === true) {
                             window.location.reload();
                         }
