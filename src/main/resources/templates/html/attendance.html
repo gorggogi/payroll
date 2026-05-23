@@ -20,15 +20,15 @@
         <section>
             <div class="head">
                 <h1>Attendance of <span th:text="${employeeName}">User</span></h1>
-                <div class="head-actions no-print" style="display: flex; gap: 0.5rem; align-items: center;" th:if="${isAdmin}">
-                    <button type="button" class="btn-edit-shift" id="toggleShiftEditBtn" onclick="toggleShiftEdit()">
-                        <i class="fa-solid fa-pen"></i> Edit Shift
-                    </button>
-                    <button type="button" class="btn-edit-shift save-btn" id="saveShiftBtn" style="display:none;" onclick="saveAllShiftChanges()">
-                        <i class="fa-solid fa-check"></i> Save Changes
-                    </button>
-                </div>
-                <div class="head-actions no-print">
+                <div class="head-actions no-print" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <th:block th:if="${isAdmin}">
+                        <button type="button" class="btn-edit-shift" id="toggleShiftEditBtn" onclick="toggleShiftEdit()">
+                            <i class="fa-solid fa-pen"></i> Edit Shift
+                        </button>
+                        <button type="button" class="btn-edit-shift save-btn" id="saveShiftBtn" style="display:none;" onclick="saveAllShiftChanges()">
+                            <i class="fa-solid fa-check"></i> Save Changes
+                        </button>
+                    </th:block>
                     <button type="button" class="btn-print" onclick="window.print()">
                         <i class="fa-solid fa-print"></i> Print
                     </button>
