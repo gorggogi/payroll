@@ -12,6 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, Integer> {
+    void deleteByEmployeeId(Integer employeeId);
+
     @Query("SELECT a FROM Attendance a WHERE a.employeeId = :employeeId ORDER BY a.attendance_date DESC")
     List<Attendance> findByEmployeeIdOrderByDateDesc(@Param("employeeId") Integer employeeId);
 

@@ -16,6 +16,8 @@ import digital8.payroll.repositories.LeaveRequestRepository;
 import digital8.payroll.repositories.OvertimeRequestRepository;
 import digital8.payroll.repositories.UndertimeRequestRepository;
 import digital8.payroll.repositories.EmployeeDeductionsRepository;
+import digital8.payroll.repositories.AttendanceRepository;
+import digital8.payroll.repositories.BonusesRepository;
 import digital8.payroll.specifications.EmployeeSpecifications;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +86,12 @@ public class EmployeeService {
 
     @Autowired
     private EmployeeScheduleAssignmentRepository employeeScheduleAssignmentRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private BonusesRepository bonusesRepository;
 
     public List<Employees> filterEmployees(
         String searchQuery,
@@ -346,7 +354,7 @@ public class EmployeeService {
         }
         // Delete in order: leave requests -> leave balances -> overtime requests
         // -> undertime requests -> employee deductions -> employee adjustments
-        // -> payroll items -> schedule assignments -> user -> employee
+        // -> payroll items -> attendance -> bonuses -> schedule assignments -> user -> employee
         leaveRequestRepository.deleteByEmployee_EmployeeId(id);
         leaveBalanceRepository.deleteByEmployeeId(id);
         overtimeRequestRepository.deleteByEmployee_EmployeeId(id);
@@ -354,6 +362,8 @@ public class EmployeeService {
         employeeDeductionsRepository.deleteByEmployeeId(id);
         employeeAdjustmentsRepository.deleteByEmployeeId(id);
         payrollItemsRepository.deleteByEmployeeId(id);
+        attendanceRepository.deleteByEmployeeId(id);
+        bonusesRepository.deleteByEmployeeId(id);
         employeeScheduleAssignmentRepository.deleteByEmployeeId(id);
         usersRepository.findByEmployee_EmployeeId(id).ifPresent(usersRepository::delete);
         employeeRepository.deleteById(id);
