@@ -34,3 +34,9 @@ build/
 ### Cursor plans ###
 .metadata/.cursor/plans/
 Digital8 Payroll System Manual.md
+
+### IntelliJ / IDE runtime junk ###
+# Stray file created when IntelliJ run command bleeds into the working directory
+ersCharlene*
+# Eclipse/Spring Tools metadata
+.metadata/
