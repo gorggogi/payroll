@@ -27,6 +27,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -728,6 +731,17 @@ public class attendanceController {
             if (cdo instanceof Boolean b) {
                 model.addAttribute("countDayOffHours", b);
             }
+            // Read approval result stored by the JSON approve endpoint
+            Object approvalSuccess = session.getAttribute("approvalSuccessMessage");
+            if (approvalSuccess instanceof String msg) {
+                model.addAttribute("successMessage", msg);
+                session.removeAttribute("approvalSuccessMessage");
+            }
+            Object approvalError = session.getAttribute("approvalErrorMessage");
+            if (approvalError instanceof String msg) {
+                model.addAttribute("errorMessage", msg);
+                session.removeAttribute("approvalErrorMessage");
+            }
         }
         if (!model.containsAttribute("countDayOffHours")) {
             model.addAttribute("countDayOffHours", true);
@@ -906,47 +920,57 @@ public class attendanceController {
         return "redirect:/admin/attendance/time-adjustments";
     }
 
-    @PostMapping("/admin/attendance/time-adjustments/approve")
-    public String approveTimeAdjustments(
-            HttpServletRequest request,
-            RedirectAttributes redirectAttributes) {
+    /**
+     * Approve endpoint — accepts JSON body so there is no HTTP parameter count limit.
+     * The frontend collects all card data via JavaScript and POSTs a single JSON object.
+     */
+    @PostMapping(value = "/admin/attendance/time-adjustments/approve", consumes = "application/json")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> approveTimeAdjustments(
+            @RequestBody ApproveRequestDto dto,
+            HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "No unverified logs to approve.");
-            return "redirect:/admin/attendance/time-adjustments";
+            return ResponseEntity.ok(Map.of("success", false, "message", "No unverified logs to approve."));
         }
         Object data = session.getAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
         if (!(data instanceof List<?> rowsRaw) || rowsRaw.isEmpty()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "No unverified logs to approve.");
-            return "redirect:/admin/attendance/time-adjustments";
+            return ResponseEntity.ok(Map.of("success", false, "message", "No unverified logs to approve."));
         }
 
-        boolean countDayOff = true;
-        String cdoParam = request.getParameter("countDayOffHours");
-        if (cdoParam != null) {
-            countDayOff = "true".equalsIgnoreCase(cdoParam);
-        } else if (session.getAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY) instanceof Boolean b) {
+        boolean countDayOff = dto.isCountDayOffHours();
+        // Fall back to session value if DTO doesn't carry it
+        if (session.getAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY) instanceof Boolean b && !dto.isCountDayOffHoursProvided()) {
             countDayOff = b;
         }
+        boolean shouldOverwrite = dto.isOverwrite();
 
-        boolean shouldOverwrite = "true".equalsIgnoreCase(request.getParameter("overwrite"));
+        // Build a lookup map from row key -> RowApprovalDto for O(1) access
+        Map<String, ApproveRequestDto.RowApprovalDto> dtoByKey = dto.getRows() == null
+                ? Map.of()
+                : dto.getRows().stream().collect(Collectors.toMap(
+                        ApproveRequestDto.RowApprovalDto::getKey,
+                        r -> r,
+                        (a, b2) -> a));
+
         int inserted = 0;
         int updated = 0;
         int skipped = 0;
         List<String> skipReasons = new ArrayList<>();
+
         for (Object o : rowsRaw) {
             if (!(o instanceof TimeAdjustmentPreviewRow row)) {
                 continue;
             }
             String rowLabel = row.employeeName + " (" + row.getDisplayDate() + ")";
-            String approvedFlag = request.getParameter("verify_" + row.key);
-            if (!"true".equalsIgnoreCase(approvedFlag)) {
+            ApproveRequestDto.RowApprovalDto rowDto = dtoByKey.get(row.key);
+            if (rowDto == null || !rowDto.isVerified()) {
                 skipped++;
                 skipReasons.add(rowLabel + ": not checked for verify");
                 continue;
             }
-            String inRaw = request.getParameter("timeInEdit_" + row.key);
-            String outRaw = request.getParameter("timeOutEdit_" + row.key);
+            String inRaw = rowDto.getTimeIn();
+            String outRaw = rowDto.getTimeOut();
             LocalTime in = parseTimeFlexible(inRaw);
             LocalTime out = parseTimeFlexible(outRaw);
             LocalDate date = parseDateFlexible(row.logDate);
@@ -969,10 +993,7 @@ public class attendanceController {
             BigDecimal overtimeHours;
             if (shiftMatch.allowed && shiftMatch.shiftIn != null && shiftMatch.shiftOut != null) {
                 AttendanceMetrics metrics = computeAttendanceMetrics(
-                        in,
-                        out,
-                        shiftMatch.shiftIn,
-                        shiftMatch.shiftOut);
+                        in, out, shiftMatch.shiftIn, shiftMatch.shiftOut);
                 workHours = metrics.workHours;
                 lateMinutes = metrics.lateMinutes;
                 undertimeMinutes = metrics.undertimeMinutes;
@@ -1003,8 +1024,10 @@ public class attendanceController {
                 inserted++;
             }
         }
+
         session.removeAttribute(TIME_ADJUSTMENTS_PREVIEW_SESSION_KEY);
         session.removeAttribute(TIME_ADJUSTMENTS_COUNT_DAY_OFF_SESSION_KEY);
+
         StringBuilder result = new StringBuilder();
         result.append("Approved logs saved. Inserted: ").append(inserted)
                 .append(", updated: ").append(updated)
@@ -1019,8 +1042,14 @@ public class attendanceController {
                 result.append("- ... ").append(skipReasons.size() - max).append(" more");
             }
         }
-        redirectAttributes.addFlashAttribute("successMessage", result.toString());
-        return "redirect:/admin/attendance/time-adjustments";
+
+        // Store result in session so the GET handler can display it after the JS redirect
+        session.setAttribute("approvalSuccessMessage", result.toString());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("redirect", "/admin/attendance/time-adjustments");
+        return ResponseEntity.ok(response);
     }
 
     private LocalDate parseDateFlexible(String raw) {
@@ -1121,6 +1150,46 @@ public class attendanceController {
 
         private String defaultOut() {
             return outCandidates.isEmpty() ? "" : outCandidates.last();
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // DTOs for the JSON approve endpoint
+    // -------------------------------------------------------------------------
+
+    public static class ApproveRequestDto {
+        private boolean overwrite;
+        private boolean countDayOffHours = true;
+        private boolean countDayOffHoursProvided = false;
+        private List<RowApprovalDto> rows;
+
+        public boolean isOverwrite() { return overwrite; }
+        public void setOverwrite(boolean overwrite) { this.overwrite = overwrite; }
+
+        public boolean isCountDayOffHours() { return countDayOffHours; }
+        public void setCountDayOffHours(boolean countDayOffHours) {
+            this.countDayOffHours = countDayOffHours;
+            this.countDayOffHoursProvided = true;
+        }
+        public boolean isCountDayOffHoursProvided() { return countDayOffHoursProvided; }
+
+        public List<RowApprovalDto> getRows() { return rows; }
+        public void setRows(List<RowApprovalDto> rows) { this.rows = rows; }
+
+        public static class RowApprovalDto {
+            private String key;
+            private boolean verified;
+            private String timeIn;
+            private String timeOut;
+
+            public String getKey() { return key; }
+            public void setKey(String key) { this.key = key; }
+            public boolean isVerified() { return verified; }
+            public void setVerified(boolean verified) { this.verified = verified; }
+            public String getTimeIn() { return timeIn; }
+            public void setTimeIn(String timeIn) { this.timeIn = timeIn; }
+            public String getTimeOut() { return timeOut; }
+            public void setTimeOut(String timeOut) { this.timeOut = timeOut; }
         }
     }
 

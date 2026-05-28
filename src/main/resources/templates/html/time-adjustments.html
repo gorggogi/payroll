@@ -103,85 +103,84 @@ Column guide:
                 <p class="adjust-panel-desc">
                     Biometric lines are grouped into one card per employee per date. Choose the correct IN/OUT from that day's detected logs, edit if needed, then approve.
                 </p>
-                <form method="post" th:action="@{/admin/attendance/time-adjustments/approve}">
-                    <input type="hidden" name="countDayOffHours" th:value="${countDayOffHours}" />
-                    <label class="overwrite-checkbox preview-overwrite" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
-                        <input type="checkbox" name="overwrite" value="true" checked />
-                        <span>Overwrite existing attendance for this approval</span>
-                    </label>
-                    <div class="preview-action-bar">
-                        <div class="preview-action-copy">
-                            <strong th:text="${#lists.size(previewRows)}">0</strong> grouped day record(s) ready for review
-                        </div>
-                        <button type="submit" class="btn-import preview-approve-btn">
-                            <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
-                        </button>
+                <!-- No form here — data is submitted as JSON via fetch to avoid the HTTP parameter limit -->
+                <input type="hidden" id="countDayOffHoursVal" th:value="${countDayOffHours}" />
+                <label class="overwrite-checkbox preview-overwrite" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem;">
+                    <input type="checkbox" id="overwriteCheckbox" value="true" checked />
+                    <span>Overwrite existing attendance for this approval</span>
+                </label>
+                <div class="preview-action-bar">
+                    <div class="preview-action-copy">
+                        <strong th:text="${#lists.size(previewRows)}">0</strong> grouped day record(s) ready for review
                     </div>
-                    <div th:each="row : ${previewRows}" class="log-card">
-                        <div class="log-card-header">
-                            <label class="log-verify-label">
-                                <input type="checkbox" th:name="${'verify_' + row.key}" value="true" checked />
-                                Verify
-                            </label>
-                            <span class="log-emp-num" th:text="${row.employeeNumber}">EMP</span>
-                            <span class="log-emp-name" th:text="${row.employeeName}">Name</span>
-                            <span class="log-meta"><i class="fa-solid fa-fingerprint"></i> <span th:text="${row.biometricId}">Bio</span></span>
-                            <span class="log-meta"><i class="fa-solid fa-calendar"></i> <span th:text="${row.displayDate}">Date</span></span>
-                            <span class="log-meta"><i class="fa-solid fa-clock"></i> <span th:text="${row.shiftLabel}">Shift</span></span>
+                    <button type="button" class="btn-import preview-approve-btn" id="approveBtnTop">
+                        <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
+                    </button>
+                </div>
+                <div th:each="row : ${previewRows}" class="log-card" th:attr="data-row-key=${row.key}">
+                    <div class="log-card-header">
+                        <label class="log-verify-label">
+                            <input type="checkbox" class="verify-checkbox" value="true" checked />
+                            Verify
+                        </label>
+                        <span class="log-emp-num" th:text="${row.employeeNumber}">EMP</span>
+                        <span class="log-emp-name" th:text="${row.employeeName}">Name</span>
+                        <span class="log-meta"><i class="fa-solid fa-fingerprint"></i> <span th:text="${row.biometricId}">Bio</span></span>
+                        <span class="log-meta"><i class="fa-solid fa-calendar"></i> <span th:text="${row.displayDate}">Date</span></span>
+                        <span class="log-meta"><i class="fa-solid fa-clock"></i> <span th:text="${row.shiftLabel}">Shift</span></span>
+                    </div>
+                    <div class="log-card-body">
+                        <div class="time-section">
+                            <div class="time-section-label">Time In</div>
+                            <div class="time-options">
+                                <label th:each="v : ${row.inCandidates}" class="time-option">
+                                    <input type="radio" th:name="${'inPick_' + row.key}" th:value="${v}"
+                                           th:checked="${v == row.selectedIn}"
+                                           th:attr="data-target=${'timeInEdit_' + row.key}" />
+                                    <span th:text="${row.format12h(v)}">08:00 AM</span>
+                                </label>
+                            </div>
+                            <input type="text" class="time-direct-input time-in-edit" th:name="${'timeInEdit_' + row.key}"
+                                   th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
                         </div>
-                        <div class="log-card-body">
-                            <div class="time-section">
-                                <div class="time-section-label">Time In</div>
-                                <div class="time-options">
-                                    <label th:each="v : ${row.inCandidates}" class="time-option">
-                                        <input type="radio" th:name="${'inPick_' + row.key}" th:value="${v}"
-                                               th:checked="${v == row.selectedIn}"
-                                               th:attr="data-target=${'timeInEdit_' + row.key}" />
-                                        <span th:text="${row.format12h(v)}">08:00 AM</span>
-                                    </label>
+                        <div class="break-section">
+                            <div class="time-section-label">Break</div>
+                            <div class="break-inputs">
+                                <div class="break-input-row">
+                                    <label class="break-input-label">START</label>
+                                    <input type="text" th:name="${'breakOutEdit_' + row.key}"
+                                           th:value="${row.breakOut}" placeholder="12:00 PM" />
                                 </div>
-                                <input type="text" class="time-direct-input" th:name="${'timeInEdit_' + row.key}"
-                                       th:value="${row.selectedIn12h}" placeholder="hh:mm a" />
-                            </div>
-                            <div class="break-section">
-                                <div class="time-section-label">Break</div>
-                                <div class="break-inputs">
-                                    <div class="break-input-row">
-                                        <label class="break-input-label">START</label>
-                                        <input type="text" th:name="${'breakOutEdit_' + row.key}"
-                                               th:value="${row.breakOut}" placeholder="12:00 PM" />
-                                    </div>
-                                    <div class="break-input-row">
-                                        <label class="break-input-label">END</label>
-                                        <input type="text" th:name="${'breakInEdit_' + row.key}"
-                                               th:value="${row.breakIn}" placeholder="1:00 PM" />
-                                    </div>
+                                <div class="break-input-row">
+                                    <label class="break-input-label">END</label>
+                                    <input type="text" th:name="${'breakInEdit_' + row.key}"
+                                           th:value="${row.breakIn}" placeholder="1:00 PM" />
                                 </div>
-                            </div>
-                            <div class="time-section">
-                                <div class="time-section-label">Time Out</div>
-                                <div class="time-options">
-                                    <label th:each="v : ${row.outCandidates}" class="time-option">
-                                        <input type="radio" th:name="${'outPick_' + row.key}" th:value="${v}"
-                                               th:checked="${v == row.selectedOut}"
-                                               th:attr="data-target=${'timeOutEdit_' + row.key}" />
-                                        <span th:text="${row.format12h(v)}">05:00 PM</span>
-                                    </label>
-                                </div>
-                                <input type="text" class="time-direct-input" th:name="${'timeOutEdit_' + row.key}"
-                                       th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
                             </div>
                         </div>
-                    </div>
-                    <div class="preview-action-bar preview-action-bar-bottom">
-                        <div class="preview-action-copy">
-                            Review complete? Approve the checked rows.
+                        <div class="time-section">
+                            <div class="time-section-label">Time Out</div>
+                            <div class="time-options">
+                                <label th:each="v : ${row.outCandidates}" class="time-option">
+                                    <input type="radio" th:name="${'outPick_' + row.key}" th:value="${v}"
+                                           th:checked="${v == row.selectedOut}"
+                                           th:attr="data-target=${'timeOutEdit_' + row.key}" />
+                                    <span th:text="${row.format12h(v)}">05:00 PM</span>
+                                </label>
+                            </div>
+                            <input type="text" class="time-direct-input time-out-edit" th:name="${'timeOutEdit_' + row.key}"
+                                   th:value="${row.selectedOut12h}" placeholder="hh:mm a" />
                         </div>
-                        <button type="submit" class="btn-import preview-approve-btn">
-                            <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
-                        </button>
                     </div>
-                </form>
+                </div>
+                <div class="preview-action-bar preview-action-bar-bottom">
+                    <div class="preview-action-copy">
+                        Review complete? Approve the checked rows.
+                    </div>
+                    <button type="button" class="btn-import preview-approve-btn" id="approveBtnBottom">
+                        <i class="fa-solid fa-circle-check"></i> Approve Selected Logs
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -212,6 +211,64 @@ Column guide:
                if (event.target === modal) { modal.style.display = 'none'; }
            };
        }
+
+       // JSON approve — collects all card data and POSTs as a single JSON body
+       // (avoids Tomcat's HTTP parameter count limit which would trigger a 400 on large uploads)
+       function submitApproval() {
+           var overwrite = document.getElementById('overwriteCheckbox') &&
+                           document.getElementById('overwriteCheckbox').checked;
+           var cdoEl = document.getElementById('countDayOffHoursVal');
+           var countDayOffHours = cdoEl ? (cdoEl.value === 'true') : true;
+
+           var rows = [];
+           document.querySelectorAll('.log-card[data-row-key]').forEach(function(card) {
+               var key = card.dataset.rowKey;
+               var verifyCheckbox = card.querySelector('.verify-checkbox');
+               var timeInInput = card.querySelector('.time-in-edit');
+               var timeOutInput = card.querySelector('.time-out-edit');
+               rows.push({
+                   key: key,
+                   verified: verifyCheckbox ? verifyCheckbox.checked : false,
+                   timeIn: timeInInput ? timeInInput.value : '',
+                   timeOut: timeOutInput ? timeOutInput.value : ''
+               });
+           });
+
+           if (rows.length === 0) {
+               alert('No rows to approve.');
+               return;
+           }
+
+           var headers = { 'Content-Type': 'application/json' };
+
+           // Disable both approve buttons while submitting
+           var btns = document.querySelectorAll('#approveBtnTop, #approveBtnBottom');
+           btns.forEach(function(b) { b.disabled = true; b.textContent = 'Approving…'; });
+
+           fetch('/admin/attendance/time-adjustments/approve', {
+               method: 'POST',
+               headers: headers,
+               body: JSON.stringify({ overwrite: overwrite, countDayOffHours: countDayOffHours, rows: rows })
+           })
+           .then(function(res) { return res.json(); })
+           .then(function(data) {
+               if (data.success && data.redirect) {
+                   window.location.href = data.redirect;
+               } else {
+                   alert('Approval failed: ' + (data.message || 'Unknown error'));
+                   btns.forEach(function(b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-circle-check"></i> Approve Selected Logs'; });
+               }
+           })
+           .catch(function(err) {
+               alert('Network error during approval: ' + err);
+               btns.forEach(function(b) { b.disabled = false; b.innerHTML = '<i class="fa-solid fa-circle-check"></i> Approve Selected Logs'; });
+           });
+       }
+
+       var topBtn = document.getElementById('approveBtnTop');
+       var bottomBtn = document.getElementById('approveBtnBottom');
+       if (topBtn) topBtn.addEventListener('click', submitApproval);
+       if (bottomBtn) bottomBtn.addEventListener('click', submitApproval);
 
     </script>
 </body>
